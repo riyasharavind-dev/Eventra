@@ -1,0 +1,45 @@
+name: customer
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Supabase
+  supabase_flutter: ^2.17.2
+
+  # Firebase
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
+
+  # Image / Permissions
+  image_picker: ^1.2.3
+  permission_handler: ^13.0.2
+
+  # External URLs
+  url_launcher: ^6.3.2
+
+  # Mappls
+  mappls_gl: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Mappls SDK configuration files
+  assets:
+    - assets/mappls/

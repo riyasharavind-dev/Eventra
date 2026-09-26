@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "598452530776",
+    "project_id": "eventra-push-notification",
+    "storage_bucket": "eventra-push-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598452530776:android:6fceef157797642d1be42d",
+        "android_client_info": {
+          "package_name": "com.example.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2EHlJcu5N6qWfMCTGKszNEb17IY0vTMM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
