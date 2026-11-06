@@ -38,6 +38,7 @@ Future<ListingFilterSelection?> showListingFilterSheet(
 class ListingFilterSheet extends StatefulWidget {
   final Map<String, String>? statusOptions, sortOptions;
   final String? categoryLabel;
+  final bool showCategory, showStatus;
   final String defaultSort;
   final Widget? additionalFilters;
   final VoidCallback? onReset;
@@ -49,6 +50,8 @@ class ListingFilterSheet extends StatefulWidget {
     this.statusOptions,
     this.sortOptions,
     this.categoryLabel,
+    this.showCategory = true,
+    this.showStatus = true,
     this.defaultSort = 'newest',
     this.additionalFilters,
     this.onReset,
@@ -234,54 +237,56 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                           (v) => chosenBusiness = v,
                         ),
                       ),
-                      field(
-                        Icons.sell_rounded,
-                        widget.categoryLabel ?? t('Category', 'வகை'),
-                        dropdown(
-                          'category',
-                          chosenCategory,
-                          widget.categoryOptions,
-                          (v) => chosenCategory = v,
+                      if (widget.showCategory)
+                        field(
+                          Icons.sell_rounded,
+                          widget.categoryLabel ?? t('Category', 'வகை'),
+                          dropdown(
+                            'category',
+                            chosenCategory,
+                            widget.categoryOptions,
+                            (v) => chosenCategory = v,
+                          ),
                         ),
-                      ),
-                      field(
-                        Icons.pie_chart_rounded,
-                        t('Status', 'நிலை'),
-                        Wrap(
-                          spacing: 7,
-                          runSpacing: 7,
-                          children: [
-                            for (final s
-                                in (widget.statusOptions?.keys ??
-                                    ['all', 'active', 'inactive']))
-                              ChoiceChip(
-                                label: Text(
-                                  widget.statusOptions?[s] ?? _statusLabel(s),
-                                  style: TextStyle(
-                                    fontSize: 12,
+                      if (widget.showStatus)
+                        field(
+                          Icons.pie_chart_rounded,
+                          t('Status', 'நிலை'),
+                          Wrap(
+                            spacing: 7,
+                            runSpacing: 7,
+                            children: [
+                              for (final s
+                                  in (widget.statusOptions?.keys ??
+                                      ['all', 'active', 'inactive']))
+                                ChoiceChip(
+                                  label: Text(
+                                    widget.statusOptions?[s] ?? _statusLabel(s),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: chosenStatus == s
+                                          ? wine
+                                          : const Color(0xFF282837),
+                                    ),
+                                  ),
+                                  selected: chosenStatus == s,
+                                  showCheckmark: false,
+                                  selectedColor: const Color(0xFFFFF2F5),
+                                  backgroundColor: const Color(0xFFF5F5F8),
+                                  side: BorderSide(
                                     color: chosenStatus == s
                                         ? wine
-                                        : const Color(0xFF282837),
+                                        : Colors.transparent,
                                   ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => chosenStatus = s),
                                 ),
-                                selected: chosenStatus == s,
-                                showCheckmark: false,
-                                selectedColor: const Color(0xFFFFF2F5),
-                                backgroundColor: const Color(0xFFF5F5F8),
-                                side: BorderSide(
-                                  color: chosenStatus == s
-                                      ? wine
-                                      : Colors.transparent,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                onSelected: (_) =>
-                                    setState(() => chosenStatus = s),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                       if (widget.additionalFilters != null)
                         widget.additionalFilters!,
                       field(

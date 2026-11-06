@@ -6,6 +6,7 @@ import '../../repositories/explore_repository.dart';
 import '../../widgets/explore/explore_categories.dart';
 import '../../widgets/explore/explore_service_card.dart';
 import '../extended/service_details_screen.dart';
+import '../extended/search_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key, this.repository, this.onOpen});
@@ -91,15 +92,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(18, 16, 18, 16),
-              child: Text(
-                'Explore',
-                style: TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF171720),
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Explore',
+                      style: TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF171720),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Search',
+                    icon: const Icon(Icons.search, color: Color(0xFF73737D)),
+                    onPressed: () => Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const CustomerSearchScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const Divider(height: 1, color: Color(0xFFECECF1)),

@@ -222,49 +222,23 @@ class ServiceRepository {
   // ============================================================
 
   Future<void> deleteService(ServiceModel service) async {
-    final String userId = _requireUserId();
-
-    final ServiceModel? existing = await getServiceById(service.id);
-
-    if (existing == null) {
-      throw Exception(
-        'Service not found or you do not have permission to delete it.',
-      );
-    }
-
-    // ----------------------------------------------------------
-    // Delete gallery files
-    // ----------------------------------------------------------
-
-    if (service.gallery.isNotEmpty) {
-      final List<String> paths = [];
-
-      for (final String url in service.gallery) {
-        final String? path = _extractStoragePath(url);
-
-        if (path != null && path.isNotEmpty) {
-          paths.add(path);
-        }
-      }
-
-      if (paths.isNotEmpty) {
-        try {
-          await _supabase.storage.from('service-gallery').remove(paths);
-        } catch (_) {
-          // Continue with database deletion.
-        }
+    _requireUserId();
+    // Authorize and remove the DB row first. A booked service must keep its media.
+    final result = await _supabase.rpc(
+      'delete_vendor_service',
+      params: {'p_service_id': service.id},
+    );
+    final gallery = List<String>.from(
+      (result as Map)['gallery'] as List? ?? [],
+    );
+    final paths = gallery.map(_extractStoragePath).whereType<String>().toList();
+    if (paths.isNotEmpty) {
+      try {
+        await _supabase.storage.from('service-gallery').remove(paths);
+      } catch (_) {
+        // A failed media cleanup does not restore the already deleted service.
       }
     }
-
-    // ----------------------------------------------------------
-    // Delete database record
-    // ----------------------------------------------------------
-
-    await _supabase
-        .from('services')
-        .delete()
-        .eq('id', service.id)
-        .eq('vendor_id', userId);
   }
 
   // ============================================================

@@ -1,3 +1,4 @@
+import '../../widgets/listings/listing_filter_sheet.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'dart:async';
@@ -72,6 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   late final DashboardRepository _repository;
   DashboardOverview? _overview;
   String _selectedBusiness = 'all';
+  String _bookingSort = 'newest';
   int _generation = 0;
   final Set<String> _busyIds = {};
   List<BusinessModel> _allBusinesses = [];
@@ -223,14 +225,19 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<BookingModel> get _recentBookings {
     final List<BookingModel> list = List<BookingModel>.from(_bookings);
 
-    list.sort((BookingModel a, BookingModel b) {
-      final DateTime aDate =
-          a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-      final DateTime bDate =
-          b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-      return bDate.compareTo(aDate);
+    list.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final result = switch (_bookingSort) {
+        'oldest' => aDate.compareTo(bDate),
+        'event_date' => (a.eventDate ?? DateTime(9999)).compareTo(
+          b.eventDate ?? DateTime(9999),
+        ),
+        'price_low' => a.price.compareTo(b.price),
+        'price_high' => b.price.compareTo(a.price),
+        _ => bDate.compareTo(aDate),
+      };
+      return result == 0 ? a.id.compareTo(b.id) : result;
     });
 
     return list.take(5).toList();
@@ -347,6 +354,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Row(
       children: [
+        InkWell(
+          onTap: _openProfile,
+          borderRadius: BorderRadius.circular(26),
+          child: _buildProfileAvatar(),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,17 +383,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                   color: darkText,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Manage your Eventra business',
-                style: TextStyle(fontSize: 13, color: greyText),
-              ),
             ],
           ),
         ),
         const SizedBox(width: 12),
         IconButton(
-          tooltip: _text('Filter business', 'Filter business'),
+          tooltip: _text('Filter & Sort', 'வடிகட்டி வரிசைப்படுத்து'),
           onPressed: _chooseBusiness,
           icon: const Icon(
             Icons.tune_rounded,
@@ -401,11 +409,6 @@ class _DashboardScreenState extends State<DashboardScreen>
               color: VendorBottomNavBar.inactiveIconColor,
             ),
           ),
-        ),
-        InkWell(
-          onTap: _openProfile,
-          borderRadius: BorderRadius.circular(26),
-          child: _buildProfileAvatar(),
         ),
       ],
     );
@@ -564,11 +567,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-              Icon(
-                Icons.calendar_month_outlined,
-                color: Colors.white70,
-                size: 21,
               ),
             ],
           ),
@@ -1376,43 +1374,58 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _chooseBusiness() async {
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showModalBottomSheet<ListingFilterSelection>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
-      builder: (sheet) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            ListTile(
-              title: Text(_text('All businesses', 'All businesses')),
-              trailing: _selectedBusiness == 'all'
-                  ? const Icon(
-                      Icons.check,
-                      color: VendorBottomNavBar.inactiveIconColor,
-                    )
-                  : null,
-              onTap: () => Navigator.pop(sheet, 'all'),
-            ),
-            ..._allBusinesses.map(
-              (b) => ListTile(
-                title: Text(b.name),
-                trailing: _selectedBusiness == b.id
-                    ? const Icon(
-                        Icons.check,
-                        color: VendorBottomNavBar.inactiveIconColor,
-                      )
-                    : null,
-                onTap: () => Navigator.pop(sheet, b.id),
-              ),
-            ),
-          ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (_) => ListingFilterSheet(
+        selection: ListingFilterSelection(
+          business: _selectedBusiness,
+          sort: _bookingSort,
         ),
+        businessOptions: {
+          'all': _text('All businesses', 'அனைத்து வணிகங்களும்'),
+          'unassigned': _text(
+            'Unassigned bookings',
+            'வணிகம் ஒதுக்கப்படாத பதிவுகள்',
+          ),
+          for (final business in _allBusinesses) business.id: business.name,
+        },
+        categoryOptions: const {'all': 'All'},
+        showCategory: false,
+        showStatus: false,
+        sortOptions: {
+          'newest': _text(
+            'Newest bookings first',
+            'புதிய முன்பதிவுகள் முதலில்',
+          ),
+          'oldest': _text('Oldest bookings first', 'பழைய முன்பதிவுகள் முதலில்'),
+          'event_date': _text(
+            'Event date · earliest first',
+            'நிகழ்வு தேதி · முதலில் வருபவை',
+          ),
+          'price_low': _text(
+            'Amount · low to high',
+            'தொகை · குறைவிலிருந்து அதிகம்',
+          ),
+          'price_high': _text(
+            'Amount · high to low',
+            'தொகை · அதிகத்திலிருந்து குறைவு',
+          ),
+        },
       ),
     );
-    if (selected != null && mounted) {
-      setState(() => _selectedBusiness = selected);
-      await _loadDashboard();
-    }
+    if (selected == null || !mounted) return;
+    final businessChanged = selected.business != _selectedBusiness;
+    setState(() {
+      _selectedBusiness = selected.business;
+      _bookingSort = selected.sort;
+    });
+    if (businessChanged) await _loadDashboard();
   }
 
   Future<void> _showBooking(BookingModel booking) async {

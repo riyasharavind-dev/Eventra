@@ -1,3 +1,6 @@
+import '../../repositories/admin_connections_repository.dart';
+import '../management/admin_connections_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/admin_module.dart';
@@ -98,7 +101,9 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Widget navigation({bool drawer = false}) {
     final visible = modules
         .where(
-          (m) => m.label.toLowerCase().contains(moduleSearch.toLowerCase()),
+          (m) => '${m.label} ${m.name} ${m.section}'.toLowerCase().contains(
+            moduleSearch.toLowerCase(),
+          ),
         )
         .toList();
     final sections = visible.map((m) => m.section).toSet();
@@ -152,6 +157,24 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                         Navigator.pop(context);
                       }
                       open('dashboard', {});
+                    },
+                  ),
+                  ListTile(
+                    selected: selected == 'database_connections',
+                    leading: const Icon(Icons.hub_outlined),
+                    title: const Text('Database Connections'),
+                    onTap: () {
+                      if (drawer) Navigator.pop(context);
+                      open('database_connections', {});
+                    },
+                  ),
+                  ListTile(
+                    selected: selected == 'storage_buckets',
+                    leading: const Icon(Icons.cloud_outlined),
+                    title: const Text('Storage Buckets'),
+                    onTap: () {
+                      if (drawer) Navigator.pop(context);
+                      open('storage_buckets', {});
                     },
                   ),
                   ListTile(
@@ -211,14 +234,16 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   }
 
   IconData _icon(String section) => switch (section) {
-    'People' => Icons.people_outline,
-    'Marketplace' => Icons.storefront_outlined,
-    'Operations' => Icons.event_note,
-    'Verification' => Icons.verified_user_outlined,
+    'Accounts & Access' => Icons.manage_accounts_outlined,
+    'Businesses & Services' => Icons.storefront_outlined,
+    'Catalog & Locations' => Icons.category_outlined,
+    'Bookings & History' => Icons.event_note_outlined,
+    'Trust & Moderation' => Icons.verified_user_outlined,
+    'Customer Experience' => Icons.view_carousel_outlined,
+    'Content & Settings' => Icons.article_outlined,
     'Support' => Icons.support_agent,
-    'Reviews' => Icons.star_outline,
-    'Content' => Icons.article_outlined,
-    'Published Views' => Icons.public,
+    'Notifications' => Icons.notifications_outlined,
+    'Published Content' => Icons.public,
     _ => Icons.admin_panel_settings_outlined,
   };
   @override
@@ -258,7 +283,11 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          selected == 'customer_app'
+          selected == 'database_connections'
+              ? 'Database Connections'
+              : selected == 'storage_buckets'
+              ? 'Storage Buckets'
+              : selected == 'customer_app'
               ? 'Customer App'
               : module?.label ?? 'Dashboard',
         ),
@@ -290,6 +319,15 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                     key: ValueKey('dashboard-$refreshKey'),
                     repo: repo,
                     modules: modules,
+                    onOpen: open,
+                  )
+                : selected == 'database_connections' ||
+                      selected == 'storage_buckets'
+                ? AdminConnectionsScreen(
+                    key: ValueKey('$selected-$refreshKey'),
+                    connections: AdminConnectionsRepository(repo.db),
+                    repo: repo,
+                    storageFirst: selected == 'storage_buckets',
                     onOpen: open,
                   )
                 : selected == 'customer_app'
