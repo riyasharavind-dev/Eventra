@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.customer"
+    namespace = "com.eventor.customer"
 
     // permission_handler_android requires Android SDK 37
     compileSdk = 37
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.customer"
+        applicationId = "com.eventor.customer"
 
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

@@ -145,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // LOGO / APP NAME
                     // ==================================================
                     const Text(
-                      'EVENTRA',
+                      'EVENTOR',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,
@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
 
                     const Text(
-                      'Sign in to continue to Eventra',
+                      'Sign in to continue to Eventor',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),

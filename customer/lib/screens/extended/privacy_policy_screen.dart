@@ -155,7 +155,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text(
-                            'EVENTRA CUSTOMER',
+                            'EVENTOR CUSTOMER',
                             style: TextStyle(
                               color: _red,
                               fontWeight: FontWeight.w700,

@@ -45,7 +45,7 @@ begin
   update public.verification_documents set status=p_action,reviewed_at=now(),reviewed_by=auth.uid(),rejection_reason=case when p_action in ('rejected','resubmission_required') then note else null end,updated_at=now() where id::text=p_id;
  elsif m.name='vendor_identity_verifications' then
   if note is null then raise exception 'Record the manual identity-review reason'; end if;
-  update public.vendor_identity_verifications set status=p_action,verification_method='manual_admin_review',verification_provider='Eventra Admin',verified_at=case when p_action='verified' then now() else null end,failure_reason=case when p_action='failed' then note else null end,updated_at=now() where id::text=p_id;
+  update public.vendor_identity_verifications set status=p_action,verification_method='manual_admin_review',verification_provider='Eventor Admin',verified_at=case when p_action='verified' then now() else null end,failure_reason=case when p_action='failed' then note else null end,updated_at=now() where id::text=p_id;
  elsif m.name='business_verifications' then
   if p_action='rejected' and note is null then raise exception 'A rejection reason is required'; end if;
   if p_action='approved' and not exists(select 1 from storage.objects where bucket_id='business-documents' and name=before_row->>'document_path') then raise exception 'Business proof file is missing'; end if;

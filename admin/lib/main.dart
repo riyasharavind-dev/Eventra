@@ -12,15 +12,15 @@ Future<void> main() async {
     // ignore: deprecated_member_use
     anonKey: SupabaseConfig.anonKey,
   );
-  runApp(const EventraAdminApp());
+  runApp(const EventorAdminApp());
 }
 
-class EventraAdminApp extends StatelessWidget {
-  const EventraAdminApp({super.key});
+class EventorAdminApp extends StatelessWidget {
+  const EventorAdminApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    title: 'Eventra Admin',
+    title: 'Eventor Admin',
     themeMode: ThemeMode.light,
     theme: ThemeData(
       useMaterial3: true,

@@ -10,7 +10,7 @@ import '../repositories/app_settings_repository.dart';
 class NotificationService {
   NotificationService._();
   static final instance = NotificationService._();
-  static const _notificationChannel = MethodChannel('eventra/notifications');
+  static const _notificationChannel = MethodChannel('eventor/notifications');
   final _supabase = Supabase.instance.client;
   StreamSubscription<String>? _tokenRefresh;
   StreamSubscription<RemoteMessage>? _foreground;
@@ -107,7 +107,7 @@ class NotificationService {
       try {
         await _notificationChannel.invokeMethod<void>('show', {
           'id': message.data['booking_id'] ?? message.messageId ?? 'booking',
-          'title': notification.title ?? 'Eventra',
+          'title': notification.title ?? 'Eventor',
           'body': notification.body ?? '',
         });
       } catch (error) {

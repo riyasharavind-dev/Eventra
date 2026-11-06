@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD2EHlJcu5N6qWfMCTGKszNEb17IY0vTMM',
-    appId: '1:598452530776:android:9dba82528724122e1be42d',
+    appId: '1:598452530776:android:a34c67688d46054f1be42d',
     messagingSenderId: '598452530776',
     projectId: 'eventra-push-notification',
     storageBucket: 'eventra-push-notification.firebasestorage.app',
@@ -59,20 +59,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBuG6nPHvrxRoeti6KksXbgccjyjUYR-DQ',
-    appId: '1:598452530776:ios:c8346d1a8337af1b1be42d',
+    appId: '1:598452530776:ios:b64585dfa70fcc3c1be42d',
     messagingSenderId: '598452530776',
     projectId: 'eventra-push-notification',
     storageBucket: 'eventra-push-notification.firebasestorage.app',
-    iosBundleId: 'com.example.vendor',
+    iosBundleId: 'com.eventor.vendor',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBuG6nPHvrxRoeti6KksXbgccjyjUYR-DQ',
-    appId: '1:598452530776:ios:c8346d1a8337af1b1be42d',
+    appId: '1:598452530776:ios:b64585dfa70fcc3c1be42d',
     messagingSenderId: '598452530776',
     projectId: 'eventra-push-notification',
     storageBucket: 'eventra-push-notification.firebasestorage.app',
-    iosBundleId: 'com.example.vendor',
+    iosBundleId: 'com.eventor.vendor',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

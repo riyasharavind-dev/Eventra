@@ -96,7 +96,7 @@ class NotificationService {
       }
     });
     _foreground = FirebaseMessaging.onMessage.listen((message) {
-      if (_enabled) debugPrint('Eventra customer notification received.');
+      if (_enabled) debugPrint('Eventor customer notification received.');
     });
     return true;
   }

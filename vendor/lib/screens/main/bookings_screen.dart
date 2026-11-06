@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
-import '../extended/eventra_calendar.dart';
+import '../extended/eventor_calendar.dart';
 import '../../models/booking_model.dart';
 import '../../widgets/bookings/vendor_booking_card.dart';
 import '../../widgets/common/global_search_bar.dart';
@@ -192,7 +192,7 @@ class _BookingsScreenState extends State<BookingsScreen>
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) =>
-            EventraCalendar(initialBusiness: business, initialStatus: status),
+            EventorCalendar(initialBusiness: business, initialStatus: status),
       ),
     );
     if (mounted) {

@@ -25,7 +25,7 @@ import '../../services/notification_service.dart';
 import '../../widgets/account_security_dialog.dart';
 import '../../widgets/app_settings_section.dart';
 import '../../widgets/common/confirmation_dialog.dart';
-import '../extended/about_eventra_screen.dart';
+import '../extended/about_eventor_screen.dart';
 import '../extended/business_details.dart';
 import '../extended/help_support_screen.dart';
 import '../extended/my_profile.dart';
@@ -259,8 +259,8 @@ class _MeScreenState extends State<MeScreen> {
         builder: (_) => ConfirmationDialog(
           title: _text('Logout?', 'வெளியேற வேண்டுமா?'),
           message: _text(
-            'Are you sure you want to log out of Eventra?',
-            'Eventra கணக்கிலிருந்து வெளியேற விரும்புகிறீர்களா?',
+            'Are you sure you want to log out of Eventor?',
+            'Eventor கணக்கிலிருந்து வெளியேற விரும்புகிறீர்களா?',
           ),
           confirmLabel: _text('Logout', 'வெளியேறு'),
           cancelLabel: _text('Cancel', 'ரத்து செய்'),
@@ -695,11 +695,11 @@ class _MeScreenState extends State<MeScreen> {
       _setting(
         'about',
         Icons.info_outline_rounded,
-        'About Eventra',
-        'Eventra பற்றி',
-        'Learn about Eventra Vendor',
-        'Eventra Vendor பற்றித் தெரிந்துகொள்ளவும்',
-        () => _open(const AboutEventraScreen()),
+        'About Eventor',
+        'Eventor பற்றி',
+        'Learn about Eventor Vendor',
+        'Eventor Vendor பற்றித் தெரிந்துகொள்ளவும்',
+        () => _open(const AboutEventorScreen()),
         keywords: ['help information company about பற்றி'],
       ),
       _setting(
@@ -707,7 +707,7 @@ class _MeScreenState extends State<MeScreen> {
         Icons.privacy_tip_outlined,
         'Privacy Policy',
         'தனியுரிமைக் கொள்கை',
-        'How Eventra handles your information',
+        'How Eventor handles your information',
         'உங்கள் தகவல்கள் எவ்வாறு கையாளப்படுகின்றன',
         () => _open(const PrivacyPolicyScreen()),
         keywords: ['help information legal privacy data தனியுரிமை'],
@@ -717,7 +717,7 @@ class _MeScreenState extends State<MeScreen> {
         Icons.description_outlined,
         'Terms & Conditions',
         'விதிமுறைகள் மற்றும் நிபந்தனைகள்',
-        'Read the latest Eventra vendor terms',
+        'Read the latest Eventor vendor terms',
         'சமீபத்திய விற்பனையாளர் விதிமுறைகளைப் படிக்கவும்',
         () => _open(const TermsAndConditionsScreen()),
         keywords: ['help information legal terms conditions விதிமுறைகள்'],
@@ -730,8 +730,8 @@ class _MeScreenState extends State<MeScreen> {
         Icons.public,
         'Follow Us',
         'எங்களைப் பின்தொடருங்கள்',
-        'Eventra social links',
-        'Eventra சமூக இணைப்புகள்',
+        'Eventor social links',
+        'Eventor சமூக இணைப்புகள்',
         () => _revealSection(_followKey),
         keywords: [
           'social instagram whatsapp facebook youtube telegram linkedin twitter community சமூகம்',

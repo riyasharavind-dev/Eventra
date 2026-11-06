@@ -1,6 +1,6 @@
-# Eventra access security baseline
+# Eventor access security baseline
 
-Apply `sql/18_access_security.sql` after the existing Eventra migrations. The migration is transactional and preserves application records. It deliberately replaces old public-schema and Storage object policies rather than combining restrictive rules with permissive legacy policies.
+Apply `sql/18_access_security.sql` after the existing Eventor migrations. The migration is transactional and preserves application records. It deliberately replaces old public-schema and Storage object policies rather than combining restrictive rules with permissive legacy policies.
 
 All 35 current public tables have RLS enabled. Anonymous clients can read active marketplace records and published content, and use explicitly allowlisted discovery/review RPCs. Profiles, customer addresses, device tokens, bookings, verification metadata, support, moderation, admin authority and audit data are not publicly enumerable.
 

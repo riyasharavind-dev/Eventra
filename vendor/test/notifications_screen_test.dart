@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vendor/models/vendor_notification.dart';
-import 'package:vendor/repositories/vendor_notifications_repository.dart';
-import 'package:vendor/screens/extended/notifications_screen.dart';
+import 'package:eventor_vendor/models/vendor_notification.dart';
+import 'package:eventor_vendor/repositories/vendor_notifications_repository.dart';
+import 'package:eventor_vendor/screens/extended/notifications_screen.dart';
 
 class InboxRepo extends VendorNotificationsRepository {
   InboxRepo()

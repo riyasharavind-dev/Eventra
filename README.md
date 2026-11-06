@@ -1,4 +1,4 @@
-# Eventra
+# Eventor
 
 Event service marketplace with separate Flutter applications for vendors, customers, and administrators, backed by Supabase and Firebase Cloud Messaging.
 
@@ -15,7 +15,7 @@ Install Flutter with the Dart version required by each app's `pubspec.yaml`. Ins
 
 ```sh
 git clone https://github.com/riyasharavind-dev/Eventra.git
-cd Eventra/vendor
+cd Eventor/vendor
 flutter pub get
 flutter run
 ```
@@ -26,7 +26,7 @@ Each application has its own `lib/models`, repositories, screens, widgets, depen
 
 ## Database and backend
 
-Versioned SQL changes are stored in `admin/sql/`, with additional app-specific SQL in `vendor/sql/` and `customer/sql/`. These scripts describe updates to the existing Eventra database; they are not a complete, independently bootstrappable schema dump. Review prerequisites before applying scripts to a new database. Existing application-table development RLS settings require a separate production review.
+Versioned SQL changes are stored in `admin/sql/`, with additional app-specific SQL in `vendor/sql/` and `customer/sql/`. These scripts describe updates to the existing Eventor database; they are not a complete, independently bootstrappable schema dump. Review prerequisites before applying scripts to a new database. Existing application-table development RLS settings require a separate production review.
 
 The notification Edge Functions read Supabase service credentials and Firebase service-account values from server environment variables. Configure those secrets in the backend; never add their values to source control. Local Supabase link/cache files, environment secrets, signing keys, dependency directories, and build outputs are excluded.
 
@@ -52,4 +52,4 @@ flutter build apk --release --split-per-abi --target-platform android-arm,androi
 
 The current ARM64 release APK is approximately 36 MB. Installed storage and user data vary by device and usage. APK files are generated locally and are not committed. Configure a production signing key before store distribution; the current vendor release build uses the development signing configuration.
 
-Maps currently differ between applications: vendor shop selection uses OpenStreetMap through `flutter_map`, while the customer app retains Mappls integration. Payments and subscriptions are not complete production integrations.
+Both vendor shop selection and the reusable customer location picker use OpenStreetMap through `flutter_map`. Payments and subscriptions are not complete production integrations.

@@ -417,7 +417,7 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
                   ? null
                   : (value) => setState(() => _confirmed = value ?? false),
               title: const Text(
-                'I want to request deletion of my Eventra account.',
+                'I want to request deletion of my Eventor account.',
                 style: TextStyle(fontSize: 13),
               ),
             ),

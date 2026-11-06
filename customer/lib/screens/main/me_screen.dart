@@ -20,7 +20,7 @@ import '../extended/language_screen.dart';
 import '../extended/account_security_screen.dart';
 import '../extended/help_support_screen.dart';
 import '../extended/contact_support_screen.dart';
-import '../extended/about_eventra_screen.dart';
+import '../extended/about_eventor_screen.dart';
 import '../extended/privacy_policy_screen.dart';
 import '../extended/terms_and_conditions_screen.dart';
 
@@ -97,8 +97,8 @@ class _MeScreenState extends State<MeScreen> {
         title: Text(t('Log out?', 'வெளியேற வேண்டுமா?')),
         content: Text(
           t(
-            'Are you sure you want to log out of Eventra?',
-            'Eventra-இலிருந்து வெளியேற விரும்புகிறீர்களா?',
+            'Are you sure you want to log out of Eventor?',
+            'Eventor-இலிருந்து வெளியேற விரும்புகிறீர்களா?',
           ),
         ),
         actions: [
@@ -304,7 +304,7 @@ class _MeScreenState extends State<MeScreen> {
         Icons.headset_mic_outlined,
         'Contact Support',
         'ஆதரவைத் தொடர்புகொள்',
-        'Get help from the Eventra team',
+        'Get help from the Eventor team',
         () => _open(const ContactSupportScreen()),
       ),
     ];
@@ -312,11 +312,11 @@ class _MeScreenState extends State<MeScreen> {
       item(
         'about',
         Icons.info_outline,
-        'About Eventra',
-        'Eventra பற்றி',
-        'Learn about Eventra',
+        'About Eventor',
+        'Eventor பற்றி',
+        'Learn about Eventor',
         () => _open(
-          AboutEventraScreen(languageCode: settings.value.languageCode),
+          AboutEventorScreen(languageCode: settings.value.languageCode),
         ),
       ),
       item(

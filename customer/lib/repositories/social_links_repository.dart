@@ -9,7 +9,7 @@ class SocialLinksRepository {
   SocialLinksRepository({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
   final SupabaseClient _client;
-  static const _cacheKey = 'eventra.customer.social_links.v1';
+  static const _cacheKey = 'eventor.customer.social_links.v1';
   static const defaults = <SocialLinkModel>[
     SocialLinkModel(
       id: 'whatsapp',

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:customer/models/category_node_model.dart';
-import 'package:customer/models/explore_data.dart';
-import 'package:customer/models/service_model.dart';
-import 'package:customer/repositories/explore_repository.dart';
-import 'package:customer/screens/main/explore_screen.dart';
-import 'package:customer/widgets/explore/explore_service_card.dart';
+import 'package:eventor_customer/models/category_node_model.dart';
+import 'package:eventor_customer/models/explore_data.dart';
+import 'package:eventor_customer/models/service_model.dart';
+import 'package:eventor_customer/repositories/explore_repository.dart';
+import 'package:eventor_customer/screens/main/explore_screen.dart';
+import 'package:eventor_customer/widgets/explore/explore_service_card.dart';
 
 CategoryNodeModel category(String id, String name, [String? parent]) =>
     CategoryNodeModel(

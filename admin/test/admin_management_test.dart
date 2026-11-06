@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:admin/models/admin_module.dart';
-import 'package:admin/repositories/admin_repository.dart';
-import 'package:admin/screens/management/admin_module_screen.dart';
-import 'package:admin/widgets/admin_management_helpers.dart';
+import 'package:eventor_admin/models/admin_module.dart';
+import 'package:eventor_admin/repositories/admin_repository.dart';
+import 'package:eventor_admin/screens/management/admin_module_screen.dart';
+import 'package:eventor_admin/widgets/admin_management_helpers.dart';
 
 class FakeRepository implements AdminRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   @override
-  Future<AdminPage> records(String module, {String search = '', int offset = 0, int limit = 30, Map<String, dynamic> filters = const {}}) async => const AdminPage(total: 1, rows: [AdminRecord({'id': 'one', 'name': 'Eventra test vendor'})]);
+  Future<AdminPage> records(String module, {String search = '', int offset = 0, int limit = 30, Map<String, dynamic> filters = const {}}) async => const AdminPage(total: 1, rows: [AdminRecord({'id': 'one', 'name': 'Eventor test vendor'})]);
 }
 
 void main() {
@@ -42,7 +42,7 @@ void main() {
     const module = AdminModule(name: 'vendors', label: 'Vendors', section: 'People', canCreate: true);
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: AdminModuleScreen(repo: repo, module: module, modules: const [module], canWrite: false))));
     await tester.pumpAndSettle();
-    expect(find.text('Eventra test vendor'), findsOneWidget);
+    expect(find.text('Eventor test vendor'), findsOneWidget);
     expect(find.text('Add'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());

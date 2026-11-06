@@ -1,22 +1,22 @@
-import 'package:customer/models/account_security_action.dart';
+import 'package:eventor_customer/models/account_security_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:customer/models/auth_model.dart';
-import 'package:customer/models/app_settings_model.dart';
-import 'package:customer/models/account_security_model.dart';
-import 'package:customer/models/service_model.dart';
-import 'package:customer/models/service_review_model.dart';
-import 'package:customer/repositories/auth_repository.dart';
-import 'package:customer/repositories/account_security_repository.dart';
-import 'package:customer/repositories/app_settings_repository.dart';
-import 'package:customer/repositories/saved_services_repository.dart';
-import 'package:customer/repositories/review_repository.dart';
-import 'package:customer/services/app_settings_controller.dart';
-import 'package:customer/screens/main/me_screen.dart';
-import 'package:customer/screens/extended/account_security_screen.dart';
-import 'package:customer/screens/extended/my_reviews_screen.dart';
-import 'package:customer/screens/extended/saved_services_screen.dart';
+import 'package:eventor_customer/models/auth_model.dart';
+import 'package:eventor_customer/models/app_settings_model.dart';
+import 'package:eventor_customer/models/account_security_model.dart';
+import 'package:eventor_customer/models/service_model.dart';
+import 'package:eventor_customer/models/service_review_model.dart';
+import 'package:eventor_customer/repositories/auth_repository.dart';
+import 'package:eventor_customer/repositories/account_security_repository.dart';
+import 'package:eventor_customer/repositories/app_settings_repository.dart';
+import 'package:eventor_customer/repositories/saved_services_repository.dart';
+import 'package:eventor_customer/repositories/review_repository.dart';
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import 'package:eventor_customer/screens/main/me_screen.dart';
+import 'package:eventor_customer/screens/extended/account_security_screen.dart';
+import 'package:eventor_customer/screens/extended/my_reviews_screen.dart';
+import 'package:eventor_customer/screens/extended/saved_services_screen.dart';
 
 class ProfileRepository implements AuthRepository {
   @override

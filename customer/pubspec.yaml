@@ -1,5 +1,5 @@
-name: customer
-description: "A new Flutter project."
+name: eventor_customer
+description: "Eventor Customer application."
 
 publish_to: 'none'
 
@@ -32,8 +32,9 @@ dependencies:
   # External URLs
   url_launcher: ^6.3.2
 
-  # Mappls
-  mappls_gl: ^2.0.7
+  # OpenStreetMap (same provider as the vendor app)
+  flutter_map: 8.3.2
+  latlong2: 0.9.1
 
   geolocator: ^14.0.3
 
@@ -47,7 +48,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # Mappls SDK configuration files
-  assets:
-    - assets/mappls/

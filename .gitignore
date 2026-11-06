@@ -1,5 +1,5 @@
 # =========================
-# Eventra
+# Eventor
 # =========================
 
 # Node
@@ -81,3 +81,7 @@ supabase/.branches/
 **/*.pfx
 **/*service-account*.json
 **/*service_account*.json
+
+# Local CLI diagnostic logs
+firebase-debug.log*
+flutter_*.log

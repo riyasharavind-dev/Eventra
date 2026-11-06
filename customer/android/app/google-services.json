@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:598452530776:android:6fceef157797642d1be42d",
+        "mobilesdk_app_id": "1:598452530776:android:ee37a4cc9721ee701be42d",
         "android_client_info": {
-          "package_name": "com.example.customer"
+          "package_name": "com.eventor.customer"
         }
       },
       "oauth_client": [],

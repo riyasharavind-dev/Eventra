@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vendor/widgets/listings/listing_filter_sheet.dart';
+import 'package:eventor_vendor/widgets/listings/listing_filter_sheet.dart';
 
-import 'package:vendor/services/app_settings_controller.dart';
-import 'package:vendor/models/app_settings_model.dart';
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+import 'package:eventor_vendor/models/app_settings_model.dart';
 
 void main() {
   testWidgets(

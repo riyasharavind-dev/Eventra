@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-        android:label="Eventra Vendor"
+        android:label="Eventor Vendor"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true">
@@ -49,7 +49,7 @@
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="eventra_bookings" />
+            android:value="eventor_bookings" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_booking" />

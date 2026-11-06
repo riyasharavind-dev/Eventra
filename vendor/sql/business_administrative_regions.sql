@@ -7,7 +7,7 @@ create table if not exists public.administrative_regions (
  lgd_code text, country_code text not null default 'IN',
  latitude double precision, longitude double precision,
  is_active boolean not null default true,
- source text not null default 'Eventra Admin', source_date date,
+ source text not null default 'Eventor Admin', source_date date,
  created_at timestamptz not null default now(),
  unique(level,lgd_code),
  check((latitude is null and longitude is null) or (latitude is not null and longitude is not null and latitude between -90 and 90 and longitude between -180 and 180))

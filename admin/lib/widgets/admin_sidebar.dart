@@ -307,7 +307,7 @@ class AdminSidebar extends StatelessWidget {
                   CrossAxisAlignment.start,
               children: [
                 Text(
-                  'EVENTRA',
+                  'EVENTOR',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight:

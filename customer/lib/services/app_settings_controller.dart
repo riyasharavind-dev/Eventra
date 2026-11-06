@@ -44,8 +44,8 @@ class AppSettingsController extends ChangeNotifier {
           await disablePush();
         } catch (_) {
           return text(
-            'Notifications are off in Eventra. Device registration cleanup could not be confirmed; retry when connected.',
-            'Eventra அறிவிப்புகள் அணைக்கப்பட்டன. சாதனப் பதிவு நீக்கத்தை உறுதிப்படுத்த முடியவில்லை; இணைப்பு கிடைத்ததும் மீண்டும் முயற்சிக்கவும்.',
+            'Notifications are off in Eventor. Device registration cleanup could not be confirmed; retry when connected.',
+            'Eventor அறிவிப்புகள் அணைக்கப்பட்டன. சாதனப் பதிவு நீக்கத்தை உறுதிப்படுத்த முடியவில்லை; இணைப்பு கிடைத்ததும் மீண்டும் முயற்சிக்கவும்.',
           );
         }
         return null;

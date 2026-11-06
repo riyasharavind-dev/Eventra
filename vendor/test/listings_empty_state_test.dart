@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vendor/models/app_settings_model.dart';
-import 'package:vendor/models/service_model.dart';
-import 'package:vendor/repositories/service_repository.dart';
-import 'package:vendor/screens/main/listings_screen.dart';
-import 'package:vendor/services/app_settings_controller.dart';
+import 'package:eventor_vendor/models/app_settings_model.dart';
+import 'package:eventor_vendor/models/service_model.dart';
+import 'package:eventor_vendor/repositories/service_repository.dart';
+import 'package:eventor_vendor/screens/main/listings_screen.dart';
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 
 class EmptyServices extends ServiceRepository {
   EmptyServices(SupabaseClient client) : super(supabase: client);

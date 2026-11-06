@@ -11,7 +11,7 @@ class SavedServicesRepository {
   final String? _userId;
   String get _key {
     if (_userId == null) throw StateError('Please sign in again.');
-    return 'eventra.customer.saved_services.v1.$_userId';
+    return 'eventor.customer.saved_services.v1.$_userId';
   }
 
   Future<List<ServiceModel>> getSaved() async {

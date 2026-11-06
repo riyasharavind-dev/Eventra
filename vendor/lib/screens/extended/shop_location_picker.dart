@@ -128,11 +128,11 @@ class _ShopLocationPickerState extends State<ShopLocationPicker> {
                   TileLayer(
                     tileProvider: widget.tileProvider,
                     urlTemplate: const String.fromEnvironment(
-                      'EVENTRA_MAP_TILE_URL',
+                      'EVENTOR_MAP_TILE_URL',
                       defaultValue:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     ),
-                    userAgentPackageName: 'EventraVendor.ShopLocationPicker',
+                    userAgentPackageName: 'EventorVendor.ShopLocationPicker',
                     maxNativeZoom: 19,
                     panBuffer: 0,
                     errorTileCallback: (_, error, stack) {

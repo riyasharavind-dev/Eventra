@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:admin/models/admin_connections_model.dart';
-import 'package:admin/models/admin_module.dart';
-import 'package:admin/repositories/admin_connections_repository.dart';
-import 'package:admin/repositories/admin_repository.dart';
-import 'package:admin/screens/management/admin_connections_screen.dart';
+import 'package:eventor_admin/models/admin_connections_model.dart';
+import 'package:eventor_admin/models/admin_module.dart';
+import 'package:eventor_admin/repositories/admin_connections_repository.dart';
+import 'package:eventor_admin/repositories/admin_repository.dart';
+import 'package:eventor_admin/screens/management/admin_connections_screen.dart';
 
 class ConnectionsFake implements AdminConnectionsRepository {
   final offsets = <int>[];

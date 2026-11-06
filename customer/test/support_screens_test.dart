@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:customer/models/support_model.dart';
-import 'package:customer/repositories/support_repository.dart';
-import 'package:customer/screens/extended/help_support_screen.dart';
-import 'package:customer/screens/extended/contact_support_screen.dart';
+import 'package:eventor_customer/models/support_model.dart';
+import 'package:eventor_customer/repositories/support_repository.dart';
+import 'package:eventor_customer/screens/extended/help_support_screen.dart';
+import 'package:eventor_customer/screens/extended/contact_support_screen.dart';
 
 class FakeSupportRepository extends SupportRepository {
   FakeSupportRepository(SupabaseClient client) : super(client: client);
@@ -64,7 +64,7 @@ void main() {
       MaterialApp(home: HelpSupportScreen(repository: repository)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('EVENTRA CUSTOMER SUPPORT'), findsOneWidget);
+    expect(find.text('EVENTOR CUSTOMER SUPPORT'), findsOneWidget);
     expect(find.text('Where is my booking?'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'booking');
     await tester.pumpAndSettle();

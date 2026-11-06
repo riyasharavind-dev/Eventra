@@ -104,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 20),
 
                     const Text(
-                      'Join Eventra',
+                      'Join Eventor',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -115,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 8),
 
                     const Text(
-                      'Create your Eventra account',
+                      'Create your Eventor account',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),

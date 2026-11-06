@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:customer/models/customer_search_model.dart';
-import 'package:customer/repositories/customer_search_repository.dart';
-import 'package:customer/screens/extended/search_screen.dart';
+import 'package:eventor_customer/models/customer_search_model.dart';
+import 'package:eventor_customer/repositories/customer_search_repository.dart';
+import 'package:eventor_customer/screens/extended/search_screen.dart';
 
 CustomerSearchResult result(String name, {bool vendor = false}) =>
     CustomerSearchResult({

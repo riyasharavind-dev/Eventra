@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vendor/widgets/common/app_shimmer.dart';
+import 'package:eventor_vendor/widgets/common/app_shimmer.dart';
 
 void main() {
   testWidgets('Every skeleton fits narrow viewports and compact action slots', (

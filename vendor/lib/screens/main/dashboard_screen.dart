@@ -28,7 +28,7 @@ import '../../models/business_model.dart';
 import '../../repositories/booking_repository.dart';
 
 import '../extended/business_details.dart';
-import '../extended/eventra_calendar.dart';
+import '../extended/eventor_calendar.dart';
 
 import 'bookings_screen.dart';
 
@@ -1323,7 +1323,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EventraCalendar(initialBusiness: _selectedBusiness),
+        builder: (_) => EventorCalendar(initialBusiness: _selectedBusiness),
       ),
     );
     if (mounted) await _loadDashboard();

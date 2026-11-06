@@ -119,7 +119,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'EVENTRA',
+                    'EVENTOR',
                     style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.w900,
@@ -253,7 +253,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     }
     if (error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Eventra Admin')),
+        appBar: AppBar(title: const Text('Eventor Admin')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

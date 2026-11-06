@@ -37,7 +37,7 @@ class CustomerSearchRepository {
 
 class CustomerSearchHistoryRepository {
   CustomerSearchHistoryRepository({required String accountId})
-    : _key = 'eventra.customer.search_history.v1.$accountId';
+    : _key = 'eventor.customer.search_history.v1.$accountId';
   final String _key;
   Future<void> _pending = Future<void>.value();
   Future<List<RecentCustomerSearch>> load() async {

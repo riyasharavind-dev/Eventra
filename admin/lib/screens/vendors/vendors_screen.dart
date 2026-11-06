@@ -222,7 +222,7 @@ class _VendorsScreenState
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Manage Eventra vendors',
+                      'Manage Eventor vendors',
                       style: TextStyle(
                         color: Colors.grey,
                       ),

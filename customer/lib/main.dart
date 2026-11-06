@@ -43,7 +43,7 @@ Future<void> main() async {
   // ======================================================
 
   runApp(
-    EventraCustomerApp(
+    EventorCustomerApp(
       settings: AppSettingsController(
         initial: await AppSettingsRepository().load(),
       ),
@@ -52,11 +52,11 @@ Future<void> main() async {
 }
 
 // ========================================================
-// EVENTRA CUSTOMER APP
+// EVENTOR CUSTOMER APP
 // ========================================================
 
-class EventraCustomerApp extends StatelessWidget {
-  const EventraCustomerApp({super.key, required this.settings});
+class EventorCustomerApp extends StatelessWidget {
+  const EventorCustomerApp({super.key, required this.settings});
   final AppSettingsController settings;
   @override
   Widget build(BuildContext context) => AppSettingsScope(
@@ -65,7 +65,7 @@ class EventraCustomerApp extends StatelessWidget {
       animation: settings,
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Eventra Customer',
+        title: 'Eventor Customer',
         locale: Locale(settings.value.languageCode),
         supportedLocales: const [Locale('en'), Locale('ta')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -172,7 +172,7 @@ class _CustomerEntryScreenState extends State<CustomerEntryScreen> {
         }
       },
       onError: (Object error) {
-        debugPrint('EVENTRA AUTH STATE ERROR: $error');
+        debugPrint('EVENTOR AUTH STATE ERROR: $error');
       },
     );
   }
@@ -211,9 +211,9 @@ class _CustomerEntryScreenState extends State<CustomerEntryScreen> {
       _notificationInitialized = await NotificationService.instance
           .initialize();
 
-      debugPrint('EVENTRA: Notification service initialized.');
+      debugPrint('EVENTOR: Notification service initialized.');
     } catch (e) {
-      debugPrint('EVENTRA: Notification initialization failed: $e');
+      debugPrint('EVENTOR: Notification initialization failed: $e');
     }
   }
 

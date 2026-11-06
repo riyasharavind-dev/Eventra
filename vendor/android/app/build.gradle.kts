@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.vendor"
+    namespace = "com.eventor.vendor"
 
     compileSdk = 37
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.vendor"
+        applicationId = "com.eventor.vendor"
 
         minSdk = flutter.minSdkVersion
         targetSdk = 36

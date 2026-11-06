@@ -111,7 +111,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 20),
 
                     const Text(
-                      'Eventra Admin',
+                      'Eventor Admin',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,

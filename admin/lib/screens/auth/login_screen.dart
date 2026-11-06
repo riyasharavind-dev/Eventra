@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'EVENTRA',
+                  'EVENTOR',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 32,

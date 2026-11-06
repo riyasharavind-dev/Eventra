@@ -1,5 +1,5 @@
-name: vendor
-description: "Eventra Vendor App"
+name: eventor_vendor
+description: "Eventor Vendor App"
 
 publish_to: 'none'
 
@@ -51,14 +51,14 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/images/eventra_logo.png"
+  image_path: "assets/images/eventor_logo.png"
   adaptive_icon_background: "#59000D"
-  adaptive_icon_foreground: "assets/images/eventra_logo.png"
+  adaptive_icon_foreground: "assets/images/eventor_logo.png"
 
 flutter:
   uses-material-design: true
 
-  # Eventra assets
+  # Eventor assets
   assets:
-    - assets/images/eventra_logo.png
+    - assets/images/eventor_logo.png
     - assets/splash/

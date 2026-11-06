@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings_model.dart';
 
 class AppSettingsRepository {
-  static const _notifications = 'eventra.vendor.notifications';
-  static const _language = 'eventra.vendor.language';
-  static const _appearance = 'eventra.vendor.appearance';
+  static const _notifications = 'eventor.vendor.notifications';
+  static const _language = 'eventor.vendor.language';
+  static const _appearance = 'eventor.vendor.appearance';
 
   Future<AppSettingsModel> load() async {
     final prefs = await SharedPreferences.getInstance();

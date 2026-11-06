@@ -402,7 +402,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
                   ? null
                   : (value) => setState(() => _confirmed = value ?? false),
               title: const Text(
-                'I want to request deletion of my Eventra account.',
+                'I want to request deletion of my Eventor account.',
                 style: TextStyle(fontSize: 13),
               ),
             ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:admin/models/admin_module.dart';
-import 'package:admin/repositories/admin_repository.dart';
-import 'package:admin/screens/management/admin_customer_app_screen.dart';
-import 'package:admin/screens/management/admin_module_screen.dart';
-import 'package:admin/screens/management/admin_record_editor.dart';
+import 'package:eventor_admin/models/admin_module.dart';
+import 'package:eventor_admin/repositories/admin_repository.dart';
+import 'package:eventor_admin/screens/management/admin_customer_app_screen.dart';
+import 'package:eventor_admin/screens/management/admin_module_screen.dart';
+import 'package:eventor_admin/screens/management/admin_record_editor.dart';
 
 class CustomerAdminRepository implements AdminRepository {
   Map<String, dynamic> lastFilters = {};

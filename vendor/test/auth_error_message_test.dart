@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vendor/utils/auth_error_message.dart';
+import 'package:eventor_vendor/utils/auth_error_message.dart';
 
 void main() {
   test(

@@ -106,7 +106,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         ? Uri(
             scheme: 'mailto',
             path: value,
-            queryParameters: {'subject': 'Eventra Vendor Support'},
+            queryParameters: {'subject': 'Eventor Vendor Support'},
           )
         : Uri.https('wa.me', '/$value');
     try {
@@ -238,7 +238,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   const Text(
-                    'EVENTRA VENDOR SUPPORT',
+                    'EVENTOR VENDOR SUPPORT',
                     style: TextStyle(
                       color: _supportRed,
                       fontSize: 11,
@@ -925,7 +925,7 @@ class _SupportRequestDetailScreenState
                   ),
                 ..._messages.map(
                   (message) => _message(
-                    message.fromSupport ? 'Eventra Support' : 'You',
+                    message.fromSupport ? 'Eventor Support' : 'You',
                     message.body,
                     message.createdAt,
                     message.fromSupport,

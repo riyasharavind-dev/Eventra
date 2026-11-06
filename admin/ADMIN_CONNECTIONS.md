@@ -1,4 +1,4 @@
-# Eventra admin modules and connections
+# Eventor admin modules and connections
 
 The admin app connects all 35 application tables and four published views through 39 management modules. Separate Database Connections and Storage Buckets pages expose coverage, record counts, storage limits and the relevant management routes. All data requests continue through guarded admin RPCs; the public client never receives a service-role key.
 

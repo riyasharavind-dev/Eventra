@@ -158,7 +158,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text(
-                            'EVENTRA VENDOR',
+                            'EVENTOR VENDOR',
                             style: TextStyle(
                               color: _red,
                               fontWeight: FontWeight.w700,

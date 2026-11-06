@@ -410,7 +410,7 @@ class _EventTypesScreenState
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Manage event and occasion types used across Eventra.',
+                          'Manage event and occasion types used across Eventor.',
                           style: TextStyle(
                             fontSize: 14,
                             color:

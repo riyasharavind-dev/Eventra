@@ -13,7 +13,7 @@ import 'services/app_settings_controller.dart';
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/vendor_main_screen.dart';
-import 'screens/splash/eventra_splash_screen.dart';
+import 'screens/splash/eventor_splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +24,11 @@ Future<void> main() async {
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final initial = await AppSettingsRepository().load();
-  runApp(EventraVendorApp(settings: AppSettingsController(initial: initial)));
+  runApp(EventorVendorApp(settings: AppSettingsController(initial: initial)));
 }
 
-class EventraVendorApp extends StatelessWidget {
-  const EventraVendorApp({super.key, required this.settings});
+class EventorVendorApp extends StatelessWidget {
+  const EventorVendorApp({super.key, required this.settings});
   final AppSettingsController settings;
 
   @override
@@ -38,7 +38,7 @@ class EventraVendorApp extends StatelessWidget {
       animation: settings,
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Eventra Vendor',
+        title: 'Eventor Vendor',
         locale: Locale(settings.value.languageCode),
         supportedLocales: const [Locale('en'), Locale('ta')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -50,7 +50,7 @@ class EventraVendorApp extends StatelessWidget {
           ),
         ),
         themeMode: ThemeMode.light,
-        home: const EventraSplashScreen(nextScreen: VendorEntryScreen()),
+        home: const EventorSplashScreen(nextScreen: VendorEntryScreen()),
       ),
     ),
   );

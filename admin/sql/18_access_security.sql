@@ -1,4 +1,4 @@
--- Eventra production access baseline. Run after existing application migrations.
+-- Eventor production access baseline. Run after existing application migrations.
 -- No application records are deleted. Server-owned RPCs retain their explicit checks.
 begin;
 set local lock_timeout='10s';

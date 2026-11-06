@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ============================================================================
-// EVENTRA BOOKING COLORS
+// EVENTOR BOOKING COLORS
 // ============================================================================
 
-class EventraBookingColors {
+class EventorBookingColors {
   static const Color primaryRed = Color(0xFF9F0101);
   static const Color lightRed = Color(0xFFFFE8E8);
   static const Color background = Color(0xFFF8F8F8);
   static const Color textDark = Color(0xFF202020);
   static const Color textGrey = Color(0xFF777777);
 
-  const EventraBookingColors._();
+  const EventorBookingColors._();
 }
 
 // ============================================================================
@@ -550,7 +550,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
-          EventraBookingColors.background,
+          EventorBookingColors.background,
       body: SafeArea(
         child: _buildBody(),
       ),
@@ -565,7 +565,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     if (_isLoading && _bookings.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(
-          color: EventraBookingColors.primaryRed,
+          color: EventorBookingColors.primaryRed,
         ),
       );
     }
@@ -580,7 +580,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     }
 
     return RefreshIndicator(
-      color: EventraBookingColors.primaryRed,
+      color: EventorBookingColors.primaryRed,
       onRefresh: _loadBookings,
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(
@@ -679,7 +679,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 fontSize: 21,
                 fontWeight: FontWeight.w800,
                 color:
-                    EventraBookingColors.textDark,
+                    EventorBookingColors.textDark,
               ),
             ),
           ),
@@ -701,7 +701,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   Icons.refresh_rounded,
                   size: 20,
                   color:
-                      EventraBookingColors.textDark,
+                      EventorBookingColors.textDark,
                 ),
               ),
             ),
@@ -761,14 +761,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ),
               decoration: BoxDecoration(
                 color: selected
-                    ? EventraBookingColors
+                    ? EventorBookingColors
                         .primaryRed
                     : Colors.white,
                 borderRadius:
                     BorderRadius.circular(20),
                 border: Border.all(
                   color: selected
-                      ? EventraBookingColors
+                      ? EventorBookingColors
                           .primaryRed
                       : Colors.grey.shade200,
                 ),
@@ -784,7 +784,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           : FontWeight.w500,
                   color: selected
                       ? Colors.white
-                      : EventraBookingColors
+                      : EventorBookingColors
                           .textGrey,
                 ),
               ),
@@ -880,7 +880,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 icon,
                 size: 12,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .primaryRed,
               ),
               const Spacer(),
@@ -892,7 +892,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   fontWeight:
                       FontWeight.w800,
                   color:
-                      EventraBookingColors
+                      EventorBookingColors
                           .primaryRed,
                 ),
               ),
@@ -905,7 +905,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 const TextStyle(
               fontSize: 8,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textGrey,
               fontWeight:
                   FontWeight.w500,
@@ -975,7 +975,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             boxShadow: [
               BoxShadow(
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .primaryRed
                         .withValues(
                   alpha: 0.20,
@@ -1311,7 +1311,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 fontWeight:
                     FontWeight.w800,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textDark,
               ),
             ),
@@ -1322,7 +1322,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 const TextStyle(
               fontSize: 8,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
               fontWeight:
                   FontWeight.w600,
@@ -1426,7 +1426,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             fontWeight:
                                 FontWeight.w800,
                             color:
-                                EventraBookingColors
+                                EventorBookingColors
                                     .textDark,
                           ),
                         ),
@@ -1456,7 +1456,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           const TextStyle(
                         fontSize: 8,
                         color:
-                            EventraBookingColors
+                            EventorBookingColors
                                 .primaryRed,
                         fontWeight:
                             FontWeight.w600,
@@ -1508,7 +1508,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           fontWeight:
                               FontWeight.w800,
                           color:
-                              EventraBookingColors
+                              EventorBookingColors
                                   .textDark,
                         ),
                       ),
@@ -1518,7 +1518,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             .arrow_forward_ios_rounded,
                         size: 11,
                         color:
-                            EventraBookingColors
+                            EventorBookingColors
                                 .primaryRed,
                       ),
                     ],
@@ -1542,7 +1542,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           icon,
           size: 11,
           color:
-              EventraBookingColors.textGrey,
+              EventorBookingColors.textGrey,
         ),
         const SizedBox(
           width: 4,
@@ -1557,7 +1557,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 const TextStyle(
               fontSize: 8,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textGrey,
             ),
           ),
@@ -1576,7 +1576,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         decoration:
             BoxDecoration(
           color:
-              EventraBookingColors.lightRed,
+              EventorBookingColors.lightRed,
           borderRadius:
               BorderRadius.circular(11),
         ),
@@ -1585,7 +1585,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               .miscellaneous_services_rounded,
           size: 27,
           color:
-              EventraBookingColors.primaryRed,
+              EventorBookingColors.primaryRed,
         ),
       );
     }
@@ -1608,13 +1608,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
             width: 70,
             height: 82,
             color:
-                EventraBookingColors.lightRed,
+                EventorBookingColors.lightRed,
             child: const Icon(
               Icons
                   .miscellaneous_services_rounded,
               size: 27,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
             ),
           );
@@ -1683,14 +1683,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
             decoration:
                 const BoxDecoration(
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .lightRed,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.event_busy_rounded,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
               size: 30,
             ),
@@ -1708,7 +1708,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               fontWeight:
                   FontWeight.w700,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textDark,
             ),
           ),
@@ -1725,7 +1725,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 const TextStyle(
               fontSize: 9,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textGrey,
             ),
           ),
@@ -1741,7 +1741,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget _buildEmptyState() {
     return RefreshIndicator(
       color:
-          EventraBookingColors.primaryRed,
+          EventorBookingColors.primaryRed,
       onRefresh: _loadBookings,
       child: ListView(
         physics:
@@ -1762,7 +1762,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               decoration:
                   const BoxDecoration(
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .lightRed,
                 shape: BoxShape.circle,
               ),
@@ -1771,7 +1771,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     .calendar_month_rounded,
                 size: 40,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .primaryRed,
               ),
             ),
@@ -1790,7 +1790,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 fontWeight:
                     FontWeight.w800,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textDark,
               ),
             ),
@@ -1813,7 +1813,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   TextStyle(
                 fontSize: 11,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textGrey,
                 height: 1.4,
               ),
@@ -1831,7 +1831,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget _buildErrorState() {
     return RefreshIndicator(
       color:
-          EventraBookingColors.primaryRed,
+          EventorBookingColors.primaryRed,
       onRefresh: _loadBookings,
       child: ListView(
         physics:
@@ -1850,7 +1850,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               Icons.cloud_off_rounded,
               size: 58,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
             ),
           ),
@@ -1868,7 +1868,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 fontWeight:
                     FontWeight.w800,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textDark,
               ),
             ),
@@ -1892,7 +1892,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   const TextStyle(
                 fontSize: 10,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textGrey,
               ),
             ),
@@ -1918,7 +1918,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               style:
                   ElevatedButton.styleFrom(
                 backgroundColor:
-                    EventraBookingColors
+                    EventorBookingColors
                         .primaryRed,
                 foregroundColor:
                     Colors.white,
@@ -2000,7 +2000,7 @@ class _BookingDetailsSheet
       decoration:
           const BoxDecoration(
         color:
-            EventraBookingColors.background,
+            EventorBookingColors.background,
         borderRadius:
             BorderRadius.vertical(
           top: Radius.circular(26),
@@ -2042,7 +2042,7 @@ class _BookingDetailsSheet
                       fontWeight:
                           FontWeight.w800,
                       color:
-                          EventraBookingColors
+                          EventorBookingColors
                               .textDark,
                     ),
                   ),
@@ -2122,7 +2122,7 @@ class _BookingDetailsSheet
                                   fontWeight:
                                       FontWeight.w800,
                                   color:
-                                      EventraBookingColors
+                                      EventorBookingColors
                                           .textDark,
                                 ),
                               ),
@@ -2138,7 +2138,7 @@ class _BookingDetailsSheet
                                       const TextStyle(
                                     fontSize: 9,
                                     color:
-                                        EventraBookingColors
+                                        EventorBookingColors
                                             .primaryRed,
                                     fontWeight:
                                         FontWeight.w600,
@@ -2293,7 +2293,7 @@ class _BookingDetailsSheet
                               const TextStyle(
                             fontSize: 10,
                             color:
-                                EventraBookingColors
+                                EventorBookingColors
                                     .textGrey,
                             height: 1.4,
                           ),
@@ -2319,7 +2319,7 @@ class _BookingDetailsSheet
                     decoration:
                         BoxDecoration(
                       color:
-                          EventraBookingColors
+                          EventorBookingColors
                               .primaryRed,
                       borderRadius:
                           BorderRadius.circular(
@@ -2393,7 +2393,7 @@ class _BookingDetailsSheet
               fontWeight:
                   FontWeight.w800,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textDark,
             ),
           ),
@@ -2432,7 +2432,7 @@ class _BookingDetailsSheet
             decoration:
                 const BoxDecoration(
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .lightRed,
               shape: BoxShape.circle,
             ),
@@ -2440,7 +2440,7 @@ class _BookingDetailsSheet
               icon,
               size: 14,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
             ),
           ),
@@ -2457,7 +2457,7 @@ class _BookingDetailsSheet
                   const TextStyle(
                 fontSize: 9,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textGrey,
               ),
             ),
@@ -2474,7 +2474,7 @@ class _BookingDetailsSheet
                 fontWeight:
                     FontWeight.w700,
                 color:
-                    EventraBookingColors
+                    EventorBookingColors
                         .textDark,
               ),
             ),
@@ -2523,7 +2523,7 @@ class _BookingDetailsSheet
               fontWeight:
                   FontWeight.w800,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .textDark,
             ),
           ),
@@ -2548,7 +2548,7 @@ class _BookingDetailsSheet
                         decoration:
                             BoxDecoration(
                           color: done
-                              ? EventraBookingColors
+                              ? EventorBookingColors
                                   .primaryRed
                               : Colors
                                   .grey
@@ -2566,7 +2566,7 @@ class _BookingDetailsSheet
                             height: 2,
                             color: index <
                                     current
-                                ? EventraBookingColors
+                                ? EventorBookingColors
                                     .primaryRed
                                 : Colors
                                     .grey
@@ -2597,7 +2597,7 @@ class _BookingDetailsSheet
                           const TextStyle(
                         fontSize: 6.5,
                         color:
-                            EventraBookingColors
+                            EventorBookingColors
                                 .textGrey,
                       ),
                     );
@@ -2643,7 +2643,7 @@ class _BookingDetailsSheet
         decoration:
             BoxDecoration(
           color:
-              EventraBookingColors
+              EventorBookingColors
                   .lightRed,
           borderRadius:
               BorderRadius.circular(12),
@@ -2652,7 +2652,7 @@ class _BookingDetailsSheet
           Icons
               .miscellaneous_services_rounded,
           color:
-              EventraBookingColors
+              EventorBookingColors
                   .primaryRed,
           size: 28,
         ),
@@ -2677,13 +2677,13 @@ class _BookingDetailsSheet
             width: 72,
             height: 72,
             color:
-                EventraBookingColors
+                EventorBookingColors
                     .lightRed,
             child: const Icon(
               Icons
                   .miscellaneous_services_rounded,
               color:
-                  EventraBookingColors
+                  EventorBookingColors
                       .primaryRed,
               size: 28,
             ),

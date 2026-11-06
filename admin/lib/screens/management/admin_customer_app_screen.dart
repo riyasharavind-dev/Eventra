@@ -159,7 +159,7 @@ class _AdminCustomerAppScreenState extends State<AdminCustomerAppScreen> {
         ),
         _heading('About & Legal'),
         _entry(
-          'About Eventra',
+          'About Eventor',
           'Edit the customer introduction, tagline and feature list. Enable publication to show it in the app.',
           'about_eventra_content',
           Icons.info_outline,
@@ -203,7 +203,7 @@ class _AdminCustomerAppScreenState extends State<AdminCustomerAppScreen> {
           {'audience': 'customer'},
         ),
         _entry(
-          'Live About Eventra',
+          'Live About Eventor',
           'Check the published customer About page.',
           'published_about_eventra_content',
           Icons.article_outlined,

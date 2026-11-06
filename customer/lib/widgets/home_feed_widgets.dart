@@ -97,7 +97,7 @@ class HomeFeedItemCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   item.rating == null
-                      ? 'New on Eventra'
+                      ? 'New on Eventor'
                       : '★ ${item.rating!.toStringAsFixed(1)} · ${item.data['review_count']} reviews',
                   style: const TextStyle(
                     fontSize: 11,

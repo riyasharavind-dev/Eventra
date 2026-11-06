@@ -378,7 +378,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               children: [
                 const Expanded(
                   child: Text(
-                    'EVENTRA',
+                    'EVENTOR',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 23,

@@ -73,7 +73,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             Text(
-              'Eventra overview',
+              'Eventor overview',
               style: Theme.of(context).textTheme.headlineMedium
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),

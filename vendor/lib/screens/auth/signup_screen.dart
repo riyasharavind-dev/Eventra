@@ -194,7 +194,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       const SizedBox(height: 9),
 
                       const Text(
-                        'Join Eventra and start managing your business.',
+                        'Join Eventor and start managing your business.',
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.5,

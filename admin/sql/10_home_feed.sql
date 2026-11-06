@@ -238,5 +238,5 @@ revoke all on function public.admin_home_feed_workspace(),public.admin_home_feed
 grant execute on function public.admin_home_feed_workspace(),public.admin_home_feed_save(jsonb,uuid[],uuid,text,uuid),public.admin_home_feed_preview(uuid,double precision,double precision),public.admin_home_feed_choices(text,text,text) to authenticated;
 insert into public.home_feed_sections(title,sort_by,is_active,sort_order) select 'Popular Services','bookings',true,10 where not exists(select 1 from public.home_feed_sections);
 insert into public.home_feed_sections(title,content_type,sort_by,is_active,sort_order) select 'Top Vendors','vendors','rating',true,20 where not exists(select 1 from public.home_feed_sections where title='Top Vendors');
-insert into public.home_feed_sections(title,sort_by,is_active,sort_order) select 'New on Eventra','newest',true,30 where not exists(select 1 from public.home_feed_sections where title='New on Eventra');
+insert into public.home_feed_sections(title,sort_by,is_active,sort_order) select 'New on Eventor','newest',true,30 where not exists(select 1 from public.home_feed_sections where title='New on Eventor');
 commit;

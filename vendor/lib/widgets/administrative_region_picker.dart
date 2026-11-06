@@ -44,7 +44,7 @@ class _AdministrativeRegionPickerState
             child: rows.isEmpty
                 ? const Center(
                     child: Text(
-                      'No matching location. Contact Eventra support if yours is missing.',
+                      'No matching location. Contact Eventor support if yours is missing.',
                     ),
                   )
                 : ListView.builder(

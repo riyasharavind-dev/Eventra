@@ -212,8 +212,8 @@ class VendorProfileOverview extends StatelessWidget {
                         Text(
                           vendor.name.trim().isEmpty
                               ? settings.text(
-                                  'Eventra Vendor',
-                                  'Eventra விற்பனையாளர்',
+                                  'Eventor Vendor',
+                                  'Eventor விற்பனையாளர்',
                                 )
                               : vendor.name,
                           maxLines: 2,

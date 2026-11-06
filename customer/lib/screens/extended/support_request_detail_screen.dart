@@ -189,7 +189,7 @@ class _SupportRequestDetailScreenState
                   ),
                 ..._messages.map(
                   (message) => _message(
-                    message.fromSupport ? 'Eventra Support' : 'You',
+                    message.fromSupport ? 'Eventor Support' : 'You',
                     message.body,
                     message.createdAt,
                     message.fromSupport,
