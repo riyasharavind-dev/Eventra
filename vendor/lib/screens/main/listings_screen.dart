@@ -1,875 +1,665 @@
+import '../../widgets/common/app_shimmer.dart';
+import '../../widgets/common/expandable_action_button.dart';
+import '../../models/business_model.dart';
+import '../extended/business_details.dart';
+import '../../widgets/common/global_search_bar.dart';
+import '../../widgets/listings/listing_filter_sheet.dart';
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/service_model.dart';
+import '../../models/listing_filter.dart';
 import '../../repositories/service_repository.dart';
-
-import '../../widgets/common/app_empty_state.dart';
-import '../../widgets/common/app_error_state.dart';
-import '../../widgets/common/app_loading.dart';
-import '../../widgets/common/app_search_bar.dart';
-
-import '../../widgets/cards/service_card.dart';
-
-// IMPORTANT:
-// Your new AddServiceDialog is inside widgets/edit/
-import '../../widgets/edit/add_service_dialog.dart';
+import '../../widgets/listings/listing_ui.dart';
+import '../extended/listing_detail_screen.dart';
+import '../extended/listing_editor_screen.dart';
 
 class ListingsScreen extends StatefulWidget {
-  const ListingsScreen({super.key});
-
+  final ServiceRepository? repository;
+  final SupabaseClient? client;
+  final Future<List<Map<String, dynamic>>> Function()? loadBusinesses;
+  final Future<Map<String, dynamic>> Function()? loadMetrics;
+  const ListingsScreen({
+    super.key,
+    this.repository,
+    this.client,
+    this.loadBusinesses,
+    this.loadMetrics,
+  });
   @override
-  State<ListingsScreen> createState() =>
-      _ListingsScreenState();
+  State<ListingsScreen> createState() => _ListingsScreenState();
 }
 
-class _ListingsScreenState
-    extends State<ListingsScreen> {
-
-  // ============================================================
-  // REPOSITORY
-  // ============================================================
-
-  final ServiceRepository _serviceRepository =
-      ServiceRepository();
-
-  // ============================================================
-  // IMAGE PICKER
-  // ============================================================
-
-  final ImagePicker _imagePicker =
-      ImagePicker();
-
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
-  final TextEditingController
-      _searchController =
-      TextEditingController();
-
-  // ============================================================
-  // STATE
-  // ============================================================
-
-  List<ServiceModel> _services = [];
-
-  bool _isLoading = true;
-
-  bool _hasError = false;
-
-  String? _errorMessage;
-
-  String _searchQuery = '';
-
-  // ============================================================
-  // INIT
-  // ============================================================
-
+class _ListingsScreenState extends State<ListingsScreen> {
+  late final ServiceRepository repo;
+  SupabaseClient get db => widget.client ?? Supabase.instance.client;
+  final search = TextEditingController();
+  List<ServiceModel> services = [];
+  Map<String, String> businessNames = {};
+  Map<String, dynamic> listingMetrics = {};
+  final busyIds = <String>{};
+  String status = 'all', business = 'all', category = 'all', sort = 'newest';
+  bool loading = true, adding = false;
+  Object? error, businessError;
+  int generation = 0;
+  bool hasActiveBusiness = false;
+  bool get needsBusiness =>
+      !loading && error == null && businessError == null && !hasActiveBusiness;
+  String t(String en, String ta) => listingText(context, en, ta);
   @override
   void initState() {
     super.initState();
-
-    _searchController.addListener(
-      _onSearchChanged,
-    );
-
-    _loadServices();
+    repo = widget.repository ?? ServiceRepository(supabase: db);
+    load();
   }
-
-  // ============================================================
-  // DISPOSE
-  // ============================================================
 
   @override
   void dispose() {
-    _searchController.removeListener(
-      _onSearchChanged,
-    );
-
-    _searchController.dispose();
-
+    search.dispose();
     super.dispose();
   }
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
-  void _onSearchChanged() {
-    final String query =
-        _searchController.text
-            .trim()
-            .toLowerCase();
-
-    if (_searchQuery == query) {
-      return;
+  Future<List<Map<String, dynamic>>> loadBusinessNames() async {
+    if (widget.loadBusinesses != null) {
+      return widget.loadBusinesses!();
     }
-
-    setState(() {
-      _searchQuery = query;
-    });
-  }
-
-  // ============================================================
-  // LOAD SERVICES
-  // ============================================================
-
-  Future<void> _loadServices() async {
-    if (!mounted) {
-      return;
+    final uid = db.auth.currentUser?.id;
+    if (uid == null) {
+      throw StateError(t('Please sign in again.', 'மீண்டும் உள்நுழையவும்.'));
     }
-
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-      _errorMessage = null;
-    });
-
-    try {
-      final List<ServiceModel>
-          services =
-          await _serviceRepository
-              .getMyServices();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _services = services;
-        _isLoading = false;
-        _hasError = false;
-        _errorMessage = null;
-      });
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage =
-            _cleanError(e);
-      });
-    }
-  }
-
-  // ============================================================
-  // FILTERED SERVICES
-  // ============================================================
-
-  List<ServiceModel>
-      get _filteredServices {
-
-    if (_searchQuery.isEmpty) {
-      return _services;
-    }
-
-    return _services.where(
-      (ServiceModel service) {
-
-        final String name =
-            service.name
-                .toLowerCase();
-
-        final String description =
-            service.description
-                    ?.toLowerCase() ??
-                '';
-
-        final String slug =
-            service.slug
-                .toLowerCase();
-
-        final String category =
-            service.categoryName
-                    ?.toLowerCase() ??
-                '';
-
-        return name.contains(
-              _searchQuery,
-            ) ||
-            description.contains(
-              _searchQuery,
-            ) ||
-            slug.contains(
-              _searchQuery,
-            ) ||
-            category.contains(
-              _searchQuery,
-            );
-      },
-    ).toList();
-  }
-
-  // ============================================================
-  // OPEN ADD SERVICE
-  // ============================================================
-
-  Future<void>
-      _openAddServiceDialog() async {
-
-    final bool? created =
-        await showDialog<bool>(
-      context: context,
-
-      barrierDismissible:
-          false,
-
-      builder:
-          (
-        BuildContext dialogContext,
-      ) {
-
-        return AddServiceDialog(
-          supabase:
-              Supabase.instance.client,
-
-          imagePicker:
-              _imagePicker,
-
-          onServiceCreated:
-              () async {
-            // We intentionally don't reload here.
-            // The dialog returns true first.
-          },
-        );
-      },
+    return List<Map<String, dynamic>>.from(
+      await db
+          .from('businesses')
+          .select('id,name,is_active')
+          .eq('vendor_id', uid)
+          .order('name'),
     );
+  }
 
+  Future<void> load() async {
     if (!mounted) {
       return;
     }
-
-    if (created == true) {
-
-      await _loadServices();
-
-      if (!mounted) {
-        return;
-      }
-
-      _showSnackBar(
-        'Service created successfully.',
-      );
-    }
-  }
-
-  // ============================================================
-  // TOGGLE SERVICE STATUS
-  // ============================================================
-
-  Future<void>
-      _toggleServiceStatus(
-    ServiceModel service,
-  ) async {
-
+    final request = ++generation;
+    setState(() {
+      loading = true;
+      error = null;
+      businessError = null;
+    });
     try {
-
-      final ServiceModel updated =
-          await _serviceRepository
-              .toggleServiceStatus(
-        service,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-
-        final int index =
-            _services.indexWhere(
-          (ServiceModel item) =>
-              item.id ==
-              service.id,
+      final rows = await repo.getMyServices();
+      Map<String, dynamic> metrics = {};
+      try {
+        metrics = Map<String, dynamic>.from(
+          (widget.loadMetrics != null
+                  ? await widget.loadMetrics!()
+                  : await db.rpc('get_vendor_listing_metrics'))
+              as Map,
         );
-
-        if (index != -1) {
-          _services[index] =
-              updated;
-        }
-      });
-
-      _showSnackBar(
-        updated.isActive
-            ? 'Service activated.'
-            : 'Service deactivated.',
-      );
-
-    } catch (e) {
-
-      if (!mounted) {
+      } catch (_) {
+        // Leave unknown metrics blank rather than showing invented zeroes.
+      }
+      Map<String, String> names = businessNames;
+      Object? namesError;
+      bool activeBusiness = hasActiveBusiness;
+      try {
+        final businesses = await loadBusinessNames();
+        activeBusiness = businesses.any((b) => b['is_active'] == true);
+        names = {
+          for (final b in businesses) b['id'] as String: b['name'].toString(),
+        };
+      } catch (e) {
+        namesError = e;
+      }
+      if (!mounted || request != generation) {
         return;
       }
-
-      _showSnackBar(
-        'Failed to update service: '
-        '${_cleanError(e)}',
-
-        isError: true,
-      );
+      setState(() {
+        services = rows;
+        listingMetrics = metrics;
+        businessNames = names;
+        hasActiveBusiness = activeBusiness;
+        businessError = namesError;
+        loading = false;
+      });
+    } catch (e) {
+      if (mounted && request == generation) {
+        setState(() {
+          error = e;
+          loading = false;
+        });
+      }
     }
   }
 
-  // ============================================================
-  // DELETE SERVICE
-  // ============================================================
+  List<ServiceModel> filtered({String? chosenStatus}) => filterListings(
+    services,
+    query: search.text,
+    status: chosenStatus ?? status,
+    business: business,
+    category: category,
+    sort: sort,
+  );
+  Map<String, String> get businessOptions => {
+    'all': t('All businesses', 'அனைத்து வணிகங்கள்'),
+    ...businessNames,
+    for (final s in services)
+      if (s.businessId != null && !businessNames.containsKey(s.businessId))
+        s.businessId!: t('Business', 'வணிகம்'),
+    if (services.any((s) => s.businessId == null))
+      'unassigned': t('Unassigned', 'ஒதுக்கப்படாதவை'),
+  };
+  Map<String, String> get categoryOptions => {
+    'all': t('All categories', 'அனைத்து வகைகள்'),
+    for (final s in services)
+      s.categoryNodeId: s.categoryName ?? t('Category', 'வகை'),
+  };
+  Future<void> filters() async {
+    final selection = await showListingFilterSheet(
+      context,
+      selection: ListingFilterSelection(
+        business: business,
+        category: category,
+        sort: sort,
+        status: status,
+      ),
+      businessOptions: businessOptions,
+      categoryOptions: categoryOptions,
+    );
+    if (!mounted || selection == null) return;
+    setState(() {
+      business = selection.business;
+      category = selection.category;
+      sort = selection.sort;
+      status = selection.status;
+    });
+  }
 
-  Future<void> _deleteService(
-    ServiceModel service,
-  ) async {
+  String _statusLabel(String value) => switch (value) {
+    'active' => t('Active', 'செயலில்'),
+    'inactive' => t('Inactive', 'செயலற்றவை'),
+    _ => t('All', 'அனைத்தும்'),
+  };
 
-    final bool? confirmed =
-        await showDialog<bool>(
-      context: context,
+  Future<void> addBusiness() async {
+    if (adding) return;
+    setState(() => adding = true);
+    try {
+      final result = await Navigator.push<BusinessModel>(
+        context,
+        MaterialPageRoute(builder: (_) => const AddBusinessScreen()),
+      );
+      if (result != null) await load();
+    } finally {
+      if (mounted) setState(() => adding = false);
+    }
+  }
 
-      builder:
-          (
-        BuildContext dialogContext,
-      ) {
+  Future<void> add() async {
+    if (adding) {
+      return;
+    }
+    setState(() => adding = true);
+    try {
+      final saved = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ListingEditorScreen(client: widget.client),
+        ),
+      );
+      if (saved == true) {
+        await load();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => adding = false);
+      }
+    }
+  }
 
-        return AlertDialog(
+  Future<void> open(ServiceModel s) async {
+    if (busyIds.contains(s.id)) {
+      return;
+    }
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (detailContext) => ListingDetailScreen(
+          service: s,
+          onEdit: () => Navigator.pop(detailContext, 'edit'),
+          onManageImages: () => Navigator.pop(detailContext, 'gallery'),
+          onToggleStatus: () => Navigator.pop(detailContext, 'toggle'),
+          onDelete: () => Navigator.pop(detailContext, 'delete'),
+        ),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (result != null) {
+      await action(s, result);
+    } else {
+      await load();
+    }
+  }
 
-          title:
-              const Text(
-            'Delete Service?',
-
-            style:
-                TextStyle(
-              fontWeight:
-                  FontWeight.w700,
+  Future<void> action(ServiceModel s, String target) async {
+    if (busyIds.contains(s.id)) {
+      return;
+    }
+    setState(() => busyIds.add(s.id));
+    try {
+      if (target == 'edit' || target == 'gallery') {
+        final fresh = await repo.getServiceById(s.id);
+        if (fresh == null) {
+          throw StateError(
+            t(
+              'Service no longer exists. Refresh the list.',
+              'சேவை இல்லை. பட்டியலைப் புதுப்பிக்கவும்.',
+            ),
+          );
+        }
+        if (!mounted) {
+          return;
+        }
+        final saved = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListingEditorScreen(
+              service: fresh,
+              client: widget.client,
+              focusGallery: target == 'gallery',
             ),
           ),
-
-          content:
-              Text(
-            'Are you sure you want to '
-            'delete "${service.name}"?\n\n'
-            'This action cannot be undone.',
-          ),
-
-          actions: [
-
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
-              },
-
-              child:
-                  const Text(
-                'Cancel',
-              ),
+        );
+        if (saved == true) {
+          await load();
+        }
+      } else if (target == 'toggle') {
+        final updated = await repo.toggleServiceStatus(s);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          services = services
+              .map((item) => item.id == updated.id ? updated : item)
+              .toList();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              updated.isActive
+                  ? t('Service activated.', 'சேவை செயல்படுத்தப்பட்டது.')
+                  : t('Service is inactive.', 'சேவை செயலற்ற நிலையில் உள்ளது.'),
             ),
-
-            FilledButton(
-              style:
-                  FilledButton.styleFrom(
-                backgroundColor:
-                    Colors.red,
+          ),
+        );
+      } else if (target == 'delete') {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: Text(t('Delete Service?', 'சேவையை நீக்கவா?')),
+            content: Text(
+              '${s.name}\n\n${t('This permanently deletes the service. Existing database rules may also delete linked bookings. This cannot be undone.', 'இது சேவையை நிரந்தரமாக நீக்கும். தற்போதைய தரவுத்தள விதிகளின்படி இணைந்த முன்பதிவுகளும் நீக்கப்படலாம். இதை மீட்டெடுக்க முடியாது.')}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: Text(t('Cancel', 'ரத்து செய்')),
               ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                onPressed: () => Navigator.pop(c, true),
+                child: Text(t('Delete', 'நீக்கு')),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) {
+          return;
+        }
+        await repo.deleteService(s);
+        if (!mounted) {
+          return;
+        }
+        setState(() => services.removeWhere((item) => item.id == s.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('Service deleted.', 'சேவை நீக்கப்பட்டது.'))),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        listingError(context, e);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => busyIds.remove(s.id));
+      }
+    }
+  }
 
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
-              },
-
-              child:
-                  const Text(
-                'Delete',
+  Widget message(
+    String title,
+    String description, {
+    bool retry = false,
+    String? actionLabel,
+    VoidCallback? onAction,
+    IconData icon = Icons.inventory_2_outlined,
+  }) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            retry ? Icons.cloud_off_outlined : icon,
+            size: 48,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(description, textAlign: TextAlign.center),
+          ],
+          if (actionLabel != null) ...[
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: adding ? null : onAction,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(actionLabel),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF850E2B),
+                foregroundColor: Colors.white,
               ),
             ),
           ],
-        );
-      },
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    try {
-
-      await _serviceRepository
-          .deleteService(
-        service,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-
-        _services.removeWhere(
-          (ServiceModel item) =>
-              item.id ==
-              service.id,
-        );
-      });
-
-      _showSnackBar(
-        'Service deleted successfully.',
-      );
-
-    } catch (e) {
-
-      if (!mounted) {
-        return;
-      }
-
-      _showSnackBar(
-        'Failed to delete service: '
-        '${_cleanError(e)}',
-
-        isError: true,
-      );
-    }
-  }
-
-  // ============================================================
-  // SNACKBAR
-  // ============================================================
-
-  void _showSnackBar(
-    String message, {
-    bool isError = false,
-  }) {
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content:
-              Text(message),
-
-          backgroundColor:
-              isError
-                  ? Colors.red
-                  : null,
-        ),
-      );
-  }
-
-  // ============================================================
-  // ERROR CLEANER
-  // ============================================================
-
-  String _cleanError(
-    Object error,
-  ) {
-
-    if (error
-        is PostgrestException) {
-      return error.message;
-    }
-
-    return error
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
-  }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-
-    return Scaffold(
-
-      appBar:
-          AppBar(
-
-        title:
-            const Text(
-          'Listings',
-
-          style:
-              TextStyle(
-            fontWeight:
-                FontWeight.w700,
-          ),
-        ),
-
-        actions: [
-
-          IconButton(
-
-            tooltip:
-                'Refresh',
-
-            onPressed:
-                _isLoading
-                    ? null
-                    : _loadServices,
-
-            icon:
-                const Icon(
-              Icons.refresh,
+          if (retry)
+            TextButton(
+              onPressed: load,
+              child: Text(t('Retry', 'மீண்டும் முயற்சி')),
             ),
-          ),
         ],
       ),
-
-      // ========================================================
-      // ADD SERVICE BUTTON
-      // ========================================================
-
-      floatingActionButton:
-          FloatingActionButton.extended(
-
-        onPressed:
-            _isLoading
-                ? null
-                : _openAddServiceDialog,
-
-        icon:
-            const Icon(
-          Icons.add,
-        ),
-
-        label:
-            const Text(
-          'Add Service',
-        ),
-      ),
-
-      // ========================================================
-      // BODY
-      // ========================================================
-
-      body:
-          SafeArea(
-
-        child:
-            Column(
-
-          children: [
-
-            // ==================================================
-            // SEARCH
-            // ==================================================
-
-            Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                16,
-                12,
-                16,
-                8,
-              ),
-
-              child:
-                  AppSearchBar(
-                controller:
-                    _searchController,
-
-                hintText:
-                    'Search services...',
+    ),
+  );
+  @override
+  Widget build(BuildContext context) {
+    const wine = Color(0xFF850E2B);
+    final rows = filtered(), base = filtered(chosenStatus: 'all');
+    final activeFilters =
+        business != 'all' ||
+        category != 'all' ||
+        sort != 'newest' ||
+        status != 'all';
+    return Scaffold(
+      backgroundColor: Colors.white,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: MediaQuery.viewInsetsOf(context).bottom > 0
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 104),
+              child: ExpandableActionButton(
+                key: const ValueKey('add-service-fab'),
+                color: wine,
+                busy: adding,
+                tooltip: t('Add', 'சேர்'),
+                actions: [
+                  FloatingMenuAction(
+                    label: t('Add a business', 'வணிகம் சேர்'),
+                    icon: Icons.storefront_outlined,
+                    onSelected: addBusiness,
+                  ),
+                  FloatingMenuAction(
+                    label: t('Add a service', 'சேவை சேர்'),
+                    icon: Icons.add_business_outlined,
+                    onSelected: add,
+                  ),
+                ],
               ),
             ),
+      body: SafeArea(
+        child: AppShimmerRefreshIndicator(
+          onRefresh: load,
+          color: wine,
+          child: CustomScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t('Listings', 'சேவைகள்'),
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF171720),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GlobalSearchBar(
+                              controller: search,
+                              onChanged: (_) => setState(() {}),
+                              hintText: t(
+                                'Search services...',
+                                'சேவைகளைத் தேடு...',
+                              ),
+                              clearLabel: t('Clear search', 'தேடலை அழி'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Badge(
+                            isLabelVisible: activeFilters,
+                            child: IconButton.outlined(
+                              tooltip: t(
+                                'Filter & Sort',
+                                'வடிகட்டி வரிசைப்படுத்து',
+                              ),
+                              onPressed: filters,
+                              style: IconButton.styleFrom(
+                                foregroundColor: wine,
+                                side: const BorderSide(
+                                  color: Color(0xFFD58C9E),
+                                ),
+                                padding: const EdgeInsets.all(13),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              icon: const Icon(Icons.filter_alt_outlined),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final v in ['all', 'active', 'inactive'])
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  selected: status == v,
+                                  onSelected: (_) => setState(() => status = v),
+                                  showCheckmark: false,
+                                  selectedColor: wine,
+                                  backgroundColor: const Color(0xFFF4F5F8),
+                                  side: BorderSide.none,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(17),
+                                  ),
+                                  label: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        size: 9,
+                                        color: status == v
+                                            ? Colors.white
+                                            : v == 'active'
+                                            ? const Color(0xFF00BE83)
+                                            : const Color(0xFF89909F),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        '${_statusLabel(v)} (${v == 'all' ? base.length : base.where((s) => s.isActive == (v == 'active')).length})',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: status == v
+                                              ? Colors.white
+                                              : const Color(0xFF252839),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (activeFilters)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => setState(() {
+                              business = 'all';
+                              category = 'all';
+                              sort = 'newest';
+                              status = 'all';
+                            }),
+                            icon: const Icon(Icons.close, size: 15),
+                            label: Text(t('Clear filters', 'வடிகட்டல்களை அழி')),
+                          ),
+                        ),
+                      if (error != null && services.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: load,
+                          icon: const Icon(Icons.refresh),
+                          label: Text(
+                            t(
+                              'Unable to refresh. Showing saved listings. Retry',
+                              'புதுப்பிக்க முடியவில்லை. முந்தைய சேவைகள் காட்டப்படுகின்றன. மீண்டும் முயற்சி',
+                            ),
+                          ),
+                        ),
+                      if (businessError != null)
+                        TextButton(
+                          onPressed: load,
+                          child: Text(
+                            t(
+                              'Could not load business names. Retry',
+                              'வணிகப் பெயர்களை ஏற்ற முடியவில்லை. மீண்டும் முயற்சி',
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 14),
+                    ],
+                  ),
+                ),
+              ),
 
-            // ==================================================
-            // CONTENT
-            // ==================================================
-
-            Expanded(
-              child:
-                  _buildBody(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // BODY
-  // ============================================================
-
-  Widget _buildBody() {
-
-    // ==========================================================
-    // LOADING
-    // ==========================================================
-
-    if (_isLoading) {
-      return const AppLoading();
-    }
-
-    // ==========================================================
-    // ERROR
-    // ==========================================================
-
-    if (_hasError) {
-
-      return AppErrorState(
-        message:
-            _errorMessage ??
-                'Something went wrong.',
-
-        onRetry:
-            _loadServices,
-      );
-    }
-
-    final List<ServiceModel>
-        filteredServices =
-        _filteredServices;
-
-    // ==========================================================
-    // NO SERVICES
-    // ==========================================================
-
-    if (_services.isEmpty) {
-
-      return RefreshIndicator(
-
-        onRefresh:
-            _loadServices,
-
-        child:
-            ListView(
-
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal:
-                16,
+              if (loading && services.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: AppContentSkeleton(layout: SkeletonLayout.listings),
+                  ),
+                )
+              else if (error != null && services.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: message(
+                    t('Could not load services', 'சேவைகளை ஏற்ற முடியவில்லை'),
+                    t('Please try again.', 'மீண்டும் முயற்சிக்கவும்.'),
+                    retry: true,
+                  ),
+                )
+              else if (services.isEmpty && businessError != null)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: message(
+                    t(
+                      'Could not load businesses',
+                      'வணிகங்களை ஏற்ற முடியவில்லை',
+                    ),
+                    t('Please try again.', 'மீண்டும் முயற்சிக்கவும்.'),
+                    retry: true,
+                  ),
+                )
+              else if (services.isEmpty && needsBusiness)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: message(
+                    t(
+                      'Add a business to get started',
+                      'தொடங்க ஒரு வணிகத்தைச் சேர்க்கவும்',
+                    ),
+                    t(
+                      'You need an active business before you can add services.',
+                      'சேவைகளைச் சேர்க்க செயலில் உள்ள வணிகம் தேவை.',
+                    ),
+                    icon: Icons.storefront_outlined,
+                    actionLabel: t('Add a business', 'வணிகத்தைச் சேர்'),
+                    onAction: addBusiness,
+                  ),
+                )
+              else if (rows.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: message(
+                    services.isEmpty
+                        ? t('No services yet', 'இன்னும் சேவைகள் இல்லை')
+                        : t('No matching services', 'பொருத்தமான சேவைகள் இல்லை'),
+                    services.isEmpty
+                        ? ''
+                        : t(
+                            'Try a different search or clear your filters.',
+                            'வேறு தேடலை முயற்சிக்கவும் அல்லது வடிகட்டல்களை அழிக்கவும்.',
+                          ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 130),
+                  sliver: SliverList.builder(
+                    itemCount: rows.length,
+                    itemBuilder: (context, i) {
+                      final s = rows[i],
+                          metrics = listingMetrics[rows[i].id] as Map?;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: ListingCard(
+                          service: s,
+                          businessName: businessNames[s.businessId],
+                          bookingCount: (metrics?['bookings'] as num?)?.toInt(),
+                          rating: (metrics?['rating'] as num?)?.toDouble(),
+                          busy: busyIds.contains(s.id),
+                          onOpen: () => open(s),
+                          onAction: (value) => action(s, value),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
-
-          children: [
-
-            SizedBox(
-              height:
-                  MediaQuery.of(context)
-                          .size
-                          .height *
-                      0.18,
-            ),
-
-            const AppEmptyState(
-
-              icon:
-                  Icons
-                      .inventory_2_outlined,
-
-              title:
-                  'No services yet',
-
-              message:
-                  'Add your first service '
-                  'to start building your listings.',
-            ),
-
-            const SizedBox(
-              height:
-                  16,
-            ),
-
-            Center(
-
-              child:
-                  FilledButton.icon(
-
-                onPressed:
-                    _openAddServiceDialog,
-
-                icon:
-                    const Icon(
-                  Icons.add,
-                ),
-
-                label:
-                    const Text(
-                  'Add Service',
-                ),
-              ),
-            ),
-          ],
         ),
-      );
-    }
-
-    // ==========================================================
-    // SEARCH EMPTY
-    // ==========================================================
-
-    if (filteredServices.isEmpty) {
-
-      return RefreshIndicator(
-
-        onRefresh:
-            _loadServices,
-
-        child:
-            ListView(
-
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal:
-                16,
-          ),
-
-          children: [
-
-            SizedBox(
-              height:
-                  MediaQuery.of(context)
-                          .size
-                          .height *
-                      0.18,
-            ),
-
-            const AppEmptyState(
-
-              icon:
-                  Icons
-                      .search_off_outlined,
-
-              title:
-                  'No services found',
-
-              message:
-                  'Try searching with a '
-                  'different keyword.',
-            ),
-
-            const SizedBox(
-              height:
-                  16,
-            ),
-
-            Center(
-
-              child:
-                  OutlinedButton.icon(
-
-                onPressed: () {
-
-                  _searchController
-                      .clear();
-                },
-
-                icon:
-                    const Icon(
-                  Icons.clear,
-                ),
-
-                label:
-                    const Text(
-                  'Clear Search',
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // ==========================================================
-    // SERVICE GRID
-    // ==========================================================
-
-    return RefreshIndicator(
-
-      onRefresh:
-          _loadServices,
-
-      child:
-          GridView.builder(
-
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-
-        padding:
-            const EdgeInsets.fromLTRB(
-          12,
-          8,
-          12,
-          110,
-        ),
-
-        itemCount:
-            filteredServices.length,
-
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-
-          crossAxisCount:
-              2,
-
-          crossAxisSpacing:
-              10,
-
-          mainAxisSpacing:
-              12,
-
-          childAspectRatio:
-              0.86,
-        ),
-
-        itemBuilder:
-            (
-          BuildContext context,
-          int index,
-        ) {
-
-          final ServiceModel
-              service =
-              filteredServices[index];
-
-          return ServiceCard(
-
-            service:
-                service,
-
-            // ==================================================
-            // TOGGLE
-            // ==================================================
-
-            onToggleStatus:
-                () {
-              _toggleServiceStatus(
-                service,
-              );
-            },
-
-            // ==================================================
-            // DELETE
-            // ==================================================
-
-            onDelete:
-                () {
-              _deleteService(
-                service,
-              );
-            },
-          );
-        },
       ),
     );
   }

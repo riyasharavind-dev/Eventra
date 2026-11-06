@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
+import '../../repositories/saved_services_repository.dart';
 
 import '../../widgets/service_details/service_action_bar.dart';
 import '../../widgets/service_details/service_description_section.dart';
@@ -13,19 +14,53 @@ import 'booking_screen.dart';
 class ServiceDetailsScreen extends StatefulWidget {
   final ServiceModel service;
 
-  const ServiceDetailsScreen({
-    super.key,
-    required this.service,
-  });
+  const ServiceDetailsScreen({super.key, required this.service});
 
   @override
-  State<ServiceDetailsScreen> createState() =>
-      _ServiceDetailsScreenState();
+  State<ServiceDetailsScreen> createState() => _ServiceDetailsScreenState();
 }
 
-class _ServiceDetailsScreenState
-    extends State<ServiceDetailsScreen> {
+class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   bool _isFavorite = false;
+  bool _savingFavorite = true;
+  late final SavedServicesRepository _saved;
+  @override
+  void initState() {
+    super.initState();
+    _saved = SavedServicesRepository();
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    try {
+      final saved = await _saved.contains(widget.service.id);
+      if (mounted) setState(() => _isFavorite = saved);
+    } catch (_) {
+      // Keep the heart available so a later save can be retried.
+    } finally {
+      if (mounted) setState(() => _savingFavorite = false);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_savingFavorite) return;
+    setState(() => _savingFavorite = true);
+    try {
+      final next = !_isFavorite;
+      await _saved.setSaved(widget.service, next);
+      if (mounted) setState(() => _isFavorite = next);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to save service. Please retry.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingFavorite = false);
+    }
+  }
 
   // ============================================================
   // ADD TO PLAN
@@ -34,11 +69,8 @@ class _ServiceDetailsScreenState
   void _addToPlan() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'Add to Plan will be available soon.',
-        ),
-        behavior:
-            SnackBarBehavior.floating,
+        content: Text('Add to Plan will be available soon.'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -48,13 +80,8 @@ class _ServiceDetailsScreenState
   // ============================================================
 
   Future<void> _bookService() async {
-    final bool? bookingCreated =
-        await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => BookingScreen(
-          service: widget.service,
-        ),
-      ),
+    final bool? bookingCreated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => BookingScreen(service: widget.service)),
     );
 
     if (!mounted) {
@@ -64,11 +91,8 @@ class _ServiceDetailsScreenState
     if (bookingCreated == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Booking request created successfully.',
-          ),
-          behavior:
-              SnackBarBehavior.floating,
+          content: Text('Booking request created successfully.'),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -80,32 +104,24 @@ class _ServiceDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final ServiceModel service =
-        widget.service;
+    final ServiceModel service = widget.service;
 
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F5),
 
       // ========================================================
       // FIXED BOTTOM ACTION BAR
       // ========================================================
-
-      bottomNavigationBar:
-          ServiceActionBar(
-        onAddToPlan:
-            _addToPlan,
-        onBookService:
-            _bookService,
+      bottomNavigationBar: ServiceActionBar(
+        onAddToPlan: _addToPlan,
+        onBookService: _bookService,
       ),
 
       // ========================================================
       // SCREEN CONTENT
       // ========================================================
-
       body: CustomScrollView(
         slivers: [
-
           // ======================================================
           // APP BAR
           // ======================================================
@@ -113,107 +129,57 @@ class _ServiceDetailsScreenState
           SliverAppBar(
             pinned: true,
             elevation: 0,
-            backgroundColor:
-                Colors.white,
-            foregroundColor:
-                Colors.black,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
 
             title: const Text(
               'Service Details',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
 
             actions: [
-
               IconButton(
-                tooltip:
-                    'Favorite',
+                tooltip: 'Favorite',
 
-                onPressed: () {
-                  setState(() {
-                    _isFavorite =
-                        !_isFavorite;
-                  });
-                },
+                onPressed: _savingFavorite ? null : _toggleFavorite,
 
                 icon: Icon(
-                  _isFavorite
-                      ? Icons.favorite
-                      : Icons.favorite_border,
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
 
-                  color: _isFavorite
-                      ? Colors.red
-                      : Colors.black,
+                  color: _isFavorite ? Colors.red : Colors.black,
                 ),
               ),
 
-              const SizedBox(
-                width: 4,
-              ),
+              const SizedBox(width: 4),
             ],
           ),
 
           // ======================================================
           // GALLERY
           // ======================================================
-
-          SliverToBoxAdapter(
-            child:
-                ServiceGallery(
-              gallery:
-                  service.gallery,
-            ),
-          ),
+          SliverToBoxAdapter(child: ServiceGallery(gallery: service.gallery)),
 
           // ======================================================
           // SERVICE INFO
           // ======================================================
-
-          SliverToBoxAdapter(
-            child:
-                ServiceInfoSection(
-              service:
-                  service,
-            ),
-          ),
+          SliverToBoxAdapter(child: ServiceInfoSection(service: service)),
 
           // ======================================================
           // DESCRIPTION
           // ======================================================
-
           SliverToBoxAdapter(
-            child:
-                ServiceDescriptionSection(
-              service:
-                  service,
-            ),
+            child: ServiceDescriptionSection(service: service),
           ),
 
           // ======================================================
           // SERVICE DETAILS
           // ======================================================
-
-          SliverToBoxAdapter(
-            child:
-                ServiceDetailsSection(
-              service:
-                  service,
-            ),
-          ),
+          SliverToBoxAdapter(child: ServiceDetailsSection(service: service)),
 
           // ======================================================
           // BOTTOM SPACE
           // ======================================================
-
-          const SliverToBoxAdapter(
-            child: SizedBox(
-              height: 30,
-            ),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
       ),
     );

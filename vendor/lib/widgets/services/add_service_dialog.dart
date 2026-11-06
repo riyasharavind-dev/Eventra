@@ -1,3 +1,7 @@
+import '../common/app_shimmer.dart';
+import '../../models/service_pricing.dart';
+import '../../widgets/services/service_pricing_fields.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -20,39 +24,31 @@ class AddServiceDialog extends StatefulWidget {
   });
 
   @override
-  State<AddServiceDialog> createState() =>
-      _AddServiceDialogState();
+  State<AddServiceDialog> createState() => _AddServiceDialogState();
 }
 
-class _AddServiceDialogState
-    extends State<AddServiceDialog> {
+class _AddServiceDialogState extends State<AddServiceDialog> {
+  ServicePricing pricing = const ServicePricing();
+
   // ============================================================
   // CONTROLLERS
   // ============================================================
 
-  final TextEditingController
-      _nameController =
-      TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
-  final TextEditingController
-      _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  final TextEditingController
-      _priceController =
-      TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   // ============================================================
   // CATEGORY
   // ============================================================
 
-  List<Map<String, dynamic>>
-      _categories = [];
+  List<Map<String, dynamic>> _categories = [];
 
   String? _selectedCategoryId;
 
-  bool _isLoadingCategories =
-      true;
+  bool _isLoadingCategories = true;
 
   bool _isCreating = false;
 
@@ -90,20 +86,12 @@ class _AddServiceDialogState
   // LOAD CATEGORIES
   // ============================================================
 
-  Future<void>
-      _loadCategories() async {
+  Future<void> _loadCategories() async {
     try {
-      final List<dynamic>
-          response =
-          await widget.supabase
-              .from('category_nodes')
-              .select(
-                'id,name,slug,parent_id',
-              )
-              .order(
-                'name',
-                ascending: true,
-              );
+      final List<dynamic> response = await widget.supabase
+          .from('category_nodes')
+          .select('id,name,slug,parent_id')
+          .order('name', ascending: true);
 
       if (!mounted) {
         return;
@@ -111,16 +99,10 @@ class _AddServiceDialogState
 
       setState(() {
         _categories = response
-            .map(
-              (dynamic item) =>
-                  Map<String, dynamic>.from(
-                item as Map,
-              ),
-            )
+            .map((dynamic item) => Map<String, dynamic>.from(item as Map))
             .toList();
 
-        _isLoadingCategories =
-            false;
+        _isLoadingCategories = false;
       });
     } catch (e) {
       if (!mounted) {
@@ -128,13 +110,10 @@ class _AddServiceDialogState
       }
 
       setState(() {
-        _isLoadingCategories =
-            false;
+        _isLoadingCategories = false;
       });
 
-      _showError(
-        'Failed to load categories: $e',
-      );
+      _showError('Failed to load categories: $e');
     }
   }
 
@@ -151,13 +130,10 @@ class _AddServiceDialogState
     // NAME
     // ----------------------------------------------------------
 
-    final String name =
-        _nameController.text.trim();
+    final String name = _nameController.text.trim();
 
     if (name.isEmpty) {
-      _showError(
-        'Please enter service name.',
-      );
+      _showError('Please enter service name.');
       return;
     }
 
@@ -165,12 +141,8 @@ class _AddServiceDialogState
     // CATEGORY
     // ----------------------------------------------------------
 
-    if (_selectedCategoryId ==
-            null ||
-        _selectedCategoryId!.isEmpty) {
-      _showError(
-        'Please select a category.',
-      );
+    if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
+      _showError('Please select a category.');
       return;
     }
 
@@ -178,16 +150,19 @@ class _AddServiceDialogState
     // PRICE
     // ----------------------------------------------------------
 
-    final double? price =
-        double.tryParse(
-      _priceController.text.trim(),
-    );
+    final double? price = double.tryParse(_priceController.text.trim());
 
-    if (price == null ||
-        price < 0) {
-      _showError(
-        'Please enter a valid price.',
-      );
+    if (price == null || price < 0) {
+      _showError('Please enter a valid price.');
+      return;
+    }
+    try {
+      pricing.validate(price);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
       return;
     }
 
@@ -195,15 +170,10 @@ class _AddServiceDialogState
     // USER
     // ----------------------------------------------------------
 
-    final user =
-        widget.supabase
-            .auth
-            .currentUser;
+    final user = widget.supabase.auth.currentUser;
 
     if (user == null) {
-      _showError(
-        'You are not logged in.',
-      );
+      _showError('You are not logged in.');
       return;
     }
 
@@ -217,97 +187,71 @@ class _AddServiceDialogState
 
     String? serviceId;
 
-    final List<String>
-        uploadedPaths = [];
+    final List<String> uploadedPaths = [];
 
     try {
       // ========================================================
       // SLUG
       // ========================================================
 
-      final String slug =
-          await _generateUniqueSlug(
-        name,
-      );
+      final String slug = await _generateUniqueSlug(name);
 
       // ========================================================
       // CREATE DATABASE ROW
       // ========================================================
 
-      final dynamic inserted =
-          await widget.supabase
-              .from('services')
-              .insert({
-                'vendor_id': user.id,
-                'category_node_id':
-                    _selectedCategoryId,
-                'name': name,
-                'slug': slug,
-                'description':
-                    _descriptionController
-                            .text
-                            .trim()
-                            .isEmpty
-                        ? null
-                        : _descriptionController
-                            .text
-                            .trim(),
-                'price': price,
-                'gallery': [],
-                'is_active': true,
-              })
-              .select('id')
-              .single();
+      final dynamic inserted = await widget.supabase
+          .from('services')
+          .insert({
+            'vendor_id': user.id,
+            'category_node_id': _selectedCategoryId,
+            'name': name,
+            'slug': slug,
+            'description': _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            'price': price,
+            ...pricing.toMap(),
+            'gallery': [],
+            'is_active': true,
+          })
+          .select('id')
+          .single();
 
-      serviceId =
-          inserted['id'].toString();
+      serviceId = inserted['id'].toString();
 
       // ========================================================
       // UPLOAD CROPPED IMAGES
       // ========================================================
 
-      final List<String>
-          imageUrls = [];
+      final List<String> imageUrls = [];
 
-      for (
-        int i = 0;
-        i < _selectedImages.length;
-        i++
-      ) {
-        final XFile image =
-            _selectedImages[i];
+      for (int i = 0; i < _selectedImages.length; i++) {
+        final XFile image = _selectedImages[i];
 
-        final File file =
-            File(image.path);
+        final File file = File(image.path);
 
         final String path =
             '${user.id}/'
             '$serviceId/'
             'image-${DateTime.now().microsecondsSinceEpoch}-$i.jpg';
 
-        await widget.supabase
-            .storage
+        await widget.supabase.storage
             .from('service-gallery')
             .upload(
               path,
               file,
-              fileOptions:
-                  const FileOptions(
-                contentType:
-                    'image/jpeg',
+              fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
                 upsert: false,
               ),
             );
 
         uploadedPaths.add(path);
 
-        final String url =
-            widget.supabase
-                .storage
-                .from('service-gallery')
-                .getPublicUrl(
-                  path,
-                );
+        final String url = widget.supabase.storage
+            .from('service-gallery')
+            .getPublicUrl(path);
 
         imageUrls.add(url);
       }
@@ -320,19 +264,10 @@ class _AddServiceDialogState
           .from('services')
           .update({
             'gallery': imageUrls,
-            'updated_at':
-                DateTime.now()
-                    .toUtc()
-                    .toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
-          .eq(
-            'id',
-            serviceId,
-          )
-          .eq(
-            'vendor_id',
-            user.id,
-          );
+          .eq('id', serviceId)
+          .eq('vendor_id', user.id);
 
       // ========================================================
       // SUCCESS
@@ -352,12 +287,9 @@ class _AddServiceDialogState
 
       if (uploadedPaths.isNotEmpty) {
         try {
-          await widget.supabase
-              .storage
+          await widget.supabase.storage
               .from('service-gallery')
-              .remove(
-                uploadedPaths,
-              );
+              .remove(uploadedPaths);
         } catch (_) {}
       }
 
@@ -370,14 +302,8 @@ class _AddServiceDialogState
           await widget.supabase
               .from('services')
               .delete()
-              .eq(
-                'id',
-                serviceId,
-              )
-              .eq(
-                'vendor_id',
-                user.id,
-              );
+              .eq('id', serviceId)
+              .eq('vendor_id', user.id);
         } catch (_) {}
       }
 
@@ -389,9 +315,7 @@ class _AddServiceDialogState
         _isCreating = false;
       });
 
-      _showError(
-        'Failed to create service:\n$e',
-      );
+      _showError('Failed to create service:\n$e');
     }
   }
 
@@ -399,22 +323,12 @@ class _AddServiceDialogState
   // UNIQUE SLUG
   // ============================================================
 
-  Future<String>
-      _generateUniqueSlug(
-    String name,
-  ) async {
-    String slug =
-        name
-            .toLowerCase()
-            .trim()
-            .replaceAll(
-              RegExp(r'[^a-z0-9]+'),
-              '-',
-            )
-            .replaceAll(
-              RegExp(r'^-|-$'),
-              '',
-            );
+  Future<String> _generateUniqueSlug(String name) async {
+    String slug = name
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
 
     if (slug.isEmpty) {
       slug = 'service';
@@ -425,15 +339,11 @@ class _AddServiceDialogState
     int counter = 1;
 
     while (true) {
-      final existing =
-          await widget.supabase
-              .from('services')
-              .select('id')
-              .eq(
-                'slug',
-                finalSlug,
-              )
-              .maybeSingle();
+      final existing = await widget.supabase
+          .from('services')
+          .select('id')
+          .eq('slug', finalSlug)
+          .maybeSingle();
 
       if (existing == null) {
         return finalSlug;
@@ -441,8 +351,7 @@ class _AddServiceDialogState
 
       counter++;
 
-      finalSlug =
-          '$slug-$counter';
+      finalSlug = '$slug-$counter';
     }
   }
 
@@ -450,9 +359,7 @@ class _AddServiceDialogState
   // ERROR
   // ============================================================
 
-  void _showError(
-    String message,
-  ) {
+  void _showError(String message) {
     if (!mounted) {
       return;
     }
@@ -460,12 +367,7 @@ class _AddServiceDialogState
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content:
-              Text(message),
-          backgroundColor:
-              Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
   }
 
@@ -474,21 +376,11 @@ class _AddServiceDialogState
   // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Dialog(
-      insetPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 24,
-      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints:
-            const BoxConstraints(
-          maxWidth: 600,
-          maxHeight: 750,
-        ),
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 750),
         child: Column(
           children: [
             // ==================================================
@@ -496,13 +388,7 @@ class _AddServiceDialogState
             // ==================================================
 
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                20,
-                18,
-                12,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
               child: Row(
                 children: [
                   const Expanded(
@@ -510,23 +396,17 @@ class _AddServiceDialogState
                       'Add Service',
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   IconButton(
-                    onPressed:
-                        _isCreating
-                            ? null
-                            : () {
-                                Navigator.of(
-                                  context,
-                                ).pop();
-                              },
-                    icon: const Icon(
-                      Icons.close,
-                    ),
+                    onPressed: _isCreating
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                          },
+                    icon: const Icon(Icons.close),
                   ),
                 ],
               ),
@@ -537,17 +417,11 @@ class _AddServiceDialogState
             // ==================================================
             // FORM
             // ==================================================
-
             Expanded(
-              child:
-                  SingleChildScrollView(
-                padding:
-                    const EdgeInsets.all(
-                  20,
-                ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ==========================================
                     // NAME
@@ -555,148 +429,100 @@ class _AddServiceDialogState
 
                     const Text(
                       'Service Name',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
 
                     TextField(
-                      controller:
-                          _nameController,
-                      enabled:
-                          !_isCreating,
-                      decoration:
-                          const InputDecoration(
-                        hintText:
-                            'Enter service name',
-                        border:
-                            OutlineInputBorder(),
+                      controller: _nameController,
+                      enabled: !_isCreating,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter service name',
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 18,
-                    ),
+                    const SizedBox(height: 18),
 
                     // ==========================================
                     // CATEGORY
                     // ==========================================
-
                     const Text(
                       'Category',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
 
                     _buildCategoryDropdown(),
 
-                    const SizedBox(
-                      height: 18,
-                    ),
+                    const SizedBox(height: 18),
 
                     // ==========================================
                     // DESCRIPTION
                     // ==========================================
-
                     const Text(
                       'Description',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
 
                     TextField(
-                      controller:
-                          _descriptionController,
-                      enabled:
-                          !_isCreating,
+                      controller: _descriptionController,
+                      enabled: !_isCreating,
                       maxLines: 4,
-                      decoration:
-                          const InputDecoration(
-                        hintText:
-                            'Describe your service',
-                        border:
-                            OutlineInputBorder(),
+                      decoration: const InputDecoration(
+                        hintText: 'Describe your service',
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 18,
-                    ),
+                    const SizedBox(height: 18),
 
                     // ==========================================
                     // PRICE
                     // ==========================================
-
                     const Text(
                       'Price',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
-                    const SizedBox(
-                      height: 8,
+                    const SizedBox(height: 8),
+
+                    ServicePricingFields(
+                      value: pricing,
+                      onChanged: (value) => setState(() => pricing = value),
                     ),
 
                     TextField(
-                      controller:
-                          _priceController,
-                      enabled:
-                          !_isCreating,
-                      keyboardType:
-                          const TextInputType
-                              .numberWithOptions(
+                      controller: _priceController,
+                      enabled: !_isCreating,
+                      keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration:
-                          const InputDecoration(
-                        prefixText:
-                            '₹ ',
-                        hintText:
-                            'Enter price',
-                        border:
-                            OutlineInputBorder(),
+                      decoration: const InputDecoration(
+                        prefixText: '₹ ',
+                        hintText: 'Enter price',
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 24,
-                    ),
+                    const SizedBox(height: 24),
 
                     // ==========================================
                     // IMAGES
                     // ==========================================
-
                     const Text(
                       'Service Images',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 6,
-                    ),
+                    const SizedBox(height: 6),
 
                     Text(
                       'Select one or more images. '
@@ -704,37 +530,27 @@ class _AddServiceDialogState
                       '16:9 crop screen.',
                       style: TextStyle(
                         fontSize: 12,
-                        color:
-                            Colors.grey.shade600,
+                        color: Colors.grey.shade600,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 12,
-                    ),
+                    const SizedBox(height: 12),
 
                     ImagePickerWidget(
-                      images:
-                          _selectedImages,
-                      onChanged:
-                          (
-                        List<XFile>
-                            images,
-                      ) {
+                      images: _selectedImages,
+                      onChanged: (List<XFile> images) {
                         if (!mounted) {
                           return;
                         }
 
                         setState(() {
-                          _selectedImages =
-                              images;
+                          _selectedImages = images;
                         });
                       },
                       maxImages: 8,
                       cropRatioX: 16,
                       cropRatioY: 9,
-                      cropTitle:
-                          'Crop Service Image',
+                      cropTitle: 'Crop Service Image',
                     ),
                   ],
                 ),
@@ -744,67 +560,40 @@ class _AddServiceDialogState
             // ==================================================
             // ACTIONS
             // ==================================================
-
             const Divider(height: 1),
 
             Padding(
-              padding:
-                  const EdgeInsets.all(
-                16,
-              ),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Expanded(
-                    child:
-                        OutlinedButton(
-                      onPressed:
-                          _isCreating
-                              ? null
-                              : () {
-                                  Navigator.of(
-                                    context,
-                                  ).pop();
-                                },
-                      child:
-                          const Text(
-                        'Cancel',
-                      ),
+                    child: OutlinedButton(
+                      onPressed: _isCreating
+                          ? null
+                          : () {
+                              Navigator.of(context).pop();
+                            },
+                      child: const Text('Cancel'),
                     ),
                   ),
 
-                  const SizedBox(
-                    width: 12,
-                  ),
+                  const SizedBox(width: 12),
 
                   Expanded(
-                    child:
-                        FilledButton.icon(
-                      onPressed:
-                          _isCreating
-                              ? null
-                              : _createService,
-                      icon:
-                          _isCreating
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(
-                                    strokeWidth:
-                                        2,
-                                    color:
-                                        Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons
-                                      .add,
-                                ),
-                      label:
-                          Text(
-                        _isCreating
-                            ? 'Creating...'
-                            : 'Create Service',
+                    child: FilledButton.icon(
+                      onPressed: _isCreating ? null : _createService,
+                      icon: _isCreating
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: AppShimmerIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.add),
+                      label: Text(
+                        _isCreating ? 'Creating...' : 'Create Service',
                       ),
                     ),
                   ),
@@ -825,94 +614,50 @@ class _AddServiceDialogState
     if (_isLoadingCategories) {
       return Container(
         height: 56,
-        alignment:
-            Alignment.centerLeft,
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 16,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(4),
         ),
-        decoration:
-            BoxDecoration(
-          border:
-              Border.all(
-            color:
-                Colors.grey.shade400,
-          ),
-          borderRadius:
-              BorderRadius.circular(4),
-        ),
-        child:
-            const SizedBox(
+        child: const SizedBox(
           width: 20,
           height: 20,
-          child:
-              CircularProgressIndicator(
-            strokeWidth: 2,
-          ),
+          child: AppShimmerIndicator(strokeWidth: 2),
         ),
       );
     }
 
-    return DropdownButtonFormField<
-        String>(
+    return DropdownButtonFormField<String>(
       initialValue:
           _categories.any(
-        (
-          Map<String, dynamic>
-              category,
-        ) =>
-            category['id']
-                ?.toString() ==
-            _selectedCategoryId,
-      )
-              ? _selectedCategoryId
-              : null,
+            (Map<String, dynamic> category) =>
+                category['id']?.toString() == _selectedCategoryId,
+          )
+          ? _selectedCategoryId
+          : null,
       isExpanded: true,
-      decoration:
-          const InputDecoration(
-        border:
-            OutlineInputBorder(),
-        hintText:
-            'Select category',
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        hintText: 'Select category',
       ),
-      items:
-          _categories.map(
-        (
-          Map<String, dynamic>
-              category,
-        ) {
-          final String id =
-              category['id']
-                      ?.toString() ??
-                  '';
+      items: _categories.map((Map<String, dynamic> category) {
+        final String id = category['id']?.toString() ?? '';
 
-          final String name =
-              category['name']
-                      ?.toString() ??
-                  'Unnamed';
+        final String name = category['name']?.toString() ?? 'Unnamed';
 
-          return DropdownMenuItem<
-              String>(
-            value: id,
-            child: Text(
-              name,
-              overflow:
-                  TextOverflow.ellipsis,
-            ),
-          );
-        },
-      ).toList(),
-      onChanged:
-          _isCreating
-              ? null
-              : (
-                  String? value,
-                ) {
-                  setState(() {
-                    _selectedCategoryId =
-                        value;
-                  });
-                },
+        return DropdownMenuItem<String>(
+          value: id,
+          child: Text(name, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: _isCreating
+          ? null
+          : (String? value) {
+              setState(() {
+                _selectedCategoryId = value;
+              });
+            },
     );
   }
 }

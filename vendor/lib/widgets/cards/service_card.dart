@@ -1,3 +1,5 @@
+import '../common/app_shimmer.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
@@ -16,65 +18,45 @@ class ServiceCard extends StatelessWidget {
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Card(
-      clipBehavior:
-          Clip.antiAlias,
+      clipBehavior: Clip.antiAlias,
       elevation: 1.5,
       margin: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ====================================================
           // IMAGE
           // ====================================================
 
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: _buildImage(),
-          ),
+          AspectRatio(aspectRatio: 16 / 9, child: _buildImage()),
 
           // ====================================================
           // DETAILS
           // ====================================================
-
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                10,
-                8,
-                8,
-                8,
-              ),
+              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ============================================
                   // CATEGORY + MENU
                   // ============================================
 
                   Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
-                          service.categoryName ??
-                              'Uncategorized',
+                          service.categoryName ?? 'Uncategorized',
                           maxLines: 1,
-                          overflow:
-                              TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 11,
-                            color:
-                                Colors.grey.shade600,
-                            fontWeight:
-                                FontWeight.w500,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -82,55 +64,35 @@ class ServiceCard extends StatelessWidget {
                       SizedBox(
                         width: 30,
                         height: 30,
-                        child:
-                            PopupMenuButton<
-                                String>(
-                          padding:
-                              EdgeInsets.zero,
+                        child: PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
                           iconSize: 20,
-                          onSelected:
-                              (
-                            String value,
-                          ) {
+                          onSelected: (String value) {
                             switch (value) {
                               case 'toggle':
-                                onToggleStatus
-                                    ?.call();
+                                onToggleStatus?.call();
                                 break;
 
                               case 'delete':
-                                onDelete
-                                    ?.call();
+                                onDelete?.call();
                                 break;
                             }
                           },
-                          itemBuilder:
-                              (
-                            BuildContext
-                                context,
-                          ) {
+                          itemBuilder: (BuildContext context) {
                             return [
-                              PopupMenuItem<
-                                  String>(
-                                value:
-                                    'toggle',
+                              PopupMenuItem<String>(
+                                value: 'toggle',
                                 child: Row(
                                   children: [
                                     Icon(
-                                      service
-                                              .isActive
-                                          ? Icons
-                                              .visibility_off_outlined
-                                          : Icons
-                                              .visibility_outlined,
+                                      service.isActive
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
                                       size: 20,
                                     ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
+                                    const SizedBox(width: 10),
                                     Text(
-                                      service
-                                              .isActive
+                                      service.isActive
                                           ? 'Deactivate'
                                           : 'Activate',
                                     ),
@@ -140,29 +102,19 @@ class ServiceCard extends StatelessWidget {
 
                               const PopupMenuDivider(),
 
-                              const PopupMenuItem<
-                                  String>(
-                                value:
-                                    'delete',
+                              const PopupMenuItem<String>(
+                                value: 'delete',
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons
-                                          .delete_outline,
+                                      Icons.delete_outline,
                                       size: 20,
-                                      color:
-                                          Colors.red,
+                                      color: Colors.red,
                                     ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
+                                    SizedBox(width: 10),
                                     Text(
                                       'Delete',
-                                      style:
-                                          TextStyle(
-                                        color:
-                                            Colors.red,
-                                      ),
+                                      style: TextStyle(color: Colors.red),
                                     ),
                                   ],
                                 ),
@@ -174,48 +126,34 @@ class ServiceCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(
-                    height: 2,
-                  ),
+                  const SizedBox(height: 2),
 
                   // ==========================================
                   // NAME
                   // ==========================================
-
                   Text(
                     service.name,
                     maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style:
-                        const TextStyle(
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          FontWeight.w700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
 
                   // ==========================================
                   // DESCRIPTION
                   // ==========================================
-
-                  if (service.description !=
-                          null &&
-                      service.description!
-                          .trim()
-                          .isNotEmpty) ...[
-                    const SizedBox(
-                      height: 3,
-                    ),
+                  if (service.description != null &&
+                      service.description!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 3),
                     Text(
                       service.description!,
                       maxLines: 2,
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
-                        color:
-                            Colors.grey.shade600,
+                        color: Colors.grey.shade600,
                         height: 1.25,
                       ),
                     ),
@@ -226,65 +164,37 @@ class ServiceCard extends StatelessWidget {
                   // ==========================================
                   // PRICE + STATUS
                   // ==========================================
-
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          '₹${service.price.toStringAsFixed(0)}',
+                          service.priceLabel,
                           maxLines: 1,
-                          overflow:
-                              TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             fontSize: 15,
-                            fontWeight:
-                                FontWeight.w800,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
 
                       Container(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 7,
                           vertical: 3,
                         ),
-                        decoration:
-                            BoxDecoration(
-                          color:
-                              service.isActive
-                                  ? Colors
-                                      .green
-                                      .withValues(
-                                      alpha:
-                                          0.10,
-                                    )
-                                  : Colors
-                                      .red
-                                      .withValues(
-                                      alpha:
-                                          0.10,
-                                    ),
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            20,
-                          ),
+                        decoration: BoxDecoration(
+                          color: service.isActive
+                              ? Colors.green.withValues(alpha: 0.10)
+                              : Colors.red.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          service.isActive
-                              ? 'Active'
-                              : 'Inactive',
+                          service.isActive ? 'Active' : 'Inactive',
                           style: TextStyle(
                             fontSize: 9,
-                            fontWeight:
-                                FontWeight.w700,
-                            color:
-                                service.isActive
-                                    ? Colors.green
-                                    : Colors.red,
+                            fontWeight: FontWeight.w700,
+                            color: service.isActive ? Colors.green : Colors.red,
                           ),
                         ),
                       ),
@@ -306,14 +216,9 @@ class ServiceCard extends StatelessWidget {
   Widget _buildImage() {
     if (service.gallery.isEmpty) {
       return Container(
-        color:
-            Colors.grey.shade200,
+        color: Colors.grey.shade200,
         child: const Center(
-          child: Icon(
-            Icons.image_outlined,
-            size: 40,
-            color: Colors.grey,
-          ),
+          child: Icon(Icons.image_outlined, size: 40, color: Colors.grey),
         ),
       );
     }
@@ -322,51 +227,39 @@ class ServiceCard extends StatelessWidget {
       service.gallery.first,
       fit: BoxFit.cover,
       errorBuilder:
-          (
-        BuildContext context,
-        Object error,
-        StackTrace? stackTrace,
-      ) {
-        return Container(
-          color:
-              Colors.grey.shade200,
-          child: const Center(
-            child: Icon(
-              Icons
-                  .broken_image_outlined,
-              size: 40,
-              color: Colors.grey,
-            ),
-          ),
-        );
-      },
+          (BuildContext context, Object error, StackTrace? stackTrace) {
+            return Container(
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  size: 40,
+                  color: Colors.grey,
+                ),
+              ),
+            );
+          },
       loadingBuilder:
           (
-        BuildContext context,
-        Widget child,
-        ImageChunkEvent?
-            loadingProgress,
-      ) {
-        if (loadingProgress ==
-            null) {
-          return child;
-        }
+            BuildContext context,
+            Widget child,
+            ImageChunkEvent? loadingProgress,
+          ) {
+            if (loadingProgress == null) {
+              return child;
+            }
 
-        return Container(
-          color:
-              Colors.grey.shade100,
-          child: const Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child:
-                  CircularProgressIndicator(
-                strokeWidth: 2,
+            return Container(
+              color: Colors.grey.shade100,
+              child: const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: AppShimmerIndicator(strokeWidth: 2),
+                ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
     );
   }
 }

@@ -3,101 +3,48 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/auth_model.dart';
 
 class AuthRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
-
-  // -----------------------------
-  // SIGN UP
-  // -----------------------------
+  final SupabaseClient _db;
+  AuthRepository({SupabaseClient? client})
+    : _db = client ?? Supabase.instance.client;
+  User? get currentUser => _db.auth.currentUser;
+  Session? get currentSession => _db.auth.currentSession;
+  bool get isAuthenticated => currentSession != null;
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    if (email.trim().isEmpty || password.isEmpty) {
+      throw StateError('Enter email and password.');
+    }
+    final response = await _db.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
+    try {
+      final profile = await _db.rpc('admin_context');
+      if (profile == null) {
+        throw StateError('This account has no active admin access.');
+      }
+    } catch (_) {
+      await _db.auth.signOut();
+      rethrow;
+    }
+    return response;
+  }
 
   Future<AuthResponse> signUp({
     required String name,
     required String email,
     required String password,
-  }) async {
-    return await _supabase.auth.signUp(
-      email: email.trim(),
-      password: password,
-      data: {
-        'name': name.trim(),
-      },
-    );
-  }
-
-  // -----------------------------
-  // SIGN IN
-  // -----------------------------
-
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) async {
-    return await _supabase.auth.signInWithPassword(
-      email: email.trim(),
-      password: password,
-    );
-  }
-
-  // -----------------------------
-  // CURRENT USER
-  // -----------------------------
-
-  User? get currentUser {
-    return _supabase.auth.currentUser;
-  }
-
-  // -----------------------------
-  // CURRENT SESSION
-  // -----------------------------
-
-  Session? get currentSession {
-    return _supabase.auth.currentSession;
-  }
-
-  // -----------------------------
-  // AUTHENTICATED CHECK
-  // -----------------------------
-
-  bool get isAuthenticated {
-    return _supabase.auth.currentSession != null;
-  }
-
-  // -----------------------------
-  // GET AUTH USER PROFILE
-  // -----------------------------
-
+  }) async => throw StateError(
+    'Admin accounts are provisioned by an owner. Public admin signup is disabled.',
+  );
   Future<AuthModel?> getAuthUser() async {
-    final user = _supabase.auth.currentUser;
-
-    if (user == null) {
-      return null;
-    }
-
-    final data = await _supabase
-        .from('users')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
-
-    if (data == null) {
-      return null;
-    }
-
-    return AuthModel.fromMap(data);
+    final profile = await _db.rpc('admin_context');
+    return profile == null
+        ? null
+        : AuthModel.fromMap(Map<String, dynamic>.from(profile as Map));
   }
 
-  // -----------------------------
-  // SIGN OUT
-  // -----------------------------
-
-  Future<void> signOut() async {
-    await _supabase.auth.signOut();
-  }
-
-  // -----------------------------
-  // AUTH STATE CHANGES
-  // -----------------------------
-
-  Stream<AuthState> get authStateChanges {
-    return _supabase.auth.onAuthStateChange;
-  }
+  Future<void> signOut() => _db.auth.signOut();
 }

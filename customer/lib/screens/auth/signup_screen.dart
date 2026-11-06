@@ -1,3 +1,5 @@
+import '../../utils/auth_error_message.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../repositories/auth_repository.dart';
@@ -64,9 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
           Navigator.pop(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created successfully'),
-            ),
+            const SnackBar(content: Text('Account created successfully')),
           );
 
           Navigator.pop(context);
@@ -75,11 +75,8 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(authErrorMessage(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -92,17 +89,13 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-              ),
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -124,10 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const Text(
                       'Create your Eventra account',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),
 
                     const SizedBox(height: 35),
@@ -292,9 +282,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           : () {
                               Navigator.pop(context);
                             },
-                      child: const Text(
-                        'Already have an account? Sign In',
-                      ),
+                      child: const Text('Already have an account? Sign In'),
                     ),
 
                     const SizedBox(height: 20),

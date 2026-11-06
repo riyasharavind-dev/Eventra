@@ -70,3 +70,14 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local backend links, credentials, and distribution artifacts
+supabase/.temp/
+supabase/.branches/
+**/*.apk
+**/*.aab
+**/*.ipa
+**/*.p12
+**/*.pfx
+**/*service-account*.json
+**/*service_account*.json

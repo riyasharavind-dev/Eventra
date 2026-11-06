@@ -1,150 +1,111 @@
+import 'repositories/auth_repository.dart';
+import 'widgets/account_role_gate.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/supabase_config.dart';
 import 'firebase_options.dart';
+import 'repositories/app_settings_repository.dart';
+import 'services/app_settings_controller.dart';
+import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/vendor_main_screen.dart';
-import 'services/notification_service.dart';
+import 'screens/splash/eventra_splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // ==========================================================
-  // SUPABASE INITIALIZATION
-  // ==========================================================
-
   await Supabase.initialize(
     url: SupabaseConfig.url,
-
     // ignore: deprecated_member_use
     anonKey: SupabaseConfig.anonKey,
   );
-
-  // ==========================================================
-  // FIREBASE INITIALIZATION
-  // ==========================================================
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // ==========================================================
-  // START APPLICATION
-  // ==========================================================
-
-  runApp(
-    const EventraVendorApp(),
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final initial = await AppSettingsRepository().load();
+  runApp(EventraVendorApp(settings: AppSettingsController(initial: initial)));
 }
-
-// ============================================================
-// EVENTRA VENDOR APP
-// ============================================================
 
 class EventraVendorApp extends StatelessWidget {
-  const EventraVendorApp({super.key});
+  const EventraVendorApp({super.key, required this.settings});
+  final AppSettingsController settings;
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Eventra Vendor',
-
-      theme: ThemeData(
-        useMaterial3: true,
+  Widget build(BuildContext context) => AppSettingsScope(
+    controller: settings,
+    child: AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Eventra Vendor',
+        locale: Locale(settings.value.languageCode),
+        supportedLocales: const [Locale('en'), Locale('ta')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF9F0101),
+            brightness: Brightness.light,
+          ),
+        ),
+        themeMode: ThemeMode.light,
+        home: const EventraSplashScreen(nextScreen: VendorEntryScreen()),
       ),
-
-      home: const VendorEntryScreen(),
-    );
-  }
+    ),
+  );
 }
-
-// ============================================================
-// VENDOR ENTRY SCREEN
-// ============================================================
 
 class VendorEntryScreen extends StatefulWidget {
   const VendorEntryScreen({super.key});
-
   @override
-  State<VendorEntryScreen> createState() =>
-      _VendorEntryScreenState();
+  State<VendorEntryScreen> createState() => _VendorEntryScreenState();
 }
 
-class _VendorEntryScreenState
-    extends State<VendorEntryScreen> {
+class _VendorEntryScreenState extends State<VendorEntryScreen> {
   bool _notificationInitialized = false;
+  bool _initializingNotifications = false;
 
   @override
   void initState() {
     super.initState();
-
     _initializeNotifications();
   }
 
-  // ==========================================================
-  // INITIALIZE NOTIFICATIONS FOR LOGGED-IN VENDOR
-  // ==========================================================
-
   Future<void> _initializeNotifications() async {
-    if (_notificationInitialized) {
+    if (_notificationInitialized ||
+        _initializingNotifications ||
+        Supabase.instance.client.auth.currentSession == null) {
       return;
     }
-
-    final session =
-        Supabase.instance.client.auth.currentSession;
-
-    // Vendor is not logged in.
-    if (session == null) {
-      return;
-    }
-
+    _initializingNotifications = true;
     try {
-      await NotificationService.instance.initialize();
-
-      _notificationInitialized = true;
-    } catch (e) {
-      debugPrint(
-        'Vendor notification initialization failed: $e',
-      );
+      // OFF preferences and blocked OS permissions never register a new token.
+      await AuthRepository().validateAccountRole();
+      final initialized = await NotificationService.instance.initialize();
+      if (mounted) _notificationInitialized = initialized;
+    } catch (error) {
+      debugPrint('Notification initialization failed: $error');
+    } finally {
+      _initializingNotifications = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final supabase =
-        Supabase.instance.client;
-
+    final auth = Supabase.instance.client.auth;
     return StreamBuilder<AuthState>(
-      stream: supabase.auth.onAuthStateChange,
+      stream: auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final session =
-            supabase.auth.currentSession;
-
-        // ======================================================
-        // VENDOR LOGGED IN
-        // ======================================================
-
-        if (session != null) {
-          // Make sure notification initialization
-          // also happens after a fresh login.
-          if (!_notificationInitialized) {
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) {
-                _initializeNotifications();
-              },
-            );
+        if (auth.currentSession != null) {
+          if (!_notificationInitialized && !_initializingNotifications) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _initializeNotifications();
+            });
           }
-
-          return const VendorMainScreen();
+          return const AccountRoleGate(child: VendorMainScreen());
         }
-
-        // ======================================================
-        // VENDOR NOT LOGGED IN
-        // ======================================================
-
+        _notificationInitialized = false;
         return const LoginScreen();
       },
     );

@@ -1,13 +1,24 @@
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <application
-        android:label="vendor"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+    <!-- Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
-        <!-- ================================================= -->
-        <!-- MAIN FLUTTER ACTIVITY                             -->
-        <!-- ================================================= -->
+    <!-- Location -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Notifications for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Notification vibration -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:label="Eventra Vendor"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="true">
 
         <activity
             android:name=".MainActivity"
@@ -19,37 +30,31 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- Flutter normal theme -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme"
-            />
+                android:resource="@style/NormalTheme" />
 
-            <!-- App launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
-                <category
-                    android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
         </activity>
 
-
-        <!-- ================================================= -->
-        <!-- IMAGE CROPPER / UCROP ACTIVITY                    -->
-        <!-- ================================================= -->
-
+        <!-- Image cropper -->
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="eventra_bookings" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_booking" />
 
-        <!-- ================================================= -->
-        <!-- FLUTTER EMBEDDING                                 -->
-        <!-- ================================================= -->
-
+        <!-- Flutter embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

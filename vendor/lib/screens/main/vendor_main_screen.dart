@@ -1,3 +1,5 @@
+import '../../widgets/common/main_screen_back_guard.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/vendor_bottom_nav_bar.dart';
@@ -16,14 +18,22 @@ class VendorMainScreen extends StatefulWidget {
 class _VendorMainScreenState extends State<VendorMainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    ListingsScreen(),
-    BookingsScreen(),
-    MeScreen(),
+  List<Widget> get _screens => [
+    DashboardScreen(
+      isActive: _currentIndex == 0,
+      onNavigate: _onNavigationChanged,
+    ),
+    const ListingsScreen(),
+    const BookingsScreen(),
+    MeScreen(
+      isActive: _currentIndex == 3,
+      onBookings: () => _onNavigationChanged(2),
+    ),
   ];
 
   void _onNavigationChanged(int index) {
+    if (index < 0 || index >= _screens.length) return;
+
     setState(() {
       _currentIndex = index;
     });
@@ -31,14 +41,29 @@ class _VendorMainScreenState extends State<VendorMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: VendorBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavigationChanged,
+    return MainScreenBackGuard(
+      currentIndex: _currentIndex,
+      onDashboard: () => _onNavigationChanged(0),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F8FA),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: IndexedStack(index: _currentIndex, children: _screens),
+            ),
+            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: VendorBottomNavBar(
+                  currentIndex: _currentIndex,
+                  onTap: _onNavigationChanged,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

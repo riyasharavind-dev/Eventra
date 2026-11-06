@@ -1,3 +1,5 @@
+import 'app_shimmer.dart';
+
 import 'package:flutter/material.dart';
 
 import 'category_explorer.dart';
@@ -18,9 +20,7 @@ class CategorySelector extends StatelessWidget {
     this.isLoading = false,
   });
 
-  Future<void> _openCategoryExplorer(
-    BuildContext context,
-  ) async {
+  Future<void> _openCategoryExplorer(BuildContext context) async {
     if (!enabled || isLoading) {
       return;
     }
@@ -39,8 +39,7 @@ class CategorySelector extends StatelessWidget {
       return;
     }
 
-    final selected =
-        await showModalBottomSheet<Map<String, dynamic>>(
+    final selected = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -65,23 +64,17 @@ class CategorySelector extends StatelessWidget {
       return const InputDecorator(
         decoration: InputDecoration(
           border: OutlineInputBorder(),
-          prefixIcon: Icon(
-            Icons.category_outlined,
-          ),
+          prefixIcon: Icon(Icons.category_outlined),
         ),
         child: Row(
           children: [
             SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
+              child: AppShimmerIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 12),
-            Text(
-              'Loading categories...',
-            ),
+            Text('Loading categories...'),
           ],
         ),
       );
@@ -92,17 +85,13 @@ class CategorySelector extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.red.shade300,
-          ),
+          border: Border.all(color: Colors.red.shade300),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           'No categories available. '
           'Please ask the admin to create categories.',
-          style: TextStyle(
-            color: Colors.red.shade700,
-          ),
+          style: TextStyle(color: Colors.red.shade700),
         ),
       );
     }
@@ -110,55 +99,35 @@ class CategorySelector extends StatelessWidget {
     final selected = selectedCategory;
 
     return InkWell(
-      onTap: enabled
-          ? () => _openCategoryExplorer(context)
-          : null,
+      onTap: enabled ? () => _openCategoryExplorer(context) : null,
       borderRadius: BorderRadius.circular(8),
       child: InputDecorator(
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
-          prefixIcon: const Icon(
-            Icons.category_outlined,
-          ),
+          prefixIcon: const Icon(Icons.category_outlined),
           suffixIcon: Icon(
             Icons.chevron_right,
-            color: enabled
-                ? null
-                : Colors.grey.shade400,
+            color: enabled ? null : Colors.grey.shade400,
           ),
         ),
         child: selected == null
             ? const Text(
                 'Browse categories',
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               )
             : Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    selected['name']
-                            ?.toString() ??
-                        '',
-                    style: const TextStyle(
-                      fontWeight:
-                          FontWeight.w600,
-                    ),
+                    selected['name']?.toString() ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _buildCategoryPath(
-                      selected['id'].toString(),
-                    ),
+                    _buildCategoryPath(selected['id'].toString()),
                     maxLines: 2,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -170,13 +139,9 @@ class CategorySelector extends StatelessWidget {
   // CATEGORY PATH
   // ============================================================
 
-  String _buildCategoryPath(
-    String categoryId,
-  ) {
-    final Map<String, Map<String, dynamic>>
-        lookup = {
-      for (final category in categories)
-        category['id'].toString(): category,
+  String _buildCategoryPath(String categoryId) {
+    final Map<String, Map<String, dynamic>> lookup = {
+      for (final category in categories) category['id'].toString(): category,
     };
 
     final List<String> path = [];
@@ -185,9 +150,7 @@ class CategorySelector extends StatelessWidget {
 
     final Set<String> visited = {};
 
-    while (
-        currentId != null &&
-        !visited.contains(currentId)) {
+    while (currentId != null && !visited.contains(currentId)) {
       visited.add(currentId);
 
       final category = lookup[currentId];
@@ -196,13 +159,9 @@ class CategorySelector extends StatelessWidget {
         break;
       }
 
-      path.insert(
-        0,
-        category['name']?.toString() ?? '',
-      );
+      path.insert(0, category['name']?.toString() ?? '');
 
-      currentId =
-          category['parent_id']?.toString();
+      currentId = category['parent_id']?.toString();
     }
 
     return path.join(' › ');

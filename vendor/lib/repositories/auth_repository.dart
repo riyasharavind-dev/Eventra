@@ -1,70 +1,85 @@
+import '../utils/auth_error_message.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/auth_model.dart';
 
 class AuthRepository {
+  Future<void> validateAccountRole() async {
+    if (_supabase.auth.currentSession == null) {
+      throw const AccountAccessException('Please sign in to continue.');
+    }
+    final role = await _supabase.rpc('get_my_account_role');
+    if (role != 'vendor') {
+      await _supabase.auth.signOut(scope: SignOutScope.local);
+      throw const AccountAccessException(
+        'This account cannot sign in to the Vendor app. Please use a vendor account.',
+      );
+    }
+  }
+
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // -----------------------------
+  // ============================================================
   // SIGN UP - VENDOR
-  // -----------------------------
+  // ============================================================
 
   Future<AuthResponse> signUp({
     required String name,
+    required String phone,
     required String email,
     required String password,
   }) async {
     return await _supabase.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {
-        'name': name.trim(),
-        'role': 'vendor',
-      },
+      data: {'name': name.trim(), 'role': 'vendor', 'phone': phone.trim()},
     );
   }
 
-  // -----------------------------
+  // ============================================================
   // SIGN IN
-  // -----------------------------
+  // ============================================================
 
   Future<AuthResponse> signIn({
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signInWithPassword(
+    final response = await _supabase.auth.signInWithPassword(
       email: email.trim(),
       password: password,
     );
+    await validateAccountRole();
+    return response;
   }
 
-  // -----------------------------
-  // GET CURRENT AUTH USER
-  // -----------------------------
+  // ============================================================
+  // CURRENT AUTH USER
+  // ============================================================
 
   User? get currentUser {
     return _supabase.auth.currentUser;
   }
 
-  // -----------------------------
-  // GET CURRENT SESSION
-  // -----------------------------
+  // ============================================================
+  // CURRENT SESSION
+  // ============================================================
 
   Session? get currentSession {
     return _supabase.auth.currentSession;
   }
 
-  // -----------------------------
-  // CHECK AUTHENTICATION
-  // -----------------------------
+  // ============================================================
+  // AUTHENTICATED?
+  // ============================================================
 
   bool get isAuthenticated {
     return _supabase.auth.currentSession != null;
   }
 
-  // -----------------------------
-  // GET USER FROM public.users
-  // -----------------------------
+  // ============================================================
+  // GET CURRENT USER FROM public.users
+  // ============================================================
 
   Future<AuthModel?> getAuthUser() async {
     final user = _supabase.auth.currentUser;
@@ -86,17 +101,17 @@ class AuthRepository {
     return AuthModel.fromMap(data);
   }
 
-  // -----------------------------
+  // ============================================================
   // SIGN OUT
-  // -----------------------------
+  // ============================================================
 
   Future<void> signOut() async {
     await _supabase.auth.signOut();
   }
 
-  // -----------------------------
+  // ============================================================
   // AUTH STATE CHANGES
-  // -----------------------------
+  // ============================================================
 
   Stream<AuthState> get authStateChanges {
     return _supabase.auth.onAuthStateChange;

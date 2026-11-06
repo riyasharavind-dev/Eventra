@@ -1,3 +1,5 @@
+import '../models/service_pricing.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/service_model.dart';
@@ -5,11 +7,8 @@ import '../models/service_model.dart';
 class ServiceRepository {
   final SupabaseClient _supabase;
 
-  ServiceRepository({
-    SupabaseClient? supabase,
-  }) : _supabase =
-            supabase ??
-            Supabase.instance.client;
+  ServiceRepository({SupabaseClient? supabase})
+    : _supabase = supabase ?? Supabase.instance.client;
 
   // ============================================================
   // SERVICE SELECT
@@ -18,11 +17,15 @@ class ServiceRepository {
   static const String _serviceSelect = '''
     id,
     vendor_id,
+    business_id,
     category_node_id,
+    event_type_id,
     name,
     slug,
     description,
     price,
+    pricing_type,
+    pricing_unit,
     gallery,
     is_active,
     created_at,
@@ -40,48 +43,30 @@ class ServiceRepository {
   // ============================================================
 
   String _requireUserId() {
-    final user =
-        _supabase.auth.currentUser;
+    final user = _supabase.auth.currentUser;
 
     if (user == null) {
-      throw Exception(
-        'You are not logged in.',
-      );
+      throw Exception('You are not logged in.');
     }
 
     return user.id;
   }
 
   // ============================================================
-  // GET CURRENT VENDOR SERVICES
+  // GET MY SERVICES
   // ============================================================
 
-  Future<List<ServiceModel>>
-      getMyServices() async {
-    final String userId =
-        _requireUserId();
+  Future<List<ServiceModel>> getMyServices() async {
+    final String userId = _requireUserId();
 
     final response = await _supabase
         .from('services')
         .select(_serviceSelect)
-        .eq(
-          'vendor_id',
-          userId,
-        )
-        .order(
-          'created_at',
-          ascending: false,
-        );
+        .eq('vendor_id', userId)
+        .order('created_at', ascending: false);
 
     return (response as List)
-        .map(
-          (item) =>
-              ServiceModel.fromMap(
-            Map<String, dynamic>.from(
-              item,
-            ),
-          ),
-        )
+        .map((item) => ServiceModel.fromMap(Map<String, dynamic>.from(item)))
         .toList();
   }
 
@@ -89,189 +74,157 @@ class ServiceRepository {
   // GET SERVICE BY ID
   // ============================================================
 
-  Future<ServiceModel?>
-      getServiceById(
-    String serviceId,
-  ) async {
-    final String userId =
-        _requireUserId();
+  Future<ServiceModel?> getServiceById(String serviceId) async {
+    final String userId = _requireUserId();
 
     final response = await _supabase
         .from('services')
         .select(_serviceSelect)
-        .eq(
-          'id',
-          serviceId,
-        )
-        .eq(
-          'vendor_id',
-          userId,
-        )
+        .eq('id', serviceId)
+        .eq('vendor_id', userId)
         .maybeSingle();
 
     if (response == null) {
       return null;
     }
 
-    return ServiceModel.fromMap(
-      Map<String, dynamic>.from(
-        response,
-      ),
-    );
+    return ServiceModel.fromMap(Map<String, dynamic>.from(response));
+  }
+
+  // ============================================================
+  // GET ACTIVE SERVICES
+  // ============================================================
+
+  Future<List<ServiceModel>> getActiveServices() async {
+    final String userId = _requireUserId();
+
+    final response = await _supabase
+        .from('services')
+        .select(_serviceSelect)
+        .eq('vendor_id', userId)
+        .eq('is_active', true)
+        .order('created_at', ascending: false);
+
+    return (response as List)
+        .map((item) => ServiceModel.fromMap(Map<String, dynamic>.from(item)))
+        .toList();
   }
 
   // ============================================================
   // CREATE SERVICE
   // ============================================================
-  //
-  // AddServiceDialog currently creates the service directly.
-  // This method is available if you later want to move
-  // creation completely into the repository.
-  // ============================================================
 
-  Future<ServiceModel>
-      createService({
+  Future<ServiceModel> createService({
     required String name,
     required String categoryNodeId,
     required String slug,
+    String? businessId,
+    String? eventTypeId,
     String? description,
+    ServicePricing? pricing,
     required double price,
-    List<String> gallery =
-        const [],
+    List<String> gallery = const [],
   }) async {
-    final String userId =
-        _requireUserId();
+    final String userId = _requireUserId();
+
+    final selectedPricing = pricing ?? const ServicePricing();
+    selectedPricing.validate(price);
+    final Map<String, dynamic> data = {
+      'vendor_id': userId,
+      'business_id': businessId,
+      'category_node_id': categoryNodeId,
+      'event_type_id': eventTypeId,
+      'name': name,
+      'slug': slug,
+      'description': description,
+      'price': price,
+      ...selectedPricing.toMap(),
+      'gallery': gallery,
+      'is_active': true,
+    };
 
     final response = await _supabase
         .from('services')
-        .insert({
-          'vendor_id': userId,
-          'category_node_id':
-              categoryNodeId,
-          'name': name,
-          'slug': slug,
-          'description': description,
-          'price': price,
-          'gallery': gallery,
-          'is_active': true,
-        })
+        .insert(data)
         .select(_serviceSelect)
         .single();
 
-    return ServiceModel.fromMap(
-      Map<String, dynamic>.from(
-        response,
-      ),
-    );
+    return ServiceModel.fromMap(Map<String, dynamic>.from(response));
   }
 
   // ============================================================
   // UPDATE SERVICE
   // ============================================================
 
-  Future<ServiceModel>
-      updateService({
+  Future<ServiceModel> updateService({
     required ServiceModel service,
     required String name,
     required String categoryNodeId,
+    String? businessId,
+    String? eventTypeId,
     String? description,
+    ServicePricing? pricing,
     required double price,
     required List<String> gallery,
   }) async {
-    final String userId =
-        _requireUserId();
+    final String userId = _requireUserId();
+
+    final selectedPricing = pricing ?? service.pricing;
+    selectedPricing.validate(price);
+    final Map<String, dynamic> data = {
+      'name': name,
+      'business_id': businessId,
+      'category_node_id': categoryNodeId,
+      'event_type_id': eventTypeId,
+      'description': description,
+      'price': price,
+      ...selectedPricing.toMap(),
+      'gallery': gallery,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
 
     final response = await _supabase
         .from('services')
-        .update({
-          'name': name,
-          'category_node_id':
-              categoryNodeId,
-          'description': description,
-          'price': price,
-          'gallery': gallery,
-          'updated_at':
-              DateTime.now()
-                  .toUtc()
-                  .toIso8601String(),
-        })
-        .eq(
-          'id',
-          service.id,
-        )
-        .eq(
-          'vendor_id',
-          userId,
-        )
+        .update(data)
+        .eq('id', service.id)
+        .eq('vendor_id', userId)
         .select(_serviceSelect)
         .single();
 
-    return ServiceModel.fromMap(
-      Map<String, dynamic>.from(
-        response,
-      ),
-    );
+    return ServiceModel.fromMap(Map<String, dynamic>.from(response));
   }
 
   // ============================================================
   // TOGGLE SERVICE STATUS
   // ============================================================
 
-  Future<ServiceModel>
-      toggleServiceStatus(
-    ServiceModel service,
-  ) async {
-    final String userId =
-        _requireUserId();
+  Future<ServiceModel> toggleServiceStatus(ServiceModel service) async {
+    final String userId = _requireUserId();
 
-    final bool newStatus =
-        !service.isActive;
+    final bool newStatus = !service.isActive;
 
     final response = await _supabase
         .from('services')
         .update({
           'is_active': newStatus,
-          'updated_at':
-              DateTime.now()
-                  .toUtc()
-                  .toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
-        .eq(
-          'id',
-          service.id,
-        )
-        .eq(
-          'vendor_id',
-          userId,
-        )
+        .eq('id', service.id)
+        .eq('vendor_id', userId)
         .select(_serviceSelect)
         .single();
 
-    return ServiceModel.fromMap(
-      Map<String, dynamic>.from(
-        response,
-      ),
-    );
+    return ServiceModel.fromMap(Map<String, dynamic>.from(response));
   }
 
   // ============================================================
   // DELETE SERVICE
   // ============================================================
 
-  Future<void> deleteService(
-    ServiceModel service,
-  ) async {
-    final String userId =
-        _requireUserId();
+  Future<void> deleteService(ServiceModel service) async {
+    final String userId = _requireUserId();
 
-    // ----------------------------------------------------------
-    // Verify ownership first
-    // ----------------------------------------------------------
-
-    final ServiceModel? existing =
-        await getServiceById(
-      service.id,
-    );
+    final ServiceModel? existing = await getServiceById(service.id);
 
     if (existing == null) {
       throw Exception(
@@ -284,29 +237,21 @@ class ServiceRepository {
     // ----------------------------------------------------------
 
     if (service.gallery.isNotEmpty) {
-      final List<String> paths =
-          [];
+      final List<String> paths = [];
 
-      for (final String url
-          in service.gallery) {
-        final String? path =
-            _extractStoragePath(url);
+      for (final String url in service.gallery) {
+        final String? path = _extractStoragePath(url);
 
-        if (path != null &&
-            path.isNotEmpty) {
+        if (path != null && path.isNotEmpty) {
           paths.add(path);
         }
       }
 
       if (paths.isNotEmpty) {
         try {
-          await _supabase.storage
-              .from('service-gallery')
-              .remove(paths);
+          await _supabase.storage.from('service-gallery').remove(paths);
         } catch (_) {
-          // Continue with database
-          // deletion even if a storage
-          // file is already missing.
+          // Continue with database deletion.
         }
       }
     }
@@ -318,92 +263,50 @@ class ServiceRepository {
     await _supabase
         .from('services')
         .delete()
-        .eq(
-          'id',
-          service.id,
-        )
-        .eq(
-          'vendor_id',
-          userId,
-        );
+        .eq('id', service.id)
+        .eq('vendor_id', userId);
   }
 
   // ============================================================
   // DELETE SINGLE GALLERY IMAGE
   // ============================================================
-  //
-  // Useful later if you want the edit screen to immediately
-  // delete an image instead of waiting for Save Changes.
-  // ============================================================
 
-  Future<void>
-      deleteGalleryImage({
+  Future<void> deleteGalleryImage({
     required String serviceId,
     required String imageUrl,
   }) async {
-    final ServiceModel? service =
-        await getServiceById(
-      serviceId,
-    );
+    final ServiceModel? service = await getServiceById(serviceId);
 
     if (service == null) {
-      throw Exception(
-        'Service not found.',
-      );
+      throw Exception('Service not found.');
     }
 
-    final List<String> gallery =
-        List<String>.from(
-      service.gallery,
-    );
+    final List<String> gallery = List<String>.from(service.gallery);
 
-    if (!gallery.contains(
-      imageUrl,
-    )) {
+    if (!gallery.contains(imageUrl)) {
       return;
     }
 
-    gallery.remove(
-      imageUrl,
-    );
+    gallery.remove(imageUrl);
 
-    final String userId =
-        _requireUserId();
+    final String userId = _requireUserId();
 
     await _supabase
         .from('services')
         .update({
           'gallery': gallery,
-          'updated_at':
-              DateTime.now()
-                  .toUtc()
-                  .toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
-        .eq(
-          'id',
-          serviceId,
-        )
-        .eq(
-          'vendor_id',
-          userId,
-        );
+        .eq('id', serviceId)
+        .eq('vendor_id', userId);
 
-    final String? path =
-        _extractStoragePath(
-      imageUrl,
-    );
+    final String? path = _extractStoragePath(imageUrl);
 
-    if (path != null &&
-        path.isNotEmpty) {
+    if (path != null && path.isNotEmpty) {
       try {
-        await _supabase.storage
-            .from('service-gallery')
-            .remove([path]);
+        await _supabase.storage.from('service-gallery').remove([path]);
       } catch (_) {
-        // Database update already
-        // succeeded, so don't fail the
-        // whole operation because the
-        // storage object is missing.
+        // Database update already succeeded.
       }
     }
   }
@@ -412,31 +315,31 @@ class ServiceRepository {
   // EXTRACT STORAGE PATH
   // ============================================================
 
-  String? _extractStoragePath(
-    String url,
-  ) {
+  String? _extractStoragePath(String url) {
     try {
-      final Uri uri =
-          Uri.parse(url);
+      final Uri uri = Uri.parse(url);
 
-      const String marker =
-          '/storage/v1/object/public/service-gallery/';
+      const String marker = '/storage/v1/object/public/service-gallery/';
 
-      final String fullUrl =
-          uri.toString();
+      final String fullUrl = uri.toString();
 
-      final int index =
-          fullUrl.indexOf(marker);
+      final int index = fullUrl.indexOf(marker);
 
       if (index == -1) {
         return null;
       }
 
-      return Uri.decodeComponent(
-        fullUrl.substring(
-          index + marker.length,
-        ),
-      );
+      String path = fullUrl.substring(index + marker.length);
+
+      // Remove query parameters such as
+      // cache-busting values if present.
+      final int queryIndex = path.indexOf('?');
+
+      if (queryIndex != -1) {
+        path = path.substring(0, queryIndex);
+      }
+
+      return Uri.decodeComponent(path);
     } catch (_) {
       return null;
     }

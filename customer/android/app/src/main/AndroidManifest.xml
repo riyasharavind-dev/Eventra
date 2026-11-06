@@ -1,15 +1,34 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- ========================= -->
     <!-- Firebase Cloud Messaging -->
+    <!-- ========================= -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Photos / Gallery permission for Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- ========================= -->
+    <!-- Gallery / Photos -->
+    <!-- ========================= -->
 
-    <!-- Photos / Gallery permission for Android 12 and below -->
+    <!-- Android 13+ -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Android 12 and below -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+
+    <!-- ========================= -->
+    <!-- Location / GPS -->
+    <!-- ========================= -->
+
+    <!-- Precise location -->
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Approximate location -->
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:label="customer"
@@ -46,7 +65,10 @@
 
     </application>
 
+    <!-- ========================= -->
     <!-- Flutter shared text -->
+    <!-- ========================= -->
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />

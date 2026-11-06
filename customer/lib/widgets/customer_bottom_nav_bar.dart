@@ -10,306 +10,152 @@ class CustomerBottomNavBar extends StatelessWidget {
     required this.onTap,
   });
 
-  // ===========================================================================
-  // COLORS
-  // ===========================================================================
+  static const _wine = Color(0xFF920D29);
+  static const _wineDark = Color(0xFF68051A);
+  static const inactiveIconColor = Color(0xFF73737D);
 
-  static const Color primaryRed =
-      Color(0xFF9F0101);
+  static const _labels = ['Home', 'Explore', 'Bookings', 'Me'];
 
-  static const Color selectedRed =
-      Color(0xFF9F0101);
+  static const _icons = [
+    Icons.home_outlined,
+    Icons.explore_outlined,
+    Icons.calendar_month_outlined,
+    Icons.person_rounded,
+  ];
 
-  static const Color lightRed =
-      Color(0xFFFFE5E5);
-
-  static const Color unselectedRed =
-      Color(0xFF9F0101);
-
-  static const Color backgroundWhite =
-      Color(0xFFFFFFFF);
-
-  // ===========================================================================
-  // BUILD
-  // ===========================================================================
+  static const _duration = Duration(milliseconds: 440);
+  static const _curve = Curves.easeInOutCubicEmphasized;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          12,
-        ),
-        child: Container(
-          height: 66,
-
-          // ===================================================================
-          // WHITE FLOATING BACKGROUND
-          // ===================================================================
-
-          decoration: BoxDecoration(
-            color: backgroundWhite,
-
-            borderRadius:
-                BorderRadius.circular(24),
-
-            border: Border.all(
-              color: primaryRed.withValues(
-                alpha: 0.18,
-              ),
-              width: 0.8,
+    final count = _labels.length;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return TweenAnimationBuilder<double>(
+      duration: reduceMotion ? Duration.zero : _duration,
+      curve: _curve,
+      tween: Tween<double>(
+        begin: currentIndex.toDouble(),
+        end: currentIndex.toDouble(),
+      ),
+      builder: (context, position, child) {
+        final alignX = -1.0 + (2.0 * position / (count - 1));
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Container(
+            height: 88,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: const Color(0xFFF0EDF0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x18000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
-
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.12,
-                ),
-                blurRadius: 20,
-                spreadRadius: 0,
-                offset: const Offset(
-                  0,
-                  7,
-                ),
-              ),
-
-              BoxShadow(
-                color: primaryRed.withValues(
-                  alpha: 0.08,
-                ),
-                blurRadius: 12,
-                spreadRadius: 0,
-                offset: const Offset(
-                  0,
-                  3,
-                ),
-              ),
-            ],
-          ),
-
-          child: Row(
-            children: [
-              // ===============================================================
-              // HOME
-              // ===============================================================
-
-              _buildItem(
-                index: 0,
-                icon: Icons.home_outlined,
-                selectedIcon:
-                    Icons.home_rounded,
-                label: 'Home',
-              ),
-
-              // ===============================================================
-              // DISCOVER
-              // ===============================================================
-
-              _buildItem(
-                index: 1,
-                icon:
-                    Icons.explore_outlined,
-                selectedIcon:
-                    Icons.explore_rounded,
-                label: 'Discover',
-              ),
-
-              // ===============================================================
-              // BOOKINGS
-              // ===============================================================
-
-              _buildItem(
-                index: 2,
-                icon:
-                    Icons.bookmark_border_rounded,
-                selectedIcon:
-                    Icons.bookmark_rounded,
-                label: 'Bookings',
-              ),
-
-              // ===============================================================
-              // ME
-              // ===============================================================
-
-              _buildItem(
-                index: 3,
-                icon:
-                    Icons.person_outline_rounded,
-                selectedIcon:
-                    Icons.person_rounded,
-                label: 'Me',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // NAVIGATION ITEM
-  // ===========================================================================
-
-  Widget _buildItem({
-    required int index,
-    required IconData icon,
-    required IconData selectedIcon,
-    required String label,
-  }) {
-    final bool selected =
-        currentIndex == index;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () => onTap(index),
-
-        borderRadius:
-            BorderRadius.circular(20),
-
-        splashColor:
-            primaryRed.withValues(
-          alpha: 0.08,
-        ),
-
-        highlightColor:
-            primaryRed.withValues(
-          alpha: 0.04,
-        ),
-
-        child: AnimatedContainer(
-          duration:
-              const Duration(
-            milliseconds: 220,
-          ),
-
-          curve:
-              Curves.easeOutCubic,
-
-          margin:
-              const EdgeInsets.symmetric(
-            horizontal: 6,
-            vertical: 7,
-          ),
-
-          // =================================================================
-          // SELECTED ITEM
-          // =================================================================
-
-          decoration: BoxDecoration(
-            color: selected
-                ? lightRed
-                : Colors.transparent,
-
-            borderRadius:
-                BorderRadius.circular(18),
-
-            border: selected
-                ? Border.all(
-                    color: primaryRed
-                        .withValues(
-                      alpha: 0.10,
+            child: Stack(
+              children: [
+                // Sliding red indicator
+                Align(
+                  alignment: Alignment(alignX, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: 1 / count,
+                    heightFactor: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [_wine, _wineDark],
+                        ),
+                        borderRadius: BorderRadius.circular(27),
+                      ),
                     ),
-                    width: 0.6,
-                  )
-                : null,
-          ),
-
-          child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
-
-            children: [
-              // ===============================================================
-              // ICON
-              // ===============================================================
-
-              AnimatedContainer(
-                duration:
-                    const Duration(
-                  milliseconds: 220,
-                ),
-
-                curve:
-                    Curves.easeOutCubic,
-
-                width: selected
-                    ? 32
-                    : 28,
-
-                height: selected
-                    ? 32
-                    : 28,
-
-                decoration:
-                    BoxDecoration(
-                  color: selected
-                      ? selectedRed
-                      : Colors.transparent,
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    11,
                   ),
                 ),
 
-                child: Center(
-                  child: Icon(
-                    selected
-                        ? selectedIcon
-                        : icon,
+                // Tab items
+                Row(
+                  children: List.generate(count, (index) {
+                    final selected = currentIndex == index;
+                    // Match the foreground to the moving highlight, including rapid taps.
+                    final emphasis = (1.0 - (position - index).abs()).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    final foreground = Color.lerp(
+                      inactiveIconColor,
+                      Colors.white,
+                      emphasis,
+                    )!;
 
-                    size: selected
-                        ? 19
-                        : 21,
-
-                    color: selected
-                        ? Colors.white
-                        : unselectedRed,
-                  ),
+                    return Expanded(
+                      child: Semantics(
+                        label: _labels[index],
+                        button: true,
+                        selected: selected,
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(27),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () => onTap(index),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Transform.translate(
+                                    offset: Offset(0, -2 * emphasis),
+                                    child: Transform.scale(
+                                      scale: 1 + (2 / 27) * emphasis,
+                                      child: Icon(
+                                        _icons[index],
+                                        size: 27,
+                                        color: foreground,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  DefaultTextStyle(
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.lerp(
+                                        FontWeight.w400,
+                                        FontWeight.w600,
+                                        emphasis,
+                                      ),
+                                      color: foreground,
+                                    ),
+                                    child: Text(
+                                      _labels[index],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-              ),
-
-              const SizedBox(
-                height: 3,
-              ),
-
-              // ===============================================================
-              // LABEL
-              // ===============================================================
-
-              AnimatedDefaultTextStyle(
-                duration:
-                    const Duration(
-                  milliseconds: 180,
-                ),
-
-                style: TextStyle(
-                  fontSize: 10.5,
-
-                  fontWeight: selected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-
-                  color: selected
-                      ? primaryRed
-                      : unselectedRed,
-                ),
-
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow:
-                      TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

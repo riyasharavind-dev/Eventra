@@ -1,3 +1,11 @@
+import 'repositories/auth_repository.dart';
+import 'widgets/account_role_gate.dart';
+
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'repositories/app_settings_repository.dart';
+import 'services/app_settings_controller.dart';
+
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -28,16 +36,18 @@ Future<void> main() async {
   // FIREBASE INITIALIZATION
   // ======================================================
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // ======================================================
   // RUN APP
   // ======================================================
 
   runApp(
-    const EventraCustomerApp(),
+    EventraCustomerApp(
+      settings: AppSettingsController(
+        initial: await AppSettingsRepository().load(),
+      ),
+    ),
   );
 }
 
@@ -46,26 +56,28 @@ Future<void> main() async {
 // ========================================================
 
 class EventraCustomerApp extends StatelessWidget {
-  const EventraCustomerApp({
-    super.key,
-  });
-
+  const EventraCustomerApp({super.key, required this.settings});
+  final AppSettingsController settings;
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Eventra Customer',
-
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.red,
+  Widget build(BuildContext context) => AppSettingsScope(
+    controller: settings,
+    child: AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Eventra Customer',
+        locale: Locale(settings.value.languageCode),
+        supportedLocales: const [Locale('en'), Locale('ta')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF80152C)),
+        ),
+        home: const CustomerEntryScreen(),
       ),
-
-      home: const CustomerEntryScreen(),
-    );
-  }
+    ),
+  );
 }
-
 // ========================================================
 // CUSTOMER ENTRY SCREEN
 // ========================================================
@@ -81,17 +93,13 @@ class EventraCustomerApp extends StatelessWidget {
 // ========================================================
 
 class CustomerEntryScreen extends StatefulWidget {
-  const CustomerEntryScreen({
-    super.key,
-  });
+  const CustomerEntryScreen({super.key});
 
   @override
-  State<CustomerEntryScreen> createState() =>
-      _CustomerEntryScreenState();
+  State<CustomerEntryScreen> createState() => _CustomerEntryScreenState();
 }
 
-class _CustomerEntryScreenState
-    extends State<CustomerEntryScreen> {
+class _CustomerEntryScreenState extends State<CustomerEntryScreen> {
   // ======================================================
   // AUTH SUBSCRIPTION
   // ======================================================
@@ -122,12 +130,7 @@ class _CustomerEntryScreenState
   // ======================================================
 
   void _listenToAuthChanges() {
-    _authSubscription = Supabase
-        .instance
-        .client
-        .auth
-        .onAuthStateChange
-        .listen(
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
       (AuthState authState) async {
         final Session? session = authState.session;
 
@@ -144,11 +147,9 @@ class _CustomerEntryScreenState
 
           setState(() {});
         }
-
         // ==================================================
         // USER LOGGED OUT
         // ==================================================
-
         else {
           // Notification service can initialize again
           // after the next login.
@@ -171,9 +172,7 @@ class _CustomerEntryScreenState
         }
       },
       onError: (Object error) {
-        debugPrint(
-          'EVENTRA AUTH STATE ERROR: $error',
-        );
+        debugPrint('EVENTRA AUTH STATE ERROR: $error');
       },
     );
   }
@@ -183,11 +182,7 @@ class _CustomerEntryScreenState
   // ======================================================
 
   Future<void> _initializeNotificationsIfLoggedIn() async {
-    final Session? session = Supabase
-        .instance
-        .client
-        .auth
-        .currentSession;
+    final Session? session = Supabase.instance.client.auth.currentSession;
 
     if (session == null) {
       return;
@@ -205,30 +200,20 @@ class _CustomerEntryScreenState
       return;
     }
 
-    final Session? session = Supabase
-        .instance
-        .client
-        .auth
-        .currentSession;
+    final Session? session = Supabase.instance.client.auth.currentSession;
 
     if (session == null) {
       return;
     }
 
     try {
-      await NotificationService
-          .instance
+      await AuthRepository().validateAccountRole();
+      _notificationInitialized = await NotificationService.instance
           .initialize();
 
-      _notificationInitialized = true;
-
-      debugPrint(
-        'EVENTRA: Notification service initialized.',
-      );
+      debugPrint('EVENTRA: Notification service initialized.');
     } catch (e) {
-      debugPrint(
-        'EVENTRA: Notification initialization failed: $e',
-      );
+      debugPrint('EVENTRA: Notification initialization failed: $e');
     }
   }
 
@@ -249,18 +234,14 @@ class _CustomerEntryScreenState
 
   @override
   Widget build(BuildContext context) {
-    final Session? session = Supabase
-        .instance
-        .client
-        .auth
-        .currentSession;
+    final Session? session = Supabase.instance.client.auth.currentSession;
 
     // ====================================================
     // USER LOGGED IN
     // ====================================================
 
     if (session != null) {
-      return const CustomerMainScreen();
+      return const AccountRoleGate(child: CustomerMainScreen());
     }
 
     // ====================================================

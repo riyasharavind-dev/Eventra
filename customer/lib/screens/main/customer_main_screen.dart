@@ -3,22 +3,18 @@ import 'package:flutter/material.dart';
 import '../../widgets/customer_bottom_nav_bar.dart';
 
 import 'customer_home_screen.dart';
-import 'discover_screen.dart';
+import 'explore_screen.dart';
 import 'bookings_screen.dart';
 import 'me_screen.dart';
 
 class CustomerMainScreen extends StatefulWidget {
-  const CustomerMainScreen({
-    super.key,
-  });
+  const CustomerMainScreen({super.key});
 
   @override
-  State<CustomerMainScreen> createState() =>
-      _CustomerMainScreenState();
+  State<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _CustomerMainScreenState
-    extends State<CustomerMainScreen> {
+class _CustomerMainScreenState extends State<CustomerMainScreen> {
   // ===========================================================================
   // CURRENT TAB
   // ===========================================================================
@@ -80,13 +76,9 @@ class _CustomerMainScreenState
     final List<Widget> screens = [
       const CustomerHomeScreen(),
 
-      const DiscoverScreen(),
+      const ExploreScreen(),
 
-      BookingsScreen(
-        key: ValueKey<int>(
-          _bookingsRefreshKey,
-        ),
-      ),
+      BookingsScreen(key: ValueKey<int>(_bookingsRefreshKey)),
 
       const MeScreen(),
     ];
@@ -96,22 +88,23 @@ class _CustomerMainScreenState
     // -------------------------------------------------------------------------
 
     return Scaffold(
-      // =======================================================================
-      // BODY
-      // =======================================================================
-
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-
-      // =======================================================================
-      // BOTTOM NAVIGATION
-      // =======================================================================
-
-      bottomNavigationBar: CustomerBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavigationChanged,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: IndexedStack(index: _currentIndex, children: screens),
+          ),
+          if (MediaQuery.viewInsetsOf(context).bottom == 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: CustomerBottomNavBar(
+                currentIndex: _currentIndex,
+                onTap: _onNavigationChanged,
+              ),
+            ),
+        ],
       ),
     );
   }

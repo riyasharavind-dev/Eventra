@@ -1,3 +1,7 @@
+import '../common/app_shimmer.dart';
+import '../../models/service_pricing.dart';
+import '../../widgets/services/service_pricing_fields.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,23 +21,21 @@ class AddServiceDialog extends StatefulWidget {
   });
 
   @override
-  State<AddServiceDialog> createState() =>
-      _AddServiceDialogState();
+  State<AddServiceDialog> createState() => _AddServiceDialogState();
 }
 
 class _AddServiceDialogState extends State<AddServiceDialog> {
+  ServicePricing pricing = const ServicePricing();
+
   // ============================================================
   // CONTROLLERS
   // ============================================================
 
-  final TextEditingController _nameController =
-      TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  final TextEditingController _priceController =
-      TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   // ============================================================
   // IMAGES
@@ -109,34 +111,18 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     });
 
     try {
-      debugPrint(
-        'CATEGORY: Loading category_nodes...',
-      );
+      debugPrint('CATEGORY: Loading category_nodes...');
 
-      final List<dynamic> response =
-          await widget.supabase
-              .from('category_nodes')
-              .select(
-                'id, name, slug, parent_id',
-              )
-              .order(
-                'name',
-                ascending: true,
-              );
+      final List<dynamic> response = await widget.supabase
+          .from('category_nodes')
+          .select('id, name, slug, parent_id')
+          .order('name', ascending: true);
 
-      debugPrint(
-        'CATEGORY: ${response.length} rows found',
-      );
+      debugPrint('CATEGORY: ${response.length} rows found');
 
-      final List<Map<String, dynamic>> categories =
-          response
-              .map(
-                (dynamic item) =>
-                    Map<String, dynamic>.from(
-                  item as Map,
-                ),
-              )
-              .toList();
+      final List<Map<String, dynamic>> categories = response
+          .map((dynamic item) => Map<String, dynamic>.from(item as Map))
+          .toList();
 
       if (!mounted) return;
 
@@ -145,13 +131,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
         _isLoadingCategories = false;
       });
     } catch (e, stackTrace) {
-      debugPrint(
-        'CATEGORY ERROR: $e',
-      );
+      debugPrint('CATEGORY ERROR: $e');
 
-      debugPrint(
-        'CATEGORY STACKTRACE: $stackTrace',
-      );
+      debugPrint('CATEGORY STACKTRACE: $stackTrace');
 
       if (!mounted) return;
 
@@ -175,9 +157,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     });
 
     try {
-      debugPrint(
-        'EVENT TYPE: Loading event_types...',
-      );
+      debugPrint('EVENT TYPE: Loading event_types...');
 
       /*
        * IMPORTANT
@@ -192,40 +172,23 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
        * Later we can enable active/inactive filtering.
        */
 
-      final List<dynamic> response =
-          await widget.supabase
-              .from('event_types')
-              .select(
-                'id, name, slug, description, icon, image_url, is_active, sort_order',
-              )
-              .order(
-                'sort_order',
-                ascending: true,
-              )
-              .order(
-                'name',
-                ascending: true,
-              );
+      final List<dynamic> response = await widget.supabase
+          .from('event_types')
+          .select(
+            'id, name, slug, description, icon, image_url, is_active, sort_order',
+          )
+          .order('sort_order', ascending: true)
+          .order('name', ascending: true);
 
-      debugPrint(
-        'EVENT TYPE: ${response.length} rows found',
-      );
+      debugPrint('EVENT TYPE: ${response.length} rows found');
 
       for (final dynamic item in response) {
-        debugPrint(
-          'EVENT TYPE: ${item['name']}',
-        );
+        debugPrint('EVENT TYPE: ${item['name']}');
       }
 
-      final List<Map<String, dynamic>> eventTypes =
-          response
-              .map(
-                (dynamic item) =>
-                    Map<String, dynamic>.from(
-                  item as Map,
-                ),
-              )
-              .toList();
+      final List<Map<String, dynamic>> eventTypes = response
+          .map((dynamic item) => Map<String, dynamic>.from(item as Map))
+          .toList();
 
       if (!mounted) return;
 
@@ -234,13 +197,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
         _isLoadingEventTypes = false;
       });
     } catch (e, stackTrace) {
-      debugPrint(
-        'EVENT TYPE ERROR: $e',
-      );
+      debugPrint('EVENT TYPE ERROR: $e');
 
-      debugPrint(
-        'EVENT TYPE STACKTRACE: $stackTrace',
-      );
+      debugPrint('EVENT TYPE STACKTRACE: $stackTrace');
 
       if (!mounted) return;
 
@@ -258,9 +217,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   void _selectEventType(String id) {
     if (_isCreating) return;
 
-    debugPrint(
-      'EVENT TYPE SELECTED: $id',
-    );
+    debugPrint('EVENT TYPE SELECTED: $id');
 
     setState(() {
       _selectedEventTypeId = id;
@@ -278,54 +235,49 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     // FORM VALUES
     // ==========================================================
 
-    final String name =
-        _nameController.text.trim();
+    final String name = _nameController.text.trim();
 
-    final String description =
-        _descriptionController.text.trim();
+    final String description = _descriptionController.text.trim();
 
-    final String priceText =
-        _priceController.text.trim();
+    final String priceText = _priceController.text.trim();
 
-    final double? price =
-        double.tryParse(priceText);
+    final double? price = double.tryParse(priceText);
 
     // ==========================================================
     // VALIDATION
     // ==========================================================
 
     if (name.isEmpty) {
-      _showError(
-        'Please enter service name.',
-      );
+      _showError('Please enter service name.');
       return;
     }
 
     if (_selectedCategoryId == null) {
-      _showError(
-        'Please select a category.',
-      );
+      _showError('Please select a category.');
       return;
     }
 
     if (_selectedEventTypeId == null) {
-      _showError(
-        'Please select an event type.',
-      );
+      _showError('Please select an event type.');
       return;
     }
 
     if (price == null || price < 0) {
-      _showError(
-        'Please enter a valid price.',
-      );
+      _showError('Please enter a valid price.');
+      return;
+    }
+    try {
+      pricing.validate(price);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
       return;
     }
 
     if (_selectedImages.isEmpty) {
-      _showError(
-        'Please select at least one image.',
-      );
+      _showError('Please select at least one image.');
       return;
     }
 
@@ -333,13 +285,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     // CURRENT USER
     // ==========================================================
 
-    final user =
-        widget.supabase.auth.currentUser;
+    final user = widget.supabase.auth.currentUser;
 
     if (user == null) {
-      _showError(
-        'User session expired. Please login again.',
-      );
+      _showError('User session expired. Please login again.');
       return;
     }
 
@@ -356,73 +305,48 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
       // CREATE UNIQUE SLUG
       // ========================================================
 
-      final String slug =
-          await _generateUniqueSlug(
-        name,
-      );
+      final String slug = await _generateUniqueSlug(name);
 
-      debugPrint(
-        'SERVICE: Creating service',
-      );
+      debugPrint('SERVICE: Creating service');
 
-      debugPrint(
-        'SERVICE: vendor_id = ${user.id}',
-      );
+      debugPrint('SERVICE: vendor_id = ${user.id}');
 
-      debugPrint(
-        'SERVICE: category_node_id = $_selectedCategoryId',
-      );
+      debugPrint('SERVICE: category_node_id = $_selectedCategoryId');
 
-      debugPrint(
-        'SERVICE: event_type_id = $_selectedEventTypeId',
-      );
+      debugPrint('SERVICE: event_type_id = $_selectedEventTypeId');
 
       // ========================================================
       // INSERT SERVICE
       // ========================================================
 
-      final Map<String, dynamic> inserted =
-          await widget.supabase
-              .from('services')
-              .insert({
-        'vendor_id':
-            user.id,
+      final Map<String, dynamic> inserted = await widget.supabase
+          .from('services')
+          .insert({
+            'vendor_id': user.id,
 
-        'category_node_id':
-            _selectedCategoryId,
+            'category_node_id': _selectedCategoryId,
 
-        'event_type_id':
-            _selectedEventTypeId,
+            'event_type_id': _selectedEventTypeId,
 
-        'name':
-            name,
+            'name': name,
 
-        'slug':
-            slug,
+            'slug': slug,
 
-        'description':
-            description.isEmpty
-                ? null
-                : description,
+            'description': description.isEmpty ? null : description,
 
-        'price':
-            price,
+            'price': price,
+            ...pricing.toMap(),
 
-        'gallery':
-            [],
+            'gallery': [],
 
-        'is_active':
-            true,
-      })
-              .select('id')
-              .single();
+            'is_active': true,
+          })
+          .select('id')
+          .single();
 
-      serviceId =
-          inserted['id'].toString();
+      serviceId = inserted['id'].toString();
 
-      debugPrint(
-        'SERVICE CREATED: $serviceId',
-      );
+      debugPrint('SERVICE CREATED: $serviceId');
 
       // ========================================================
       // UPLOAD IMAGES
@@ -430,57 +354,36 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       final List<String> publicUrls = [];
 
-      for (
-        int index = 0;
-        index < _selectedImages.length;
-        index++
-      ) {
-        final XFile image =
-            _selectedImages[index];
+      for (int index = 0; index < _selectedImages.length; index++) {
+        final XFile image = _selectedImages[index];
 
         final String fileName =
             'image-${DateTime.now().millisecondsSinceEpoch}-$index.jpg';
 
-        final String storagePath =
-            '${user.id}/$serviceId/$fileName';
+        final String storagePath = '${user.id}/$serviceId/$fileName';
 
-        final bytes =
-            await image.readAsBytes();
+        final bytes = await image.readAsBytes();
 
-        debugPrint(
-          'IMAGE UPLOAD: $storagePath',
-        );
+        debugPrint('IMAGE UPLOAD: $storagePath');
 
-        await widget.supabase
-            .storage
+        await widget.supabase.storage
             .from('service-gallery')
             .uploadBinary(
               storagePath,
               bytes,
-              fileOptions:
-                  const FileOptions(
-                contentType:
-                    'image/jpeg',
-                upsert:
-                    false,
+              fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: false,
               ),
             );
 
-        uploadedPaths.add(
-          storagePath,
-        );
+        uploadedPaths.add(storagePath);
 
-        final String publicUrl =
-            widget.supabase
-                .storage
-                .from('service-gallery')
-                .getPublicUrl(
-                  storagePath,
-                );
+        final String publicUrl = widget.supabase.storage
+            .from('service-gallery')
+            .getPublicUrl(storagePath);
 
-        publicUrls.add(
-          publicUrl,
-        );
+        publicUrls.add(publicUrl);
       }
 
       // ========================================================
@@ -490,21 +393,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
       await widget.supabase
           .from('services')
           .update({
-        'gallery':
-            publicUrls,
+            'gallery': publicUrls,
 
-        'updated_at':
-            DateTime.now()
-                .toIso8601String(),
-      })
-          .eq(
-        'id',
-        serviceId,
-      );
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', serviceId);
 
-      debugPrint(
-        'SERVICE: Gallery updated',
-      );
+      debugPrint('SERVICE: Gallery updated');
 
       // ========================================================
       // SUCCESS
@@ -518,13 +413,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       Navigator.of(context).pop(true);
     } catch (e, stackTrace) {
-      debugPrint(
-        'CREATE SERVICE ERROR: $e',
-      );
+      debugPrint('CREATE SERVICE ERROR: $e');
 
-      debugPrint(
-        'CREATE SERVICE STACKTRACE: $stackTrace',
-      );
+      debugPrint('CREATE SERVICE STACKTRACE: $stackTrace');
 
       // ========================================================
       // CLEANUP STORAGE
@@ -532,16 +423,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       if (uploadedPaths.isNotEmpty) {
         try {
-          await widget.supabase
-              .storage
+          await widget.supabase.storage
               .from('service-gallery')
-              .remove(
-                uploadedPaths,
-              );
+              .remove(uploadedPaths);
         } catch (cleanupError) {
-          debugPrint(
-            'STORAGE CLEANUP ERROR: $cleanupError',
-          );
+          debugPrint('STORAGE CLEANUP ERROR: $cleanupError');
         }
       }
 
@@ -551,17 +437,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       if (serviceId != null) {
         try {
-          await widget.supabase
-              .from('services')
-              .delete()
-              .eq(
-                'id',
-                serviceId,
-              );
+          await widget.supabase.from('services').delete().eq('id', serviceId);
         } catch (cleanupError) {
-          debugPrint(
-            'DATABASE CLEANUP ERROR: $cleanupError',
-          );
+          debugPrint('DATABASE CLEANUP ERROR: $cleanupError');
         }
       }
 
@@ -571,9 +449,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
         _isCreating = false;
       });
 
-      _showError(
-        _cleanError(e),
-      );
+      _showError(_cleanError(e));
     }
   }
 
@@ -581,46 +457,27 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   // UNIQUE SLUG
   // ============================================================
 
-  Future<String> _generateUniqueSlug(
-    String name,
-  ) async {
-    String baseSlug =
-        name
-            .toLowerCase()
-            .trim()
-            .replaceAll(
-              RegExp(
-                r'[^a-z0-9]+',
-              ),
-              '-',
-            )
-            .replaceAll(
-              RegExp(
-                r'^-+|-+$',
-              ),
-              '',
-            );
+  Future<String> _generateUniqueSlug(String name) async {
+    String baseSlug = name
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
 
     if (baseSlug.isEmpty) {
-      baseSlug =
-          'service';
+      baseSlug = 'service';
     }
 
-    String slug =
-        baseSlug;
+    String slug = baseSlug;
 
     int counter = 1;
 
     while (true) {
-      final List<dynamic> existing =
-          await widget.supabase
-              .from('services')
-              .select('id')
-              .eq(
-                'slug',
-                slug,
-              )
-              .limit(1);
+      final List<dynamic> existing = await widget.supabase
+          .from('services')
+          .select('id')
+          .eq('slug', slug)
+          .limit(1);
 
       if (existing.isEmpty) {
         return slug;
@@ -628,8 +485,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       counter++;
 
-      slug =
-          '$baseSlug-$counter';
+      slug = '$baseSlug-$counter';
     }
   }
 
@@ -644,55 +500,30 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_isLoadingEventTypes) {
       return Container(
-        width:
-            double.infinity,
+        width: double.infinity,
 
-        padding:
-            const EdgeInsets.symmetric(
-          vertical: 22,
+        padding: const EdgeInsets.symmetric(vertical: 22),
+
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+
+          borderRadius: BorderRadius.circular(12),
         ),
 
-        decoration:
-            BoxDecoration(
-          border:
-              Border.all(
-            color:
-                Colors.grey.shade300,
-          ),
-
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
-        ),
-
-        child:
-            const Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
             SizedBox(
-              width:
-                  20,
-              height:
-                  20,
+              width: 20,
+              height: 20,
 
-              child:
-                  CircularProgressIndicator(
-                strokeWidth:
-                    2,
-              ),
+              child: AppShimmerIndicator(strokeWidth: 2),
             ),
 
-            SizedBox(
-              width:
-                  10,
-            ),
+            SizedBox(width: 10),
 
-            Text(
-              'Loading event types...',
-            ),
+            Text('Loading event types...'),
           ],
         ),
       );
@@ -704,106 +535,57 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_eventTypeError != null) {
       return Container(
-        width:
-            double.infinity,
+        width: double.infinity,
 
-        padding:
-            const EdgeInsets.all(
-          14,
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+
+          border: Border.all(color: Colors.red.shade200),
+
+          borderRadius: BorderRadius.circular(12),
         ),
 
-        decoration:
-            BoxDecoration(
-          color:
-              Colors.red.shade50,
-
-          border:
-              Border.all(
-            color:
-                Colors.red.shade200,
-          ),
-
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
-        ),
-
-        child:
-            Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.error_outline,
-                  color:
-                      Colors.red.shade700,
-                ),
+                Icon(Icons.error_outline, color: Colors.red.shade700),
 
-                const SizedBox(
-                  width:
-                      8,
-                ),
+                const SizedBox(width: 8),
 
                 const Expanded(
-                  child:
-                      Text(
+                  child: Text(
                     'Failed to load event types.',
-                    style:
-                        TextStyle(
-                      fontWeight:
-                          FontWeight.w700,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(
-              height:
-                  8,
-            ),
+            const SizedBox(height: 8),
 
             Text(
               _eventTypeError!,
 
-              maxLines:
-                  5,
+              maxLines: 5,
 
-              overflow:
-                  TextOverflow.ellipsis,
+              overflow: TextOverflow.ellipsis,
 
-              style:
-                  TextStyle(
-                fontSize:
-                    12,
-
-                color:
-                    Colors.red.shade700,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.red.shade700),
             ),
 
-            const SizedBox(
-              height:
-                  10,
-            ),
+            const SizedBox(height: 10),
 
             OutlinedButton.icon(
-              onPressed:
-                  _loadEventTypes,
+              onPressed: _loadEventTypes,
 
-              icon:
-                  const Icon(
-                Icons.refresh,
-              ),
+              icon: const Icon(Icons.refresh),
 
-              label:
-                  const Text(
-                'Retry',
-              ),
+              label: const Text('Retry'),
             ),
           ],
         ),
@@ -816,50 +598,26 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_eventTypes.isEmpty) {
       return Container(
-        width:
-            double.infinity,
+        width: double.infinity,
 
-        padding:
-            const EdgeInsets.all(
-          14,
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+
+          border: Border.all(color: Colors.orange.shade200),
+
+          borderRadius: BorderRadius.circular(12),
         ),
 
-        decoration:
-            BoxDecoration(
-          color:
-              Colors.orange.shade50,
-
-          border:
-              Border.all(
-            color:
-                Colors.orange.shade200,
-          ),
-
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
-        ),
-
-        child:
-            Row(
+        child: Row(
           children: [
-            Icon(
-              Icons.info_outline,
-              color:
-                  Colors.orange.shade800,
-            ),
+            Icon(Icons.info_outline, color: Colors.orange.shade800),
 
-            const SizedBox(
-              width:
-                  8,
-            ),
+            const SizedBox(width: 8),
 
             const Expanded(
-              child:
-                  Text(
-                'No event types found in the database.',
-              ),
+              child: Text('No event types found in the database.'),
             ),
           ],
         ),
@@ -871,201 +629,100 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     // ----------------------------------------------------------
 
     return Wrap(
-      spacing:
-          10,
+      spacing: 10,
 
-      runSpacing:
-          10,
+      runSpacing: 10,
 
-      children:
-          _eventTypes.map(
-        (
-          Map<String, dynamic>
-              eventType,
-        ) {
-          final String id =
-              eventType['id']
-                      ?.toString() ??
-                  '';
+      children: _eventTypes.map((Map<String, dynamic> eventType) {
+        final String id = eventType['id']?.toString() ?? '';
 
-          final String name =
-              eventType['name']
-                      ?.toString() ??
-                  'Unnamed';
+        final String name = eventType['name']?.toString() ?? 'Unnamed';
 
-          final String icon =
-              eventType['icon']
-                      ?.toString() ??
-                  '';
+        final String icon = eventType['icon']?.toString() ?? '';
 
-          final bool selected =
-              _selectedEventTypeId ==
-                  id;
+        final bool selected = _selectedEventTypeId == id;
 
-          return InkWell(
-            borderRadius:
-                BorderRadius.circular(
-              12,
+        return InkWell(
+          borderRadius: BorderRadius.circular(12),
+
+          onTap: _isCreating
+              ? null
+              : () {
+                  _selectEventType(id);
+                },
+
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+
+            decoration: BoxDecoration(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                        .withValues(alpha: 0.10)
+                  : Theme.of(context).colorScheme.surface,
+
+              border: Border.all(
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey.shade300,
+
+                width: selected ? 1.5 : 1,
+              ),
+
+              borderRadius: BorderRadius.circular(12),
             ),
 
-            onTap:
-                _isCreating
-                    ? null
-                    : () {
-                        _selectEventType(
-                          id,
-                        );
-                      },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
 
-            child:
-                AnimatedContainer(
-              duration:
-                  const Duration(
-                milliseconds:
-                    180,
-              ),
+              children: [
+                if (icon.isNotEmpty)
+                  Text(icon, style: const TextStyle(fontSize: 17))
+                else
+                  Icon(
+                    Icons.event_outlined,
 
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal:
-                    14,
+                    size: 18,
 
-                vertical:
-                    11,
-              ),
-
-              decoration:
-                  BoxDecoration(
-                color:
-                    selected
-                        ? Theme.of(
-                            context,
-                          )
-                            .colorScheme
-                            .primary
-                            .withValues(
-                              alpha: 0.10,
-                            )
-                        : Theme.of(
-                            context,
-                          )
-                            .colorScheme
-                            .surface,
-
-                border:
-                    Border.all(
-                  color:
-                      selected
-                          ? Theme.of(
-                              context,
-                            )
-                              .colorScheme
-                              .primary
-                          : Colors.grey.shade300,
-
-                  width:
-                      selected
-                          ? 1.5
-                          : 1,
-                ),
-
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
-              ),
-
-              child:
-                  Row(
-                mainAxisSize:
-                    MainAxisSize.min,
-
-                children: [
-                  if (icon.isNotEmpty)
-                    Text(
-                      icon,
-
-                      style:
-                          const TextStyle(
-                        fontSize:
-                            17,
-                      ),
-                    )
-                  else
-                    Icon(
-                      Icons.event_outlined,
-
-                      size:
-                          18,
-
-                      color:
-                          selected
-                              ? Theme.of(
-                                  context,
-                                )
-                                  .colorScheme
-                                  .primary
-                              : Colors.grey.shade700,
-                    ),
-
-                  const SizedBox(
-                    width:
-                        7,
+                    color: selected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.shade700,
                   ),
 
-                  Text(
-                    name,
+                const SizedBox(width: 7),
 
-                    style:
-                        TextStyle(
-                      fontSize:
-                          13,
+                Text(
+                  name,
 
-                      fontWeight:
-                          selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                  style: TextStyle(
+                    fontSize: 13,
 
-                      color:
-                          selected
-                              ? Theme.of(
-                                  context,
-                                )
-                                    .colorScheme
-                                    .primary
-                              : Colors.black87,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+
+                    color: selected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.black87,
+                  ),
+                ),
+
+                if (selected)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6),
+
+                    child: Icon(
+                      Icons.check_circle,
+
+                      size: 16,
+
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-
-                  if (selected)
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(
-                        left:
-                            6,
-                      ),
-
-                      child:
-                          Icon(
-                        Icons.check_circle,
-
-                        size:
-                            16,
-
-                        color:
-                            Theme.of(
-                          context,
-                        )
-                                .colorScheme
-                                .primary,
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
-          );
-        },
-      ).toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1080,39 +737,22 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_isLoadingCategories) {
       return Container(
-        height:
-            56,
+        height: 56,
 
-        alignment:
-            Alignment.center,
+        alignment: Alignment.center,
 
-        decoration:
-            BoxDecoration(
-          border:
-              Border.all(
-            color:
-                Colors.grey.shade400,
-          ),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
 
-          borderRadius:
-              BorderRadius.circular(
-            8,
-          ),
+          borderRadius: BorderRadius.circular(8),
         ),
 
-        child:
-            const SizedBox(
-          width:
-              20,
+        child: const SizedBox(
+          width: 20,
 
-          height:
-              20,
+          height: 20,
 
-          child:
-              CircularProgressIndicator(
-            strokeWidth:
-                2,
-          ),
+          child: AppShimmerIndicator(strokeWidth: 2),
         ),
       );
     }
@@ -1123,86 +763,50 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_categoryError != null) {
       return Container(
-        width:
-            double.infinity,
+        width: double.infinity,
 
-        padding:
-            const EdgeInsets.all(
-          14,
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+
+          borderRadius: BorderRadius.circular(8),
         ),
 
-        decoration:
-            BoxDecoration(
-          color:
-              Colors.red.shade50,
-
-          borderRadius:
-              BorderRadius.circular(
-            8,
-          ),
-        ),
-
-        child:
-            Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             Text(
               'Unable to load categories.',
 
-              style:
-                  TextStyle(
-                color:
-                    Colors.red.shade700,
+              style: TextStyle(
+                color: Colors.red.shade700,
 
-                fontWeight:
-                    FontWeight.w700,
+                fontWeight: FontWeight.w700,
               ),
             ),
 
-            const SizedBox(
-              height:
-                  6,
-            ),
+            const SizedBox(height: 6),
 
             Text(
               _categoryError!,
 
-              maxLines:
-                  4,
+              maxLines: 4,
 
-              overflow:
-                  TextOverflow.ellipsis,
+              overflow: TextOverflow.ellipsis,
 
-              style:
-                  TextStyle(
-                color:
-                    Colors.red.shade700,
-
-                fontSize:
-                    12,
-              ),
+              style: TextStyle(color: Colors.red.shade700, fontSize: 12),
             ),
 
-            const SizedBox(
-              height:
-                  8,
-            ),
+            const SizedBox(height: 8),
 
             OutlinedButton.icon(
-              onPressed:
-                  _loadCategories,
+              onPressed: _loadCategories,
 
-              icon:
-                  const Icon(
-                Icons.refresh,
-              ),
+              icon: const Icon(Icons.refresh),
 
-              label:
-                  const Text(
-                'Retry',
-              ),
+              label: const Text('Retry'),
             ),
           ],
         ),
@@ -1215,35 +819,19 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
     if (_categories.isEmpty) {
       return Container(
-        width:
-            double.infinity,
+        width: double.infinity,
 
-        padding:
-            const EdgeInsets.all(
-          14,
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+
+          border: Border.all(color: Colors.orange.shade200),
+
+          borderRadius: BorderRadius.circular(8),
         ),
 
-        decoration:
-            BoxDecoration(
-          color:
-              Colors.orange.shade50,
-
-          border:
-              Border.all(
-            color:
-                Colors.orange.shade200,
-          ),
-
-          borderRadius:
-              BorderRadius.circular(
-            8,
-          ),
-        ),
-
-        child:
-            const Text(
-          'No categories found in category_nodes.',
-        ),
+        child: const Text('No categories found in category_nodes.'),
       );
     }
 
@@ -1252,68 +840,37 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     // ----------------------------------------------------------
 
     return DropdownButtonFormField<String>(
-      initialValue:
-          _selectedCategoryId,
+      initialValue: _selectedCategoryId,
 
-      isExpanded:
-          true,
+      isExpanded: true,
 
-      decoration:
-          const InputDecoration(
-        hintText:
-            'Select category',
+      decoration: const InputDecoration(
+        hintText: 'Select category',
 
-        prefixIcon:
-            Icon(
-          Icons.category_outlined,
-        ),
+        prefixIcon: Icon(Icons.category_outlined),
 
-        border:
-            OutlineInputBorder(),
+        border: OutlineInputBorder(),
       ),
 
-      items:
-          _categories.map(
-        (
-          Map<String, dynamic>
-              category,
-        ) {
-          final String id =
-              category['id']
-                      ?.toString() ??
-                  '';
+      items: _categories.map((Map<String, dynamic> category) {
+        final String id = category['id']?.toString() ?? '';
 
-          final String name =
-              category['name']
-                      ?.toString() ??
-                  'Unnamed';
+        final String name = category['name']?.toString() ?? 'Unnamed';
 
-          return DropdownMenuItem<String>(
-            value:
-                id,
+        return DropdownMenuItem<String>(
+          value: id,
 
-            child:
-                Text(
-              name,
+          child: Text(name, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
 
-              overflow:
-                  TextOverflow.ellipsis,
-            ),
-          );
-        },
-      ).toList(),
-
-      onChanged:
-          _isCreating
-              ? null
-              : (
-                  String? value,
-                ) {
-                  setState(() {
-                    _selectedCategoryId =
-                        value;
-                  });
-                },
+      onChanged: _isCreating
+          ? null
+          : (String? value) {
+              setState(() {
+                _selectedCategoryId = value;
+              });
+            },
     );
   }
 
@@ -1321,21 +878,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   // ERROR
   // ============================================================
 
-  void _showError(
-    String message,
-  ) {
+  void _showError(String message) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content:
-              Text(message),
-
-          backgroundColor:
-              Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
   }
 
@@ -1343,40 +892,23 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   // CLEAN ERROR
   // ============================================================
 
-  String _cleanError(
-    Object error,
-  ) {
-    if (error
-        is PostgrestException) {
+  String _cleanError(Object error) {
+    if (error is PostgrestException) {
       return error.message;
     }
 
-    return error
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
+    return error.toString().replaceFirst('Exception: ', '');
   }
 
   // ============================================================
   // LABEL
   // ============================================================
 
-  Widget _buildLabel(
-    String text,
-  ) {
+  Widget _buildLabel(String text) {
     return Text(
       text,
 
-      style:
-          const TextStyle(
-        fontSize:
-            13,
-
-        fontWeight:
-            FontWeight.w700,
-      ),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
     );
   }
 
@@ -1385,383 +917,230 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Dialog(
-      insetPadding:
-          const EdgeInsets.symmetric(
-        horizontal:
-            16,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
 
-        vertical:
-            24,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
 
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(
-          22,
-        ),
-      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 800),
 
-      child:
-          ConstrainedBox(
-        constraints:
-            const BoxConstraints(
-          maxWidth:
-              560,
-
-          maxHeight:
-              800,
-        ),
-
-        child:
-            Column(
+        child: Column(
           children: [
             // ==================================================
             // HEADER
             // ==================================================
 
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                20,
-                18,
-                12,
-                14,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
 
-              child:
-                  Row(
+              child: Row(
                 children: [
                   const Expanded(
-                    child:
-                        Text(
+                    child: Text(
                       'Add Service',
 
-                      style:
-                          TextStyle(
-                        fontSize:
-                            21,
+                      style: TextStyle(
+                        fontSize: 21,
 
-                        fontWeight:
-                            FontWeight.w800,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
 
                   IconButton(
-                    onPressed:
-                        _isCreating
-                            ? null
-                            : () {
-                                Navigator.pop(
-                                  context,
-                                );
-                              },
+                    onPressed: _isCreating
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                          },
 
-                    icon:
-                        const Icon(
-                      Icons.close,
-                    ),
+                    icon: const Icon(Icons.close),
                   ),
                 ],
               ),
             ),
 
-            const Divider(
-              height:
-                  1,
-            ),
+            const Divider(height: 1),
 
             // ==================================================
             // FORM
             // ==================================================
-
             Expanded(
-              child:
-                  SingleChildScrollView(
-                padding:
-                    const EdgeInsets.fromLTRB(
-                  20,
-                  18,
-                  20,
-                  24,
-                ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
 
-                child:
-                    Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
                     // ==========================================
                     // SERVICE NAME
                     // ==========================================
 
-                    _buildLabel(
-                      'Service Name',
-                    ),
+                    _buildLabel('Service Name'),
 
-                    const SizedBox(
-                      height:
-                          7,
-                    ),
+                    const SizedBox(height: 7),
 
                     TextField(
-                      controller:
-                          _nameController,
+                      controller: _nameController,
 
-                      enabled:
-                          !_isCreating,
+                      enabled: !_isCreating,
 
-                      textInputAction:
-                          TextInputAction.next,
+                      textInputAction: TextInputAction.next,
 
-                      decoration:
-                          const InputDecoration(
-                        hintText:
-                            'Enter service name',
+                      decoration: const InputDecoration(
+                        hintText: 'Enter service name',
 
-                        border:
-                            OutlineInputBorder(),
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height:
-                          18,
-                    ),
+                    const SizedBox(height: 18),
 
                     // ==========================================
                     // CATEGORY
                     // ==========================================
+                    _buildLabel('Category'),
 
-                    _buildLabel(
-                      'Category',
-                    ),
-
-                    const SizedBox(
-                      height:
-                          7,
-                    ),
+                    const SizedBox(height: 7),
 
                     _buildCategoryDropdown(),
 
-                    const SizedBox(
-                      height:
-                          20,
-                    ),
+                    const SizedBox(height: 20),
 
                     // ==========================================
                     // EVENT TYPE
                     // ==========================================
+                    _buildLabel('Event Type'),
 
-                    _buildLabel(
-                      'Event Type',
-                    ),
-
-                    const SizedBox(
-                      height:
-                          5,
-                    ),
+                    const SizedBox(height: 5),
 
                     Text(
                       'Select the event this service is suitable for',
 
-                      style:
-                          TextStyle(
-                        fontSize:
-                            12,
+                      style: TextStyle(
+                        fontSize: 12,
 
-                        color:
-                            Colors.grey.shade600,
+                        color: Colors.grey.shade600,
                       ),
                     ),
 
-                    const SizedBox(
-                      height:
-                          10,
-                    ),
+                    const SizedBox(height: 10),
 
                     _buildEventTypeSection(),
 
-                    const SizedBox(
-                      height:
-                          20,
-                    ),
+                    const SizedBox(height: 20),
 
                     // ==========================================
                     // DESCRIPTION
                     // ==========================================
+                    _buildLabel('Description'),
 
-                    _buildLabel(
-                      'Description',
-                    ),
-
-                    const SizedBox(
-                      height:
-                          7,
-                    ),
+                    const SizedBox(height: 7),
 
                     TextField(
-                      controller:
-                          _descriptionController,
+                      controller: _descriptionController,
 
-                      enabled:
-                          !_isCreating,
+                      enabled: !_isCreating,
 
-                      maxLines:
-                          3,
+                      maxLines: 3,
 
-                      decoration:
-                          const InputDecoration(
-                        hintText:
-                            'Describe your service',
+                      decoration: const InputDecoration(
+                        hintText: 'Describe your service',
 
-                        border:
-                            OutlineInputBorder(),
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height:
-                          18,
-                    ),
+                    const SizedBox(height: 18),
 
                     // ==========================================
                     // PRICE
                     // ==========================================
+                    _buildLabel('Price'),
 
-                    _buildLabel(
-                      'Price',
-                    ),
+                    const SizedBox(height: 7),
 
-                    const SizedBox(
-                      height:
-                          7,
+                    ServicePricingFields(
+                      value: pricing,
+                      onChanged: (value) => setState(() => pricing = value),
                     ),
 
                     TextField(
-                      controller:
-                          _priceController,
+                      controller: _priceController,
 
-                      enabled:
-                          !_isCreating,
+                      enabled: !_isCreating,
 
-                      keyboardType:
-                          const TextInputType
-                              .numberWithOptions(
-                        decimal:
-                            true,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
 
-                      decoration:
-                          const InputDecoration(
-                        prefixText:
-                            '₹ ',
+                      decoration: const InputDecoration(
+                        prefixText: '₹ ',
 
-                        hintText:
-                            'Enter price',
+                        hintText: 'Enter price',
 
-                        border:
-                            OutlineInputBorder(),
+                        border: OutlineInputBorder(),
                       ),
                     ),
 
-                    const SizedBox(
-                      height:
-                          20,
-                    ),
+                    const SizedBox(height: 20),
 
                     // ==========================================
                     // IMAGES
                     // ==========================================
-
                     IgnorePointer(
-                      ignoring:
-                          _isCreating,
+                      ignoring: _isCreating,
 
-                      child:
-                          ImagePickerWidget(
-                        images:
-                            _selectedImages,
+                      child: ImagePickerWidget(
+                        images: _selectedImages,
 
-                        onChanged:
-                            (
-                          List<XFile>
-                              images,
-                        ) {
+                        onChanged: (List<XFile> images) {
                           setState(() {
-                            _selectedImages =
-                                images;
+                            _selectedImages = images;
                           });
                         },
 
-                        maxImages:
-                            8,
+                        maxImages: 8,
 
-                        cropRatioX:
-                            16,
+                        cropRatioX: 16,
 
-                        cropRatioY:
-                            9,
+                        cropRatioY: 9,
 
-                        cropTitle:
-                            'Adjust Service Image',
+                        cropTitle: 'Adjust Service Image',
                       ),
                     ),
 
-                    const SizedBox(
-                      height:
-                          24,
-                    ),
+                    const SizedBox(height: 24),
 
                     // ==========================================
                     // CREATE
                     // ==========================================
-
                     SizedBox(
-                      width:
-                          double.infinity,
+                      width: double.infinity,
 
-                      height:
-                          52,
+                      height: 52,
 
-                      child:
-                          FilledButton.icon(
-                        onPressed:
-                            _isCreating
-                                ? null
-                                : _createService,
+                      child: FilledButton.icon(
+                        onPressed: _isCreating ? null : _createService,
 
-                        icon:
-                            _isCreating
-                                ? const SizedBox(
-                                    width:
-                                        19,
+                        icon: _isCreating
+                            ? const SizedBox(
+                                width: 19,
 
-                                    height:
-                                        19,
+                                height: 19,
 
-                                    child:
-                                        CircularProgressIndicator(
-                                      strokeWidth:
-                                          2,
+                                child: AppShimmerIndicator(
+                                  strokeWidth: 2,
 
-                                      color:
-                                          Colors.white,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons
-                                        .add_business_outlined,
-                                  ),
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.add_business_outlined),
 
-                        label:
-                            Text(
+                        label: Text(
                           _isCreating
                               ? 'Creating Service...'
                               : 'Create Service',

@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vendor/models/app_settings_model.dart';
+import 'package:vendor/models/service_model.dart';
+import 'package:vendor/repositories/service_repository.dart';
+import 'package:vendor/screens/main/listings_screen.dart';
+import 'package:vendor/services/app_settings_controller.dart';
+
+class EmptyServices extends ServiceRepository {
+  EmptyServices(SupabaseClient client) : super(supabase: client);
+  @override
+  Future<List<ServiceModel>> getMyServices() async => [];
+}
+
+void main() {
+  late SupabaseClient client;
+  late AppSettingsController settings;
+  setUp(() {
+    client = SupabaseClient('https://example.supabase.co', 'test-key');
+    settings = AppSettingsController(initial: const AppSettingsModel());
+  });
+  tearDown(() async {
+    settings.dispose();
+    await client.dispose();
+  });
+  Future<void> page(
+    WidgetTester tester,
+    Future<List<Map<String, dynamic>>> Function() load,
+  ) async {
+    await tester.pumpWidget(
+      AppSettingsScope(
+        controller: settings,
+        child: MaterialApp(
+          home: ListingsScreen(
+            client: client,
+            repository: EmptyServices(client),
+            loadBusinesses: load,
+            loadMetrics: () async => {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('new vendor sees add business', (tester) async {
+    await page(tester, () async => []);
+    expect(find.text('Add a business to get started'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Add a business'), findsOneWidget);
+    expect(find.text('No services yet'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('add-service-fab')));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a service'), findsOneWidget);
+    expect(find.text('Add a business'), findsNWidgets(2));
+  });
+  testWidgets('inactive business also requires an active business', (
+    tester,
+  ) async {
+    await page(
+      tester,
+      () async => [
+        {'id': 'b', 'name': 'Business', 'is_active': false},
+      ],
+    );
+    expect(find.text('Add a business to get started'), findsOneWidget);
+  });
+  testWidgets('active business without listings gets service empty state', (
+    tester,
+  ) async {
+    await page(
+      tester,
+      () async => [
+        {'id': 'b', 'name': 'Business', 'is_active': true},
+      ],
+    );
+    expect(find.text('No services yet'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Add Service'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('add-service-fab')));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a service'), findsOneWidget);
+    expect(find.text('Add a business'), findsOneWidget);
+    expect(find.text('Add a business to get started'), findsNothing);
+  });
+  testWidgets('business failure shows retry instead of onboarding', (
+    tester,
+  ) async {
+    await page(tester, () async => throw Exception('offline'));
+    expect(find.text('Could not load businesses'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Add a business to get started'), findsNothing);
+  });
+}

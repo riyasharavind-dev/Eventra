@@ -1,16 +1,17 @@
+
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
+
+    // Firebase configuration
     id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
+
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.example.vendor"
 
-    // image_cropper 12.x requires a modern Android compile SDK.
-    compileSdk = 36
+    compileSdk = 37
 
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +24,6 @@ android {
         applicationId = "com.example.vendor"
 
         minSdk = flutter.minSdkVersion
-
         targetSdk = 36
 
         versionCode = flutter.versionCode

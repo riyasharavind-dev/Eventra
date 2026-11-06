@@ -649,7 +649,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
           const SliverToBoxAdapter(
             child: SizedBox(
-              height: 85,
+              height: 128,
             ),
           ),
         ],

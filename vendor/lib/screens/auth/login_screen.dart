@@ -1,3 +1,6 @@
+import '../../widgets/common/app_shimmer.dart';
+import '../../utils/auth_error_message.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../repositories/auth_repository.dart';
@@ -21,11 +24,61 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  static const Color _wine = Color(0xFF80152C);
+  static const Color _background = Color(0xFFF8F8FA);
+  static const Color _textColor = Color(0xFF17171B);
+  static const Color _hintColor = Color(0xFF85838E);
+  static const Color _borderColor = Color(0xFFE5E5EB);
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // ==========================================
+  // INPUT DECORATION
+  // ==========================================
+
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        color: _hintColor,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      prefixIcon: Icon(icon, size: 21, color: _hintColor),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _wine, width: 1.3),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+    );
   }
 
   // ==========================================
@@ -36,6 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _isLoading = true;
@@ -49,44 +104,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // --------------------------------------
-      // LOGIN SUCCESS
-      // --------------------------------------
-
       if (response.user != null && response.session != null) {
-        /*
-         * DO NOT NAVIGATE HERE.
-         *
-         * Supabase auth state changes automatically.
-         *
-         * VendorEntryScreen listens to
-         * onAuthStateChange and will automatically
-         * replace LoginScreen with VendorMainScreen.
-         */
+        // Supabase auth state change handles navigation.
         return;
       }
 
-      // --------------------------------------
-      // LOGIN FAILED
-      // --------------------------------------
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Login failed. Please try again.',
-          ),
-        ),
+        const SnackBar(content: Text('Login failed. Please try again.')),
       );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error.toString(),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(authErrorMessage(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -103,9 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _openSignup() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const SignupScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const SignupScreen()),
     );
   }
 
@@ -116,86 +144,79 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-              ),
+              constraints: const BoxConstraints(maxWidth: 400),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
 
                     // ==================================
-                    // APP NAME
+                    // HEADING — NO LOGO
                     // ==================================
-
                     const Text(
-                      'EVENTRA',
-                      textAlign: TextAlign.center,
+                      'Welcome back',
                       style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 3,
+                        fontSize: 29,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.7,
+                        color: _textColor,
                       ),
                     ),
 
-                    const SizedBox(height: 12),
-
-                    // ==================================
-                    // TITLE
-                    // ==================================
+                    const SizedBox(height: 9),
 
                     const Text(
-                      'Vendor Login',
-                      textAlign: TextAlign.center,
+                      'Sign in to continue to your account.',
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        height: 1.5,
+                        color: _hintColor,
                       ),
                     ),
 
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Sign in to manage your Eventra business',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 34),
 
                     // ==================================
                     // EMAIL
                     // ==================================
+                    const Text(
+                      'Email address',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _textColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: 9),
 
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email',
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                        ),
-                        border: OutlineInputBorder(),
+                      autocorrect: false,
+                      decoration: _inputDecoration(
+                        hint: 'Enter your email',
+                        icon: Icons.mail_outline_rounded,
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Please enter your email';
                         }
 
-                        if (!value.contains('@')) {
+                        final email = value.trim();
+
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
                           return 'Please enter a valid email';
                         }
 
@@ -203,37 +224,47 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 22),
 
                     // ==================================
                     // PASSWORD
                     // ==================================
+                    const Text(
+                      'Password',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _textColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: 9),
 
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _signIn(),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                        ),
+                      decoration: _inputDecoration(
+                        hint: 'Enter your password',
+                        icon: Icons.lock_outline_rounded,
                         suffixIcon: IconButton(
+                          tooltip: _obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
                           onPressed: () {
                             setState(() {
-                              _obscurePassword =
-                                  !_obscurePassword;
+                              _obscurePassword = !_obscurePassword;
                             });
                           },
                           icon: Icon(
                             _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                            color: _hintColor,
                           ),
                         ),
-                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -249,55 +280,84 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ==================================
                     // SIGN IN BUTTON
                     // ==================================
-
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _signIn,
+                        onPressed: _isLoading ? null : _signIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _wine,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: _wine.withValues(
+                            alpha: 0.65,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                         child: _isLoading
                             ? const SizedBox(
-                                height: 22,
                                 width: 22,
-                                child:
-                                    CircularProgressIndicator(
+                                height: 22,
+                                child: AppShimmerIndicator(
                                   strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Sign in',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(width: 9),
+                                  Icon(Icons.arrow_forward_rounded, size: 19),
+                                ],
                               ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 26),
 
                     // ==================================
-                    // CREATE ACCOUNT
+                    // SIGNUP LINK
                     // ==================================
-
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          "Don't have a vendor account? ",
+                        const Flexible(
+                          child: Text(
+                            "Don't have an account? ",
+                            style: TextStyle(fontSize: 13, color: _hintColor),
+                          ),
                         ),
                         TextButton(
-                          onPressed:
-                              _isLoading ? null : _openSignup,
+                          onPressed: _isLoading ? null : _openSignup,
+                          style: TextButton.styleFrom(
+                            foregroundColor: _wine,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 8,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: const Text(
-                            'Create Account',
+                            'Create account',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

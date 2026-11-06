@@ -1,234 +1,187 @@
+import 'service_pricing.dart';
+
 class ServiceModel {
   final String id;
   final String vendorId;
+
+  final String? businessId;
   final String categoryNodeId;
+  final String? eventTypeId;
 
   final String name;
   final String slug;
   final String? description;
 
+  final ServicePricing pricing;
+  String get priceLabel => pricing.format(price);
   final double price;
-
   final List<String> gallery;
 
   final bool isActive;
 
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-
-  // Category information
-  final String? categoryId;
   final String? categoryName;
   final String? categorySlug;
   final String? categoryParentId;
 
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   const ServiceModel({
     required this.id,
     required this.vendorId,
+    this.businessId,
     required this.categoryNodeId,
+    this.eventTypeId,
     required this.name,
     required this.slug,
     this.description,
+    this.pricing = const ServicePricing(),
     required this.price,
     required this.gallery,
     required this.isActive,
-    this.createdAt,
-    this.updatedAt,
-    this.categoryId,
     this.categoryName,
     this.categorySlug,
     this.categoryParentId,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  // ============================================================
-  // FROM SUPABASE
-  // ============================================================
+  factory ServiceModel.fromMap(Map<String, dynamic> map) {
+    final dynamic rawGallery = map['gallery'];
 
-  factory ServiceModel.fromMap(
-    Map<String, dynamic> map,
-  ) {
-    final dynamic category =
-        map['category_nodes'];
+    final List<String> gallery;
 
-    Map<String, dynamic>? categoryMap;
+    if (rawGallery is List) {
+      gallery = rawGallery
+          .map((item) => item.toString())
+          .where((item) => item.trim().isNotEmpty)
+          .toList();
+    } else {
+      gallery = [];
+    }
 
-    if (category is Map) {
-      categoryMap =
-          Map<String, dynamic>.from(category);
+    final dynamic rawCategory = map['category_nodes'];
+
+    String? categoryName;
+    String? categorySlug;
+    String? categoryParentId;
+
+    if (rawCategory is Map) {
+      categoryName = rawCategory['name']?.toString();
+
+      categorySlug = rawCategory['slug']?.toString();
+
+      categoryParentId = rawCategory['parent_id']?.toString();
     }
 
     return ServiceModel(
-      id: map['id']?.toString() ?? '',
-      vendorId:
-          map['vendor_id']?.toString() ?? '',
-      categoryNodeId:
-          map['category_node_id']?.toString() ?? '',
+      id: map['id'].toString(),
 
-      name:
-          map['name']?.toString() ??
-              'Unnamed Service',
+      vendorId: map['vendor_id'].toString(),
 
-      slug:
-          map['slug']?.toString() ?? '',
+      businessId: map['business_id']?.toString(),
 
-      description:
-          map['description']?.toString(),
+      categoryNodeId: map['category_node_id'].toString(),
 
-      price:
-          _parsePrice(map['price']),
+      eventTypeId: map['event_type_id']?.toString(),
 
-      gallery:
-          _parseGallery(map['gallery']),
+      name: map['name']?.toString() ?? '',
 
-      isActive:
-          map['is_active'] == true,
+      slug: map['slug']?.toString() ?? '',
 
-      createdAt:
-          _parseDate(map['created_at']),
+      description: map['description']?.toString(),
 
-      updatedAt:
-          _parseDate(map['updated_at']),
+      pricing: ServicePricing.fromMap(map),
+      price: _parseDouble(map['price']),
 
-      categoryId:
-          categoryMap?['id']?.toString(),
+      gallery: gallery,
 
-      categoryName:
-          categoryMap?['name']?.toString(),
+      isActive: map['is_active'] == true,
 
-      categorySlug:
-          categoryMap?['slug']?.toString(),
+      categoryName: categoryName,
 
-      categoryParentId:
-          categoryMap?['parent_id']
-              ?.toString(),
+      categorySlug: categorySlug,
+
+      categoryParentId: categoryParentId,
+
+      createdAt: _parseDateTime(map['created_at']),
+
+      updatedAt: _parseDateTime(map['updated_at']),
     );
   }
-
-  // ============================================================
-  // TO MAP
-  // ============================================================
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'vendor_id': vendorId,
+      'business_id': businessId,
       'category_node_id': categoryNodeId,
+      'event_type_id': eventTypeId,
       'name': name,
       'slug': slug,
       'description': description,
       'price': price,
+      ...pricing.toMap(),
       'gallery': gallery,
       'is_active': isActive,
-      'created_at':
-          createdAt?.toIso8601String(),
-      'updated_at':
-          updatedAt?.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
-
-  // ============================================================
-  // COPY WITH
-  // ============================================================
 
   ServiceModel copyWith({
     String? id,
     String? vendorId,
+    String? businessId,
     String? categoryNodeId,
+    String? eventTypeId,
     String? name,
     String? slug,
     String? description,
     double? price,
+    ServicePricing? pricing,
     List<String>? gallery,
     bool? isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    String? categoryId,
     String? categoryName,
     String? categorySlug,
     String? categoryParentId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return ServiceModel(
       id: id ?? this.id,
       vendorId: vendorId ?? this.vendorId,
-      categoryNodeId:
-          categoryNodeId ??
-              this.categoryNodeId,
+      businessId: businessId ?? this.businessId,
+      categoryNodeId: categoryNodeId ?? this.categoryNodeId,
+      eventTypeId: eventTypeId ?? this.eventTypeId,
       name: name ?? this.name,
       slug: slug ?? this.slug,
-      description:
-          description ?? this.description,
+      description: description ?? this.description,
+      pricing: pricing ?? this.pricing,
       price: price ?? this.price,
-      gallery:
-          gallery ?? this.gallery,
-      isActive:
-          isActive ?? this.isActive,
-      createdAt:
-          createdAt ?? this.createdAt,
-      updatedAt:
-          updatedAt ?? this.updatedAt,
-      categoryId:
-          categoryId ?? this.categoryId,
-      categoryName:
-          categoryName ?? this.categoryName,
-      categorySlug:
-          categorySlug ?? this.categorySlug,
-      categoryParentId:
-          categoryParentId ??
-              this.categoryParentId,
+      gallery: gallery ?? this.gallery,
+      isActive: isActive ?? this.isActive,
+      categoryName: categoryName ?? this.categoryName,
+      categorySlug: categorySlug ?? this.categorySlug,
+      categoryParentId: categoryParentId ?? this.categoryParentId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  // ============================================================
-  // PRICE
-  // ============================================================
-
-  static double _parsePrice(
-    dynamic value,
-  ) {
+  static double _parseDouble(dynamic value) {
     if (value is num) {
       return value.toDouble();
     }
 
-    return double.tryParse(
-          value?.toString() ?? '',
-        ) ??
-        0;
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
-  // ============================================================
-  // GALLERY
-  // ============================================================
-
-  static List<String> _parseGallery(
-    dynamic value,
-  ) {
-    if (value is! List) {
-      return [];
+  static DateTime _parseDateTime(dynamic value) {
+    if (value is DateTime) {
+      return value;
     }
 
-    return value
-        .map(
-          (item) => item.toString(),
-        )
-        .where(
-          (item) => item.isNotEmpty,
-        )
-        .toList();
-  }
-
-  // ============================================================
-  // DATE
-  // ============================================================
-
-  static DateTime? _parseDate(
-    dynamic value,
-  ) {
-    if (value == null) {
-      return null;
-    }
-
-    return DateTime.tryParse(
-      value.toString(),
-    );
+    return DateTime.parse(value.toString());
   }
 }

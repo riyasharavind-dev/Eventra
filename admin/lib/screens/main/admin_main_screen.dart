@@ -1,592 +1,323 @@
 import 'package:flutter/material.dart';
 
-import '../../widgets/admin_sidebar.dart';
+import '../../models/admin_module.dart';
+import '../../repositories/admin_repository.dart';
+import '../../widgets/admin_management_helpers.dart';
+import '../management/admin_dashboard_screen.dart';
+import '../management/admin_customer_app_screen.dart';
+import '../management/admin_home_feed_screen.dart';
+import '../management/admin_module_screen.dart';
 
-import '../banners/banners_screen.dart';
-import '../categories/category_screen.dart';
-import '../event_types/event_types_screen.dart';
-import '../services/services_screen.dart';
-import '../vendors/vendors_screen.dart';
-import '../customers/customers_screen.dart';
-import '../bookings/bookings_screen.dart';
-
-class AdminMainScreen
-    extends StatefulWidget {
-  const AdminMainScreen({
-    super.key,
-  });
-
+class AdminMainScreen extends StatefulWidget {
+  final AdminRepository? repository;
+  const AdminMainScreen({super.key, this.repository});
   @override
-  State<AdminMainScreen> createState() =>
-      _AdminMainScreenState();
+  State<AdminMainScreen> createState() => _AdminMainScreenState();
 }
 
-class _AdminMainScreenState
-    extends State<AdminMainScreen> {
-  // ===========================================================================
-  // CURRENT SECTION
-  // ===========================================================================
-
-  AdminSection _currentSection =
-      AdminSection.dashboard;
-
-  // ===========================================================================
-  // REFRESH KEYS
-  // ===========================================================================
-
-  int _bannersRefreshKey = 0;
-
-  int _eventTypesRefreshKey = 0;
-
-  int _categoriesRefreshKey = 0;
-
-  int _servicesRefreshKey = 0;
-
-  int _vendorsRefreshKey = 0;
-
-  int _customersRefreshKey = 0;
-
-  int _bookingsRefreshKey = 0;
-
-  // ===========================================================================
-  // BUILD
-  // ===========================================================================
-
+class _AdminMainScreenState extends State<AdminMainScreen> {
+  late final AdminRepository repo;
+  List<AdminModule> modules = [];
+  Map<String, dynamic>? session;
+  String selected = 'dashboard', moduleSearch = '';
+  Map<String, dynamic> filters = {};
+  int refreshKey = 0;
+  bool loading = true;
+  Object? error;
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final bool isMobile =
-        MediaQuery.sizeOf(context).width <
-            900;
+  void initState() {
+    super.initState();
+    repo = widget.repository ?? AdminRepository();
+    load();
+  }
 
-    return Scaffold(
-      appBar: _buildAppBar(
-        context,
-        isMobile,
-      ),
+  Future<void> load() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      final identity = await repo.session();
+      if (identity == null) {
+        throw StateError('This account has no active admin access.');
+      }
+      final catalog = await repo.catalog();
+      if (mounted) {
+        setState(() {
+          session = identity;
+          modules = catalog;
+          loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = e;
+          loading = false;
+        });
+      }
+    }
+  }
 
-      drawer: isMobile
-          ? _buildMobileDrawer()
-          : null,
+  void open(String name, Map<String, dynamic> values) {
+    setState(() {
+      selected = name;
+      filters = Map<String, dynamic>.from(values);
+      refreshKey++;
+    });
+  }
 
-      body: Row(
-        children: [
-          if (!isMobile)
-            AdminSidebar(
-              currentSection:
-                  _currentSection,
-              onSectionSelected:
-                  _selectSection,
-            ),
-
-          Expanded(
-            child:
-                _buildWorkspace(),
+  Future<void> logout() async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Sign out of admin?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Sign out'),
           ),
         ],
       ),
     );
-  }
-
-  // ===========================================================================
-  // APP BAR
-  // ===========================================================================
-
-  PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    bool isMobile,
-  ) {
-    return AppBar(
-      automaticallyImplyLeading:
-          isMobile,
-
-      title: Text(
-        _getSectionTitle(),
-        style:
-            const TextStyle(
-          fontWeight:
-              FontWeight.w700,
-        ),
-      ),
-
-      actions: [
-        if (_currentSection ==
-            AdminSection.banners)
-          IconButton(
-            tooltip:
-                'Refresh Banners',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.eventTypes)
-          IconButton(
-            tooltip:
-                'Refresh Event Types',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.categories)
-          IconButton(
-            tooltip:
-                'Refresh Categories',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.services)
-          IconButton(
-            tooltip:
-                'Refresh Services',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.vendors)
-          IconButton(
-            tooltip:
-                'Refresh Vendors',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.customers)
-          IconButton(
-            tooltip:
-                'Refresh Customers',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        if (_currentSection ==
-            AdminSection.bookings)
-          IconButton(
-            tooltip:
-                'Refresh Bookings',
-            onPressed:
-                _refreshCurrentSection,
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
-          ),
-
-        const SizedBox(
-          width: 8,
-        ),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // REFRESH
-  // ===========================================================================
-
-  void _refreshCurrentSection() {
-    setState(() {
-      switch (_currentSection) {
-        case AdminSection.dashboard:
-          break;
-
-        case AdminSection.banners:
-          _bannersRefreshKey++;
-          break;
-
-        case AdminSection.categories:
-          _categoriesRefreshKey++;
-          break;
-
-        case AdminSection.eventTypes:
-          _eventTypesRefreshKey++;
-          break;
-
-        case AdminSection.services:
-          _servicesRefreshKey++;
-          break;
-
-        case AdminSection.packages:
-          break;
-
-        case AdminSection.plans:
-          break;
-
-        case AdminSection.collabs:
-          break;
-
-        case AdminSection.vendors:
-          _vendorsRefreshKey++;
-          break;
-
-        case AdminSection.customers:
-          _customersRefreshKey++;
-          break;
-
-        case AdminSection.bookings:
-          _bookingsRefreshKey++;
-          break;
-
-        case AdminSection.settings:
-          break;
-      }
-    });
-  }
-
-  // ===========================================================================
-  // SECTION TITLE
-  // ===========================================================================
-
-  String _getSectionTitle() {
-    switch (_currentSection) {
-      case AdminSection.dashboard:
-        return 'Dashboard';
-
-      case AdminSection.banners:
-        return 'Banners';
-
-      case AdminSection.categories:
-        return 'Categories';
-
-      case AdminSection.eventTypes:
-        return 'Event Types';
-
-      case AdminSection.services:
-        return 'Services';
-
-      case AdminSection.packages:
-        return 'Packages';
-
-      case AdminSection.plans:
-        return 'Plans';
-
-      case AdminSection.collabs:
-        return 'Collabs';
-
-      case AdminSection.vendors:
-        return 'Vendors';
-
-      case AdminSection.customers:
-        return 'Customers';
-
-      case AdminSection.bookings:
-        return 'Bookings';
-
-      case AdminSection.settings:
-        return 'Settings';
-    }
-  }
-
-  // ===========================================================================
-  // SELECT SECTION
-  // ===========================================================================
-
-  void _selectSection(
-    AdminSection section,
-  ) {
-    setState(() {
-      _currentSection = section;
-    });
-
-    if (MediaQuery.sizeOf(context).width <
-        900) {
-      final navigator =
-          Navigator.of(context);
-
-      if (navigator.canPop()) {
-        navigator.pop();
+    if (yes == true) {
+      try {
+        await repo.db.auth.signOut();
+      } catch (e) {
+        if (mounted) {
+          adminError(context, e);
+        }
       }
     }
   }
 
-  // ===========================================================================
-  // WORKSPACE
-  // ===========================================================================
-
-  Widget _buildWorkspace() {
-    switch (_currentSection) {
-      // ========================================================================
-      // DASHBOARD
-      // ========================================================================
-
-      case AdminSection.dashboard:
-        return const _ComingSoonScreen(
-          title: 'Dashboard',
-          icon:
-              Icons.dashboard_outlined,
-          description:
-              'Eventra administration dashboard will be built here.',
-        );
-
-      // ========================================================================
-      // BANNERS
-      // ========================================================================
-
-      case AdminSection.banners:
-        return BannersScreen(
-          key: ValueKey(
-            'banners_$_bannersRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // CATEGORIES
-      // ========================================================================
-
-      case AdminSection.categories:
-        return CategoryScreen(
-          key: ValueKey(
-            'categories_$_categoriesRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // EVENT TYPES
-      // ========================================================================
-
-      case AdminSection.eventTypes:
-        return EventTypesScreen(
-          key: ValueKey(
-            'event_types_$_eventTypesRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // SERVICES
-      // ========================================================================
-
-      case AdminSection.services:
-        return ServicesScreen(
-          key: ValueKey(
-            'services_$_servicesRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // PACKAGES
-      // ========================================================================
-
-      case AdminSection.packages:
-        return const _ComingSoonScreen(
-          title: 'Packages',
-          icon:
-              Icons.inventory_2_outlined,
-          description:
-              'Package management will be connected here.',
-        );
-
-      // ========================================================================
-      // PLANS
-      // ========================================================================
-
-      case AdminSection.plans:
-        return const _ComingSoonScreen(
-          title: 'Plans',
-          icon:
-              Icons.view_agenda_outlined,
-          description:
-              'Event plan management will be connected here.',
-        );
-
-      // ========================================================================
-      // COLLABS
-      // ========================================================================
-
-      case AdminSection.collabs:
-        return const _ComingSoonScreen(
-          title: 'Collabs',
-          icon:
-              Icons.handshake_outlined,
-          description:
-              'Vendor collaboration management will be connected here.',
-        );
-
-      // ========================================================================
-      // VENDORS
-      // ========================================================================
-
-      case AdminSection.vendors:
-        return VendorsScreen(
-          key: ValueKey(
-            'vendors_$_vendorsRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // CUSTOMERS
-      // ========================================================================
-
-      case AdminSection.customers:
-        return CustomersScreen(
-          key: ValueKey(
-            'customers_$_customersRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // BOOKINGS
-      // ========================================================================
-
-      case AdminSection.bookings:
-        return BookingsScreen(
-          key: ValueKey(
-            'bookings_$_bookingsRefreshKey',
-          ),
-        );
-
-      // ========================================================================
-      // SETTINGS
-      // ========================================================================
-
-      case AdminSection.settings:
-        return const _ComingSoonScreen(
-          title: 'Settings',
-          icon:
-              Icons.settings_outlined,
-          description:
-              'Admin settings will be connected here.',
-        );
-    }
-  }
-
-  // ===========================================================================
-  // MOBILE DRAWER
-  // ===========================================================================
-
-  Widget _buildMobileDrawer() {
-    return SafeArea(
-      child: Drawer(
-        child: AdminSidebar(
-          currentSection:
-              _currentSection,
-          onSectionSelected:
-              _selectSection,
-        ),
-      ),
-    );
-  }
-}
-
-// ==============================================================================
-// COMING SOON
-// ==============================================================================
-
-class _ComingSoonScreen
-    extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-
-  const _ComingSoonScreen({
-    required this.title,
-    required this.description,
-    required this.icon,
-  });
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final theme =
-        Theme.of(context);
-
-    return Center(
-      child:
-          SingleChildScrollView(
-        padding:
-            const EdgeInsets.all(32),
-
+  Widget navigation({bool drawer = false}) {
+    final visible = modules
+        .where(
+          (m) => m.label.toLowerCase().contains(moduleSearch.toLowerCase()),
+        )
+        .toList();
+    final sections = visible.map((m) => m.section).toSet();
+    return Container(
+      width: 260,
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
-
           children: [
-            Container(
-              width: 90,
-              height: 90,
-
-              decoration:
-                  BoxDecoration(
-                color: theme
-                    .colorScheme
-                    .primaryContainer,
-                borderRadius:
-                    BorderRadius.circular(
-                  24,
-                ),
-              ),
-
-              child: Icon(
-                icon,
-                size: 46,
-                color: theme
-                    .colorScheme
-                    .onPrimaryContainer,
-              ),
-            ),
-
-            const SizedBox(
-              height: 20,
-            ),
-
-            Text(
-              title,
-              textAlign:
-                  TextAlign.center,
-              style:
-                  const TextStyle(
-                fontSize: 24,
-                fontWeight:
-                    FontWeight.w700,
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'EVENTRA',
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${session?['name'] ?? 'Admin'} · ${session?['access_level'] ?? ''}',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Find module',
+                    ),
+                    onChanged: (v) => setState(() => moduleSearch = v),
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              description,
-              textAlign:
-                  TextAlign.center,
-              style:
-                  const TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-                height: 1.5,
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                children: [
+                  ListTile(
+                    selected: selected == 'dashboard',
+                    leading: const Icon(Icons.dashboard_outlined),
+                    title: const Text('Dashboard'),
+                    onTap: () {
+                      if (drawer) {
+                        Navigator.pop(context);
+                      }
+                      open('dashboard', {});
+                    },
+                  ),
+                  ListTile(
+                    selected: selected == 'customer_app',
+                    leading: const Icon(Icons.phone_android_outlined),
+                    title: const Text('Customer App'),
+                    onTap: () {
+                      if (drawer) Navigator.pop(context);
+                      open('customer_app', {});
+                    },
+                  ),
+                  for (final section in sections) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 8, 8),
+                      child: Text(
+                        section.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    ...visible
+                        .where((m) => m.section == section)
+                        .map(
+                          (m) => ListTile(
+                            dense: true,
+                            selected: selected == m.name,
+                            selectedColor: Theme.of(context)
+                                .colorScheme
+                                .primary,
+                            leading: Icon(_icon(m.section), size: 20),
+                            title: Text(m.label),
+                            onTap: () {
+                              if (drawer) {
+                                Navigator.pop(context);
+                              }
+                              open(m.name, {});
+                            },
+                          ),
+                        ),
+                  ],
+                ],
               ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign out'),
+              onTap: logout,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  IconData _icon(String section) => switch (section) {
+    'People' => Icons.people_outline,
+    'Marketplace' => Icons.storefront_outlined,
+    'Operations' => Icons.event_note,
+    'Verification' => Icons.verified_user_outlined,
+    'Support' => Icons.support_agent,
+    'Reviews' => Icons.star_outline,
+    'Content' => Icons.article_outlined,
+    'Published Views' => Icons.public,
+    _ => Icons.admin_panel_settings_outlined,
+  };
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Eventra Admin')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  error.toString().replaceFirst('Bad state: ', ''),
+                  textAlign: TextAlign.center,
+                ),
+                TextButton(
+                  onPressed: load,
+                  child: const Text('Retry access check'),
+                ),
+                TextButton(
+                  onPressed: () => repo.db.auth.signOut(),
+                  child: const Text('Sign out'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    final mobile = MediaQuery.sizeOf(context).width < 950,
+        module = modules.where((m) => m.name == selected).firstOrNull;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          selected == 'customer_app'
+              ? 'Customer App'
+              : module?.label ?? 'Dashboard',
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh workspace',
+            onPressed: () {
+              setState(() => refreshKey++);
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Recheck admin permissions',
+            onPressed: load,
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+          ),
+        ],
+      ),
+      drawer: mobile
+          ? Drawer(width: 280, child: navigation(drawer: true))
+          : null,
+      body: Row(
+        children: [
+          if (!mobile) navigation(),
+          if (!mobile) const VerticalDivider(width: 1),
+          Expanded(
+            child: selected == 'dashboard'
+                ? AdminDashboardScreen(
+                    key: ValueKey('dashboard-$refreshKey'),
+                    repo: repo,
+                    modules: modules,
+                    onOpen: open,
+                  )
+                : selected == 'customer_app'
+                ? AdminCustomerAppScreen(
+                    key: ValueKey('customer-app-$refreshKey'),
+                    repo: repo,
+                    modules: modules,
+                    onOpen: open,
+                  )
+                : selected == 'home_feed_sections'
+                ? AdminHomeFeedScreen(
+                    key: ValueKey('home-feed-$refreshKey'),
+                    repo: repo,
+                    canWrite: session?['access_level'] != 'viewer',
+                  )
+                : module == null
+                ? const Center(child: Text('Select an admin module.'))
+                : AdminModuleScreen(
+                    key: ValueKey('${module.name}-$refreshKey'),
+                    repo: repo,
+                    module: module,
+                    modules: modules,
+                    filters: filters,
+                    canWrite: session?['access_level'] != 'viewer',
+                    isOwner: session?['access_level'] == 'owner',
+                  ),
+          ),
+        ],
       ),
     );
   }

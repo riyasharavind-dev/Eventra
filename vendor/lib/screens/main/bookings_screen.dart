@@ -1,1321 +1,666 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../widgets/common/app_shimmer.dart';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'dart:async';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
+
+import '../extended/eventra_calendar.dart';
 import '../../models/booking_model.dart';
+import '../../widgets/bookings/vendor_booking_card.dart';
+import '../../widgets/common/global_search_bar.dart';
+import '../../models/booking_list_filter.dart';
 import '../../repositories/booking_repository.dart';
-import '../../widgets/bookings/booking_details_dialog.dart';
+import '../extended/booking_details_screen.dart';
+import '../../widgets/bookings/booking_ui.dart';
 
 class BookingsScreen extends StatefulWidget {
+  final BookingRepository? repository;
+  final String initialStatus, initialBusiness, initialPeriod;
+
   const BookingsScreen({
     super.key,
+    this.repository,
+    this.initialStatus = 'all',
+    this.initialBusiness = 'all',
+    this.initialPeriod = 'all',
   });
 
   @override
-  State<BookingsScreen> createState() =>
-      _BookingsScreenState();
+  State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState
-    extends State<BookingsScreen> {
-  // ============================================================
-  // REPOSITORY
-  // ============================================================
+class _BookingsScreenState extends State<BookingsScreen>
+    with WidgetsBindingObserver {
+  late final BookingRepository repo;
+  RealtimeChannel? _bookingChannel;
+  StreamSubscription<RemoteMessage>? _bookingMessages;
+  Timer? _refreshDebounce;
 
-  final BookingRepository _repository =
-      BookingRepository();
+  final TextEditingController search = TextEditingController();
+  final Set<String> busyIds = {};
+  List<BookingModel> bookings = [];
 
-  // ============================================================
-  // STATE
-  // ============================================================
+  bool loading = true;
+  Object? error;
+  int generation = 0;
 
-  List<BookingModel> _bookings = [];
+  String status = 'all';
+  String business = 'all';
+  String period = 'all';
+  String dateFilter = 'all';
+  String sort = 'newest';
 
-  bool _isLoading = true;
+  DateTimeRange? range;
 
-  String? _errorMessage;
+  String t(String en, String ta) => bookingText(context, en, ta);
 
-  String _selectedFilter = 'all';
-
-  String _searchQuery = '';
-
-  // ============================================================
-  // INIT
-  // ============================================================
+  static const Color _wine = Color(0xFF80152C);
+  static const Color _pageBg = Color(0xFFF8F8FA);
+  static const Color _ink = Color(0xFF17171B);
+  static const Color _muted = Color(0xFF777783);
 
   @override
   void initState() {
     super.initState();
-
-    _loadBookings();
+    repo = widget.repository ?? BookingRepository();
+    status = widget.initialStatus;
+    business = widget.initialBusiness;
+    period = widget.initialPeriod;
+    WidgetsBinding.instance.addObserver(this);
+    _bookingChannel = repo.watchBookings(_scheduleRefresh);
+    // Push delivery also refreshes the open list, independently of database
+    // publication setup. Realtime covers devices with notifications disabled.
+    _bookingMessages = FirebaseMessaging.onMessage.listen((message) {
+      if (message.data['type'] == 'new_booking' &&
+          message.data['vendor_id'] == repo.vendorId) {
+        _scheduleRefresh();
+      }
+    });
+    load();
   }
 
-  // ============================================================
-  // LOAD BOOKINGS
-  // ============================================================
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshDebounce?.cancel();
+    unawaited(_bookingMessages?.cancel());
+    final channel = _bookingChannel;
+    if (channel != null) unawaited(repo.stopWatching(channel));
+    search.dispose();
+    super.dispose();
+  }
 
-  Future<void> _loadBookings() async {
-    if (!mounted) {
-      return;
-    }
+  void _scheduleRefresh() {
+    if (!mounted) return;
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) unawaited(load(quiet: true));
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _scheduleRefresh();
+  }
+
+  Future<void> load({bool quiet = false}) async {
+    if (!mounted) return;
+
+    final current = ++generation;
 
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      if (!quiet) loading = true;
+      error = null;
     });
 
     try {
-      final user =
-          Supabase.instance.client.auth.currentUser;
+      final rows = await repo.getVendorBookings(repo.vendorId);
 
-      if (user == null) {
-        throw Exception(
-          'Vendor is not logged in.',
-        );
-      }
-
-      final bookings =
-          await _repository.getVendorBookings(
-        user.id,
-      );
-
-      if (!mounted) {
-        return;
-      }
+      if (!mounted || current != generation) return;
 
       setState(() {
-        _bookings = bookings;
-        _isLoading = false;
+        bookings = rows;
+        loading = false;
       });
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted || current != generation) return;
 
       setState(() {
-        _isLoading = false;
-
-        _errorMessage =
-            e.toString().replaceFirst(
-                  'Exception: ',
-                  '',
-                );
+        if (!quiet || bookings.isEmpty) error = e;
+        loading = false;
       });
     }
   }
 
-  // ============================================================
-  // FILTERED BOOKINGS
-  // ============================================================
-
-  List<BookingModel>
-      get _filteredBookings {
-    final String query =
-        _searchQuery
-            .trim()
-            .toLowerCase();
-
-    return _bookings.where(
-      (booking) {
-        final bool matchesFilter =
-            _selectedFilter == 'all' ||
-                booking.status ==
-                    _selectedFilter;
-
-        if (!matchesFilter) {
-          return false;
-        }
-
-        if (query.isEmpty) {
-          return true;
-        }
-
-        return booking.customerName
-                .toLowerCase()
-                .contains(query) ||
-            booking.customerEmail
-                .toLowerCase()
-                .contains(query) ||
-            booking.serviceName
-                .toLowerCase()
-                .contains(query) ||
-            booking.location
-                .toLowerCase()
-                .contains(query) ||
-            booking.id
-                .toLowerCase()
-                .contains(query);
-      },
-    ).toList();
+  List<BookingModel> filtered({String? selectedStatus}) {
+    return filterVendorBookings(
+      bookings,
+      status: selectedStatus ?? status,
+      business: business,
+      period: period,
+      dateFilter: dateFilter,
+      rangeStart: range?.start,
+      rangeEnd: range?.end,
+      query: search.text,
+      sort: sort,
+    );
   }
 
-  // ============================================================
-  // STATUS COUNT
-  // ============================================================
+  Map<String, String> get businesses => {
+    'all': t('All businesses', 'அனைத்து வணிகங்கள்'),
+    for (final b in bookings)
+      if (b.businessId != null)
+        b.businessId!:
+            b.businessName ?? t('Unnamed business', 'பெயரிடப்படாத வணிகம்'),
+    if (bookings.any((b) => b.businessId == null))
+      'unassigned': t('Unassigned business', 'வணிகம் ஒதுக்கப்படவில்லை'),
+  };
 
-  int _countStatus(
-    String status,
-  ) {
-    return _bookings
-        .where(
-          (booking) =>
-              booking.status == status,
-        )
-        .length;
-  }
+  Map<String, String> get periods => {
+    'all': t('All events', 'அனைத்து நிகழ்வுகள்'),
+    'upcoming': t('Upcoming / ongoing', 'வரவிருக்கும் / நடைபெறும்'),
+    'past': t('Past events', 'கடந்த நிகழ்வுகள்'),
+  };
 
-  // ============================================================
-  // BUILD
-  // ============================================================
+  Map<String, String> get dateOptions => {
+    'all': t('Any date', 'அனைத்து தேதிகள்'),
+    'today': t('Today', 'இன்று'),
+    'week': t('Next 7 days', 'அடுத்த 7 நாட்கள்'),
+    'month': t('This month', 'இந்த மாதம்'),
+    'custom': t('Custom dates', 'தேதிகளைத் தேர்வு செய்'),
+  };
 
-  @override
-  Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _loadBookings,
-      child: CustomScrollView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // ----------------------------------------------------
-          // HEADER
-          // ----------------------------------------------------
+  Map<String, String> get sorts => {
+    'event': t(
+      'Event date · nearest first',
+      'நிகழ்வு தேதி · அருகிலுள்ளவை முதலில்',
+    ),
+    'newest': t('Newest requests first', 'புதிய கோரிக்கைகள் முதலில்'),
+  };
 
-          SliverPadding(
-            padding:
-                const EdgeInsets.all(20),
-            sliver:
-                SliverToBoxAdapter(
-              child: _buildHeader(),
-            ),
-          ),
+  int get filterCount =>
+      (business != 'all' ? 1 : 0) +
+      (period != 'all' ? 1 : 0) +
+      (dateFilter != 'all' ? 1 : 0) +
+      (sort != 'newest' ? 1 : 0);
 
-          // ----------------------------------------------------
-          // FILTERS
-          // ----------------------------------------------------
-
-          SliverPadding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 20,
-            ),
-            sliver:
-                SliverToBoxAdapter(
-              child: _buildFilters(),
-            ),
-          ),
-
-          // ----------------------------------------------------
-          // CONTENT
-          // ----------------------------------------------------
-
-          SliverPadding(
-            padding:
-                const EdgeInsets.all(20),
-            sliver: _buildContent(),
-          ),
-        ],
+  Future<void> openCalendar() async {
+    FocusScope.of(context).unfocus();
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            EventraCalendar(initialBusiness: business, initialStatus: status),
       ),
     );
-  }
-
-  // ============================================================
-  // HEADER
-  // ============================================================
-
-  Widget _buildHeader() {
-    return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Bookings',
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight:
-                      FontWeight.w800,
-                ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                'Manage customer booking requests for your services.',
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        IconButton(
-          tooltip: 'Refresh',
-          onPressed: _loadBookings,
-          icon: const Icon(
-            Icons.refresh,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ============================================================
-  // FILTERS
-  // ============================================================
-
-  Widget _buildFilters() {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        // ------------------------------------------------------
-        // SEARCH
-        // ------------------------------------------------------
-
-        TextField(
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-          decoration:
-              InputDecoration(
-            hintText:
-                'Search customer, service, location...',
-            prefixIcon:
-                const Icon(
-              Icons.search,
-            ),
-            border:
-                OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(
-                14,
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(
-          height: 14,
-        ),
-
-        // ------------------------------------------------------
-        // FILTER CHIPS
-        // ------------------------------------------------------
-
-        SingleChildScrollView(
-          scrollDirection:
-              Axis.horizontal,
-          child: Row(
-            children: [
-              _FilterChip(
-                label: 'All',
-                count:
-                    _bookings.length,
-                selected:
-                    _selectedFilter ==
-                        'all',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'all';
-                  });
-                },
-              ),
-
-              _FilterChip(
-                label: 'Pending',
-                count:
-                    _countStatus(
-                  'pending',
-                ),
-                selected:
-                    _selectedFilter ==
-                        'pending',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'pending';
-                  });
-                },
-              ),
-
-              _FilterChip(
-                label: 'Accepted',
-                count:
-                    _countStatus(
-                  'accepted',
-                ),
-                selected:
-                    _selectedFilter ==
-                        'accepted',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'accepted';
-                  });
-                },
-              ),
-
-              _FilterChip(
-                label: 'Rejected',
-                count:
-                    _countStatus(
-                  'rejected',
-                ),
-                selected:
-                    _selectedFilter ==
-                        'rejected',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'rejected';
-                  });
-                },
-              ),
-
-              _FilterChip(
-                label: 'Completed',
-                count:
-                    _countStatus(
-                  'completed',
-                ),
-                selected:
-                    _selectedFilter ==
-                        'completed',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'completed';
-                  });
-                },
-              ),
-
-              _FilterChip(
-                label: 'Cancelled',
-                count:
-                    _countStatus(
-                  'cancelled',
-                ),
-                selected:
-                    _selectedFilter ==
-                        'cancelled',
-                onTap: () {
-                  setState(() {
-                    _selectedFilter =
-                        'cancelled';
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ============================================================
-  // CONTENT
-  // ============================================================
-
-  Widget _buildContent() {
-    // ----------------------------------------------------------
-    // LOADING
-    // ----------------------------------------------------------
-
-    if (_isLoading) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child:
-              CircularProgressIndicator(),
-        ),
-      );
+    if (mounted) {
+      await load();
     }
-
-    // ----------------------------------------------------------
-    // ERROR
-    // ----------------------------------------------------------
-
-    if (_errorMessage != null) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: _buildErrorState(),
-      );
-    }
-
-    final List<BookingModel>
-        bookings =
-        _filteredBookings;
-
-    // ----------------------------------------------------------
-    // EMPTY
-    // ----------------------------------------------------------
-
-    if (bookings.isEmpty) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: _buildEmptyState(),
-      );
-    }
-
-    // ----------------------------------------------------------
-    // LIST
-    // ----------------------------------------------------------
-
-    return SliverList(
-      delegate:
-          SliverChildBuilderDelegate(
-        (context, index) {
-          final BookingModel booking =
-              bookings[index];
-
-          return Padding(
-            padding:
-                const EdgeInsets.only(
-              bottom: 14,
-            ),
-            child: _BookingCard(
-              booking: booking,
-
-              onView: () {
-                _showBookingDetails(
-                  booking,
-                );
-              },
-
-              onAccept:
-                  booking.status ==
-                          'pending'
-                      ? () {
-                          _acceptBooking(
-                            booking,
-                          );
-                        }
-                      : null,
-
-              onReject:
-                  booking.status ==
-                          'pending'
-                      ? () {
-                          _rejectBooking(
-                            booking,
-                          );
-                        }
-                      : null,
-            ),
-          );
-        },
-        childCount:
-            bookings.length,
-      ),
-    );
   }
 
-  // ============================================================
-  // EMPTY STATE
-  // ============================================================
+  Future<void> action(BookingModel b, String target) async {
+    if (busyIds.contains(b.id)) return;
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize:
-            MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.event_busy_outlined,
-            size: 64,
-            color:
-                Colors.grey.shade400,
-          ),
+    setState(() => busyIds.add(b.id));
 
-          const SizedBox(
-            height: 14,
-          ),
-
-          Text(
-            _searchQuery.isNotEmpty
-                ? 'No bookings found'
-                : 'No bookings yet',
-            style:
-                const TextStyle(
-              fontSize: 19,
-              fontWeight:
-                  FontWeight.w700,
-            ),
-          ),
-
-          const SizedBox(
-            height: 6,
-          ),
-
-          Text(
-            _searchQuery.isNotEmpty
-                ? 'Try a different search.'
-                : 'New customer booking requests will appear here.',
-            textAlign:
-                TextAlign.center,
-            style:
-                const TextStyle(
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // ERROR STATE
-  // ============================================================
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding:
-            const EdgeInsets.all(30),
-        child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Colors.red,
-            ),
-
-            const SizedBox(
-              height: 15,
-            ),
-
-            const Text(
-              'Unable to load bookings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            Text(
-              _errorMessage ??
-                  'Something went wrong.',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  const TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-
-            const SizedBox(
-              height: 18,
-            ),
-
-            ElevatedButton.icon(
-              onPressed:
-                  _loadBookings,
-              icon:
-                  const Icon(
-                Icons.refresh,
-              ),
-              label:
-                  const Text(
-                'Try Again',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // SHOW BOOKING DETAILS
-  // ============================================================
-
-  void _showBookingDetails(
-    BookingModel booking,
-  ) {
-    showDialog(
-      context: context,
-      builder: (_) =>
-          BookingDetailsDialog(
-        booking: booking,
-      ),
-    );
-  }
-
-  // ============================================================
-  // ACCEPT BOOKING
-  // ============================================================
-
-  Future<void> _acceptBooking(
-    BookingModel booking,
-  ) async {
-    final bool? confirmed =
-        await _showConfirmationDialog(
-      title: 'Accept Booking?',
-      message:
-          'Accept this booking request from ${booking.customerName}?',
-      confirmText: 'Accept',
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    await _changeBookingStatus(
-      booking,
-      'accepted',
-    );
-  }
-
-  // ============================================================
-  // REJECT BOOKING
-  // ============================================================
-
-  Future<void> _rejectBooking(
-    BookingModel booking,
-  ) async {
-    final bool? confirmed =
-        await _showConfirmationDialog(
-      title: 'Reject Booking?',
-      message:
-          'Reject this booking request from ${booking.customerName}?',
-      confirmText: 'Reject',
-      isDestructive: true,
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    await _changeBookingStatus(
-      booking,
-      'rejected',
-    );
-  }
-
-  // ============================================================
-  // CHANGE BOOKING STATUS
-  // ============================================================
-
-  Future<void> _changeBookingStatus(
-    BookingModel booking,
-    String status,
-  ) async {
     try {
-      final User? user =
-          Supabase.instance.client.auth
-              .currentUser;
-
-      if (user == null) {
-        throw Exception(
-          'Vendor is not logged in.',
-        );
+      if (await confirmBookingChange(context, repo, b, target)) {
+        await load();
       }
-
-      await _repository
-          .updateBookingStatus(
-        bookingId: booking.id,
-        vendorId: user.id,
-        status: status,
-      );
-
-      if (!mounted) {
-        return;
+    } finally {
+      if (mounted) {
+        setState(() => busyIds.remove(b.id));
       }
-
-      await _loadBookings();
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            status == 'accepted'
-                ? 'Booking accepted successfully.'
-                : 'Booking rejected successfully.',
-          ),
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst(
-                  'Exception: ',
-                  '',
-                ),
-          ),
-          backgroundColor:
-              Colors.red,
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
-  // ============================================================
-  // CONFIRMATION DIALOG
-  // ============================================================
+  Future<void> details(BookingModel b) async {
+    if (busyIds.contains(b.id)) return;
 
-  Future<bool?>
-      _showConfirmationDialog({
-    required String title,
-    required String message,
-    required String confirmText,
-    bool isDestructive = false,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(title),
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => BookingDetailsScreen(booking: b, repository: repo),
+      ),
+    );
 
-          content: Text(message),
+    if (mounted) {
+      await load();
+    }
+  }
 
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  false,
-                );
-              },
-              child:
-                  const Text('Cancel'),
+  Widget message(String title, {String? detail}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              error == null
+                  ? Icons.event_note_outlined
+                  : Icons.cloud_off_outlined,
+              size: 48,
+              color: _wine,
             ),
-
-            ElevatedButton(
-              style: isDestructive
-                  ? ElevatedButton
-                      .styleFrom(
-                      backgroundColor:
-                          Colors.red,
-                      foregroundColor:
-                          Colors.white,
-                    )
-                  : null,
-
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  true,
-                );
-              },
-
-              child:
-                  Text(confirmText),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: _ink,
+              ),
             ),
+            if (detail != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                detail,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _muted),
+              ),
+            ],
+            if (error != null)
+              TextButton(
+                onPressed: load,
+                child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+              ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
-}
-
-// =================================================================
-// BOOKING CARD
-// =================================================================
-
-class _BookingCard
-    extends StatelessWidget {
-  final BookingModel booking;
-
-  final VoidCallback onView;
-
-  final VoidCallback? onAccept;
-
-  final VoidCallback? onReject;
-
-  const _BookingCard({
-    required this.booking,
-    required this.onView,
-    this.onAccept,
-    this.onReject,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
+    final rows = filtered();
+    final base = filtered(selectedStatus: 'all');
 
-      margin: EdgeInsets.zero,
-
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(
-          18,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(context).colorScheme
+            .copyWith(primary: _wine, secondary: _wine, surface: Colors.white),
+        scaffoldBackgroundColor: _pageBg,
+        chipTheme: Theme.of(context).chipTheme.copyWith(
+          selectedColor: _wine,
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: Color(0xFFECEAF0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
         ),
-        side: BorderSide(
-          color:
-              Colors.grey.withValues(
-            alpha: 0.20,
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: _wine,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(13),
+            ),
           ),
         ),
       ),
+      child: Scaffold(
+        backgroundColor: _pageBg,
+        body: SafeArea(
+          child: AppShimmerRefreshIndicator(
+            color: _wine,
+            onRefresh: load,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Heading only — reload icon removed completely.
+                        Text(
+                          t('Bookings', 'முன்பதிவுகள்'),
+                          style: const TextStyle(
+                            color: _ink,
+                            fontSize: 29,
+                            height: 1.1,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
 
-      child: Padding(
-        padding:
-            const EdgeInsets.all(18),
+                        // Search bar directly below the heading.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GlobalSearchBar(
+                                controller: search,
+                                onChanged: (_) => setState(() {}),
+                                hintText: t(
+                                  'Search customer, service or location...',
+                                  'வாடிக்கையாளர், சேவை அல்லது இடம் தேடு...',
+                                ),
+                                clearLabel: t('Clear search', 'தேடலை அழி'),
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            SizedBox(
+                              width: 49,
+                              height: 49,
+                              child: IconButton.outlined(
+                                tooltip: t(
+                                  'Open booking calendar',
+                                  'முன்பதிவு நாட்காட்டியைத் திற',
+                                ),
+                                onPressed: openCalendar,
+                                style: IconButton.styleFrom(
+                                  foregroundColor: _wine,
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(
+                                    color: Color(0xFFE8E5EB),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.calendar_month_outlined),
+                              ),
+                            ),
+                          ],
+                        ),
 
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+                        const SizedBox(height: 18),
 
-          children: [
-            // ==================================================
-            // TOP ROW
-            // ==================================================
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${rows.length} ${t('bookings', 'முன்பதிவுகள்')}',
+                                style: const TextStyle(
+                                  color: _ink,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            if (filterCount > 0)
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    business = 'all';
+                                    period = 'all';
+                                    dateFilter = 'all';
+                                    sort = 'newest';
+                                    range = null;
+                                  });
+                                },
+                                child: Text(
+                                  t('Clear filters', 'வடிகட்டல்களை நீக்கு'),
+                                  style: const TextStyle(color: _wine),
+                                ),
+                              ),
+                          ],
+                        ),
 
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    booking.serviceName,
-                    style:
-                        const TextStyle(
-                      fontSize: 17,
-                      fontWeight:
-                          FontWeight.w700,
+                        const SizedBox(height: 10),
+
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children:
+                                [
+                                  'all',
+                                  'pending',
+                                  'accepted',
+                                  'completed',
+                                  'rejected',
+                                  'cancelled',
+                                ].map((s) {
+                                  final selected = status == s;
+
+                                  final count = s == 'all'
+                                      ? base.length
+                                      : base.where((b) => b.status == s).length;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: Text(
+                                        '${s == 'all' ? t('All', 'அனைத்தும்') : bookingStatus(context, s)} ($count)',
+                                      ),
+                                      selected: selected,
+                                      showCheckmark: false,
+                                      labelStyle: TextStyle(
+                                        color: selected ? Colors.white : _ink,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      side: BorderSide(
+                                        color: selected
+                                            ? _wine
+                                            : const Color(0xFFECEAF0),
+                                      ),
+                                      backgroundColor: Colors.white,
+                                      selectedColor: _wine,
+                                      onSelected: (_) {
+                                        setState(() => status = s);
+                                      },
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+
+                        if (filterCount > 0) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              if (business != 'all')
+                                Chip(
+                                  label: Text(
+                                    businesses[business] ??
+                                        t('Business', 'வணிகம்'),
+                                  ),
+                                ),
+                              if (period != 'all')
+                                Chip(label: Text(periods[period]!)),
+                              if (dateFilter != 'all')
+                                Chip(
+                                  label: Text(
+                                    dateFilter == 'custom' && range != null
+                                        ? '${bookingDate(context, range!.start)} – ${bookingDate(context, range!.end)}'
+                                        : dateOptions[dateFilter]!,
+                                  ),
+                                ),
+                              if (sort != 'newest')
+                                Chip(label: Text(sorts[sort]!)),
+                            ],
+                          ),
+                        ],
+
+                        if (loading && bookings.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          const ShimmerLoadingBar(color: _wine),
+                        ],
+
+                        if (error != null && bookings.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(top: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFEDEF),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: ListTile(
+                              dense: true,
+                              title: Text(
+                                t(
+                                  'Refresh failed. Showing previously loaded bookings.',
+                                  'புதுப்பிக்க முடியவில்லை. ஏற்கனவே ஏற்றப்பட்ட முன்பதிவுகள் காட்டப்படுகின்றன.',
+                                ),
+                              ),
+                              trailing: IconButton(
+                                onPressed: load,
+                                tooltip: t('Retry', 'மீண்டும் முயற்சி'),
+                                icon: const Icon(Icons.refresh, color: _wine),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
 
-                const SizedBox(
-                  width: 10,
-                ),
-
-                _StatusBadge(
-                  status:
-                      booking.status,
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            Text(
-              'Booking #${_shortId(booking.id)}',
-              style:
-                  const TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            // ==================================================
-            // CUSTOMER
-            // ==================================================
-
-            _DetailLine(
-              icon:
-                  Icons.person_outline,
-              label: 'Customer',
-              value:
-                  booking.customerName,
-            ),
-
-            _DetailLine(
-              icon:
-                  Icons.email_outlined,
-              label: 'Email',
-              value:
-                  booking.customerEmail,
-            ),
-
-            // ==================================================
-            // EVENT DATE
-            // ==================================================
-
-            _DetailLine(
-              icon:
-                  Icons.calendar_today_outlined,
-              label: 'Event Date',
-              value:
-                  _formatDate(
-                booking.eventDate,
-              ),
-            ),
-
-            // ==================================================
-            // GUESTS
-            // ==================================================
-
-            _DetailLine(
-              icon:
-                  Icons.people_outline,
-              label: 'Guests',
-              value:
-                  booking.guestCount
-                          ?.toString() ??
-                      'Not specified',
-            ),
-
-            // ==================================================
-            // LOCATION
-            // ==================================================
-
-            _DetailLine(
-              icon:
-                  Icons.location_on_outlined,
-              label: 'Location',
-              value:
-                  booking.location,
-            ),
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            // ==================================================
-            // PRICE
-            // ==================================================
-
-            Row(
-              children: [
-                const Text(
-                  'Booking Price',
-                  style:
-                      TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                  ),
-                ),
-
-                const Spacer(),
-
-                Text(
-                  '₹${booking.price.toStringAsFixed(2)}',
-                  style:
-                      const TextStyle(
-                    fontSize: 18,
-                    fontWeight:
-                        FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            // ==================================================
-            // ACTION BUTTONS
-            // ==================================================
-
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onView,
-                  icon:
-                      const Icon(
-                    Icons
-                        .visibility_outlined,
-                  ),
-                  label:
-                      const Text(
-                    'View',
-                  ),
-                ),
-
-                const Spacer(),
-
-                // ----------------------------------------------
-                // REJECT
-                // ----------------------------------------------
-
-                if (onReject != null)
-                  OutlinedButton.icon(
-                    onPressed:
-                        onReject,
-                    style:
-                        OutlinedButton
-                            .styleFrom(
-                      foregroundColor:
-                          Colors.red,
-                      side:
-                          const BorderSide(
-                        color: Colors.red,
+                if (loading && bookings.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: AppContentSkeleton(
+                        layout: SkeletonLayout.bookings,
                       ),
                     ),
-                    icon:
-                        const Icon(
-                      Icons.close,
+                  )
+                else if (error != null && bookings.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: message(
+                      t(
+                        'Unable to load bookings',
+                        'முன்பதிவுகளை ஏற்ற முடியவில்லை',
+                      ),
                     ),
-                    label:
-                        const Text(
-                      'Reject',
+                  )
+                else if (rows.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: message(
+                      bookings.isEmpty
+                          ? t('No bookings yet', 'இன்னும் முன்பதிவுகள் இல்லை')
+                          : t(
+                              'No matching bookings',
+                              'பொருத்தமான முன்பதிவுகள் இல்லை',
+                            ),
+                      detail: bookings.isEmpty
+                          ? t(
+                              'New customer requests will appear here.',
+                              'புதிய வாடிக்கையாளர் கோரிக்கைகள் இங்கே தோன்றும்.',
+                            )
+                          : t(
+                              'Try another search or change the filters.',
+                              'வேறு தேடல் அல்லது வடிகட்டலை முயற்சிக்கவும்.',
+                            ),
                     ),
-                  ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 128),
+                    sliver: SliverList.builder(
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) {
+                        final booking = rows[index];
 
-                if (onReject != null &&
-                    onAccept != null)
-                  const SizedBox(
-                    width: 8,
-                  ),
+                        final card = VendorBookingCard(
+                          booking: booking,
+                          busy: busyIds.contains(booking.id),
+                          onOpen: () => details(booking),
+                          onAccept: () => action(booking, 'accepted'),
+                          onReject: () => action(booking, 'rejected'),
+                          onComplete: () => action(booking, 'completed'),
+                        );
 
-                // ----------------------------------------------
-                // ACCEPT
-                // ----------------------------------------------
+                        String section(BookingModel item) {
+                          final eventDate = item.eventDate;
 
-                if (onAccept != null)
-                  ElevatedButton.icon(
-                    onPressed:
-                        onAccept,
-                    icon:
-                        const Icon(
-                      Icons.check,
-                    ),
-                    label:
-                        const Text(
-                      'Accept',
+                          if (eventDate == null) {
+                            return t(
+                              'Date not specified',
+                              'தேதி குறிப்பிடப்படவில்லை',
+                            );
+                          }
+
+                          final now = DateTime.now();
+                          final today = DateTime(now.year, now.month, now.day);
+
+                          final day = DateTime(
+                            eventDate.year,
+                            eventDate.month,
+                            eventDate.day,
+                          );
+
+                          if (day == today) {
+                            return t('Today', 'இன்று');
+                          }
+
+                          if (day.isBefore(today)) {
+                            return t('Past bookings', 'கடந்த முன்பதிவுகள்');
+                          }
+
+                          return t(
+                            'Upcoming bookings',
+                            'வரவிருக்கும் முன்பதிவுகள்',
+                          );
+                        }
+
+                        final heading = section(booking);
+                        final showHeading =
+                            sort == 'event' &&
+                            (index == 0 || section(rows[index - 1]) != heading);
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (showHeading)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  2,
+                                  16,
+                                  2,
+                                  10,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: _wine,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 9),
+                                    Text(
+                                      heading,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: _ink,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      sort == 'newest'
+                                          ? '${rows.length}'
+                                          : '${rows.where((item) => section(item) == heading).length}',
+                                      style: const TextStyle(
+                                        color: _muted,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            card,
+                          ],
+                        );
+                      },
                     ),
                   ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // SHORT BOOKING ID
-  // ============================================================
-
-  String _shortId(
-    String id,
-  ) {
-    if (id.length <= 8) {
-      return id;
-    }
-
-    return id.substring(
-      0,
-      8,
-    );
-  }
-
-  // ============================================================
-  // DATE FORMAT
-  // ============================================================
-
-  String _formatDate(
-    DateTime? date,
-  ) {
-    if (date == null) {
-      return 'Not specified';
-    }
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
-}
-
-// =================================================================
-// DETAIL LINE
-// =================================================================
-
-class _DetailLine
-    extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DetailLine({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(
-        bottom: 9,
-      ),
-
-      child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: Colors.grey,
           ),
-
-          const SizedBox(
-            width: 10,
-          ),
-
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style:
-                  const TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: Text(
-              value,
-              style:
-                  const TextStyle(
-                fontSize: 13,
-                fontWeight:
-                    FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =================================================================
-// STATUS BADGE
-// =================================================================
-
-class _StatusBadge
-    extends StatelessWidget {
-  final String status;
-
-  const _StatusBadge({
-    required this.status,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color;
-
-    switch (status) {
-      case 'accepted':
-        color = Colors.green;
-        break;
-
-      case 'rejected':
-        color = Colors.red;
-        break;
-
-      case 'completed':
-        color = Colors.blue;
-        break;
-
-      case 'cancelled':
-        color = Colors.grey;
-        break;
-
-      default:
-        color = Colors.orange;
-    }
-
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-
-      decoration:
-          BoxDecoration(
-        color:
-            color.withValues(
-          alpha: 0.10,
         ),
-        borderRadius:
-            BorderRadius.circular(
-          20,
-        ),
-      ),
-
-      child: Text(
-        status.toUpperCase(),
-
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight:
-              FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-// =================================================================
-// FILTER CHIP
-// =================================================================
-
-class _FilterChip
-    extends StatelessWidget {
-  final String label;
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(
-        right: 8,
-      ),
-
-      child: ChoiceChip(
-        label: Text(
-          '$label ($count)',
-        ),
-
-        selected: selected,
-
-        onSelected: (_) {
-          onTap();
-        },
       ),
     );
   }

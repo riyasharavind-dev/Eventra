@@ -1,257 +1,199 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../repositories/app_settings_repository.dart';
 
 class NotificationService {
   NotificationService._();
+  static final instance = NotificationService._();
+  final _supabase = Supabase.instance.client;
+  StreamSubscription<String>? _tokenRefresh;
+  StreamSubscription<RemoteMessage>? _foreground;
+  Future<bool>? _inFlight;
+  String? _initializedUser;
+  bool _enabled = false;
+  int _generation = 0;
 
-  static final NotificationService instance =
-      NotificationService._();
+  bool get _supported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
 
-  final FirebaseMessaging _messaging =
-      FirebaseMessaging.instance;
-
-  final SupabaseClient _supabase =
-      Supabase.instance.client;
-
-  bool _initialized = false;
-
-  // ============================================================
-  // INITIALIZE FCM
-  // ============================================================
-
-  Future<void> initialize() async {
-    if (_initialized) {
-      return;
-    }
-
-    final user = _supabase.auth.currentUser;
-
-    if (user == null) {
-      debugPrint(
-        'NotificationService: No logged-in user.',
-      );
-      return;
-    }
-
-    try {
-      // --------------------------------------------------------
-      // 1. Request notification permission
-      // --------------------------------------------------------
-
-      final settings =
-          await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-
-      if (settings.authorizationStatus ==
-          AuthorizationStatus.denied) {
-        debugPrint(
-          'NotificationService: Permission denied.',
-        );
-        return;
-      }
-
-      // --------------------------------------------------------
-      // 2. Get FCM token
-      // --------------------------------------------------------
-
-      String? token;
-
-      if (Platform.isAndroid || Platform.isIOS) {
-        token = await _messaging.getToken();
-      }
-
-      if (token == null || token.isEmpty) {
-        debugPrint(
-          'NotificationService: FCM token unavailable.',
-        );
-        return;
-      }
-
-      debugPrint(
-        'NotificationService: FCM token received.',
-      );
-
-      // --------------------------------------------------------
-      // 3. Save token
-      // --------------------------------------------------------
-
-      await _saveToken(
-        userId: user.id,
-        token: token,
-      );
-
-      // --------------------------------------------------------
-      // 4. Listen for token refresh
-      // --------------------------------------------------------
-
-      _messaging.onTokenRefresh.listen(
-        (newToken) async {
-          final currentUser =
-              _supabase.auth.currentUser;
-
-          if (currentUser == null) {
-            return;
-          }
-
-          debugPrint(
-            'NotificationService: FCM token refreshed.',
-          );
-
-          await _saveToken(
-            userId: currentUser.id,
-            token: newToken,
-          );
-        },
-        onError: (error) {
-          debugPrint(
-            'NotificationService: '
-            'Token refresh error: $error',
-          );
-        },
-      );
-
-      // --------------------------------------------------------
-      // 5. Foreground notification listener
-      // --------------------------------------------------------
-
-      FirebaseMessaging.onMessage.listen(
-        (RemoteMessage message) {
-          final title =
-              message.notification?.title;
-
-          final body =
-              message.notification?.body;
-
-          debugPrint(
-            'NotificationService: '
-            'Foreground notification received.',
-          );
-
-          debugPrint(
-            'Notification title: $title',
-          );
-
-          debugPrint(
-            'Notification body: $body',
-          );
-
-          debugPrint(
-            'Notification data: ${message.data}',
-          );
-        },
-        onError: (error) {
-          debugPrint(
-            'NotificationService: '
-            'Foreground message error: $error',
-          );
-        },
-      );
-
-      _initialized = true;
-
-      debugPrint(
-        'NotificationService: '
-        'Initialized successfully.',
-      );
-    } catch (e, stackTrace) {
-      debugPrint(
-        'NotificationService: '
-        'Initialization failed: $e',
-      );
-
-      debugPrint(
-        'NotificationService stack trace: '
-        '$stackTrace',
-      );
-    }
+  Future<bool> initialize() {
+    if (_inFlight != null) return _inFlight!;
+    final operation = _initialize();
+    _inFlight = operation;
+    return operation.whenComplete(() {
+      if (identical(_inFlight, operation)) _inFlight = null;
+    });
   }
 
-  // ============================================================
-  // SAVE FCM TOKEN
-  // ============================================================
-
-  Future<void> _saveToken({
-    required String userId,
-    required String token,
-  }) async {
-    try {
-      final String platform;
-
-      if (Platform.isAndroid) {
-        platform = 'android';
-      } else if (Platform.isIOS) {
-        platform = 'ios';
-      } else {
-        platform = 'other';
-      }
-
-      await _supabase.from('fcm_tokens').upsert(
-        {
-          'user_id': userId,
-          'token': token,
-          'platform': platform,
-          'updated_at':
-              DateTime.now().toIso8601String(),
-        },
-        onConflict: 'token',
-      );
-
-      debugPrint(
-        'NotificationService: '
-        'FCM token saved successfully.',
-      );
-    } catch (e, stackTrace) {
-      debugPrint(
-        'NotificationService: '
-        'Failed to save FCM token: $e',
-      );
-
-      debugPrint(
-        'NotificationService stack trace: '
-        '$stackTrace',
-      );
+  Future<bool> _initialize() async {
+    final generation = _generation;
+    if (!_supported) return false;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return false;
+    final prefs = await AppSettingsRepository().load();
+    if (generation != _generation) return false;
+    if (!prefs.notificationsEnabled) {
+      await FirebaseMessaging.instance.setAutoInitEnabled(false);
+      await FirebaseMessaging.instance.deleteToken();
+      return false;
     }
-  }
-
-  // ============================================================
-  // REMOVE FCM TOKEN
-  // ============================================================
-
-  Future<void> removeToken() async {
-    try {
-      final token =
-          await _messaging.getToken();
-
-      if (token == null || token.isEmpty) {
-        return;
-      }
-
+    if (_initializedUser == userId && _enabled) return true;
+    final messaging = FirebaseMessaging.instance;
+    final permission = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (permission.authorizationStatus != AuthorizationStatus.authorized &&
+        permission.authorizationStatus != AuthorizationStatus.provisional) {
+      return false;
+    }
+    if (generation != _generation || _supabase.auth.currentUser?.id != userId) {
+      return false;
+    }
+    await messaging.setAutoInitEnabled(true);
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    final token = await messaging.getToken();
+    if (generation != _generation || _supabase.auth.currentUser?.id != userId) {
+      return false;
+    }
+    if (token == null || token.isEmpty) {
+      throw Exception('Notification registration unavailable.');
+    }
+    await _saveToken(token, userId);
+    if (generation != _generation || _supabase.auth.currentUser?.id != userId) {
       await _supabase
           .from('fcm_tokens')
           .delete()
+          .eq('user_id', userId)
           .eq('token', token);
-
-      debugPrint(
-        'NotificationService: '
-        'FCM token removed successfully.',
-      );
-    } catch (e, stackTrace) {
-      debugPrint(
-        'NotificationService: '
-        'Failed to remove FCM token: $e',
-      );
-
-      debugPrint(
-        'NotificationService stack trace: '
-        '$stackTrace',
-      );
+      return false;
     }
+    await _tokenRefresh?.cancel();
+    await _foreground?.cancel();
+    _enabled = true;
+    _initializedUser = userId;
+    _tokenRefresh = messaging.onTokenRefresh.listen((token) async {
+      if (!_enabled || _supabase.auth.currentUser?.id != userId) return;
+      try {
+        final prefs = await AppSettingsRepository().load();
+        if (_enabled && prefs.notificationsEnabled) {
+          await _saveToken(token, userId);
+        }
+      } catch (error) {
+        debugPrint('Notification registration refresh failed: $error');
+      }
+    });
+    _foreground = FirebaseMessaging.onMessage.listen((message) {
+      if (_enabled) debugPrint('Eventra customer notification received.');
+    });
+    return true;
+  }
+
+  Future<void> _saveToken(String token, String userId) async {
+    if (_supabase.auth.currentUser?.id != userId) return;
+    await _supabase.from('fcm_tokens').upsert({
+      'user_id': userId,
+      'token': token,
+      'platform': defaultTargetPlatform == TargetPlatform.android
+          ? 'android'
+          : 'ios',
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'token');
+  }
+
+  Future<void> removeToken({bool reportFailure = false}) async {
+    _generation++;
+    _enabled = false;
+    _initializedUser = null;
+    await _tokenRefresh?.cancel();
+    await _foreground?.cancel();
+    _tokenRefresh = null;
+    _foreground = null;
+    if (!_supported) return;
+    // Finish any older registration before disabling SDK auto-init and deleting
+    // the token; otherwise a late registration can turn auto-init back on.
+    final pending = _inFlight;
+    if (pending != null) {
+      try {
+        await pending;
+      } catch (_) {
+        /* Cleanup still runs. */
+      }
+    }
+    final messaging = FirebaseMessaging.instance;
+    final userId = _supabase.auth.currentUser?.id;
+    Object? failure;
+    try {
+      await messaging.setAutoInitEnabled(false);
+    } catch (error) {
+      failure = error;
+    }
+    try {
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: false,
+        badge: false,
+        sound: false,
+      );
+    } catch (error) {
+      failure = error;
+    }
+    try {
+      final token = await messaging.getToken();
+      if (token != null && userId != null) {
+        await _supabase
+            .from('fcm_tokens')
+            .delete()
+            .eq('user_id', userId)
+            .eq('token', token);
+      }
+    } catch (error) {
+      failure = error;
+    }
+    // Revoke this installation's token even if the database delete failed.
+    try {
+      await messaging.deleteToken();
+    } catch (error) {
+      failure = error;
+    }
+    if (failure != null) {
+      if (reportFailure) {
+        throw Exception(
+          'Could not confirm notification cleanup. Please retry.',
+        );
+      }
+      debugPrint('Notification cleanup could not be confirmed.');
+    }
+  }
+
+  Future<bool?> permissionAllowed() async {
+    if (!_supported) return null;
+    final status = await FirebaseMessaging.instance.getNotificationSettings();
+    if (status.authorizationStatus == AuthorizationStatus.notDetermined) {
+      return null;
+    }
+    return status.authorizationStatus == AuthorizationStatus.authorized ||
+        status.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
+  Future<void> dispose() async {
+    _generation++;
+    _enabled = false;
+    _initializedUser = null;
+    await _tokenRefresh?.cancel();
+    await _foreground?.cancel();
+    _tokenRefresh = null;
+    _foreground = null;
   }
 }

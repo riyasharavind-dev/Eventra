@@ -1,13 +1,13 @@
+import '../../utils/auth_error_message.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../repositories/auth_repository.dart';
-import '../main/customer_main_screen.dart';
+import '../../main.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({
-    super.key,
-  });
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -74,9 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // ==================================================
 
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const CustomerMainScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const CustomerEntryScreen()),
           (route) => false,
         );
       }
@@ -85,13 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error.toString(),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(authErrorMessage(error))));
     } finally {
       if (mounted) {
         setState(() {
@@ -110,11 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const SignupScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const SignupScreen()));
   }
 
   // ======================================================
@@ -127,9 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const CustomerMainScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const CustomerEntryScreen()),
     );
   }
 
@@ -145,23 +133,17 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-              ),
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(
-                      height: 40,
-                    ),
+                    const SizedBox(height: 40),
 
                     // ==================================================
                     // LOGO / APP NAME
                     // ==================================================
-
                     const Text(
                       'EVENTRA',
                       textAlign: TextAlign.center,
@@ -172,9 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 12,
-                    ),
+                    const SizedBox(height: 12),
 
                     const Text(
                       'Welcome back',
@@ -185,47 +165,31 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
 
                     const Text(
                       'Sign in to continue to Eventra',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),
 
-                    const SizedBox(
-                      height: 40,
-                    ),
+                    const SizedBox(height: 40),
 
                     // ==================================================
                     // EMAIL
                     // ==================================================
-
                     TextFormField(
                       controller: _emailController,
-                      keyboardType:
-                          TextInputType.emailAddress,
-                      textInputAction:
-                          TextInputAction.next,
-                      decoration:
-                          const InputDecoration(
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
                         labelText: 'Email',
-                        hintText:
-                            'Enter your email',
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                        ),
-                        border:
-                            OutlineInputBorder(),
+                        hintText: 'Enter your email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Please enter your email';
                         }
 
@@ -237,59 +201,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
 
-                    const SizedBox(
-                      height: 20,
-                    ),
+                    const SizedBox(height: 20),
 
                     // ==================================================
                     // PASSWORD
                     // ==================================================
-
                     TextFormField(
-                      controller:
-                          _passwordController,
-                      obscureText:
-                          _obscurePassword,
-                      textInputAction:
-                          TextInputAction.done,
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) {
                         if (!_isLoading) {
                           _signIn();
                         }
                       },
-                      decoration:
-                          InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        hintText:
-                            'Enter your password',
-                        prefixIcon:
-                            const Icon(
-                          Icons.lock_outline,
-                        ),
-                        suffixIcon:
-                            IconButton(
+                        hintText: 'Enter your password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
                           onPressed: _isLoading
                               ? null
                               : () {
                                   setState(() {
-                                    _obscurePassword =
-                                        !_obscurePassword;
+                                    _obscurePassword = !_obscurePassword;
                                   });
                                 },
                           icon: Icon(
                             _obscurePassword
-                                ? Icons
-                                    .visibility_outlined
-                                : Icons
-                                    .visibility_off_outlined,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                         ),
-                        border:
-                            const OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.isEmpty) {
+                        if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
 
@@ -297,89 +244,60 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
 
-                    const SizedBox(
-                      height: 28,
-                    ),
+                    const SizedBox(height: 28),
 
                     // ==================================================
                     // SIGN IN BUTTON
                     // ==================================================
-
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(
-                        onPressed:
-                            _isLoading
-                                ? null
-                                : _signIn,
+                        onPressed: _isLoading ? null : _signIn,
                         child: _isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
-                                child:
-                                    CircularProgressIndicator(
+                                child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
                             : const Text(
                                 'Sign In',
-                                style:
-                                    TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight:
-                                      FontWeight.w600,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 24,
-                    ),
+                    const SizedBox(height: 24),
 
                     // ==================================================
                     // CREATE ACCOUNT
                     // ==================================================
-
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          "Don't have an account? ",
-                        ),
+                        const Text("Don't have an account? "),
                         TextButton(
-                          onPressed: _isLoading
-                              ? null
-                              : _openSignup,
-                          child: const Text(
-                            'Create Account',
-                          ),
+                          onPressed: _isLoading ? null : _openSignup,
+                          child: const Text('Create Account'),
                         ),
                       ],
                     ),
 
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
 
                     // ==================================================
                     // SKIP LOGIN
                     // ==================================================
-
                     TextButton(
-                      onPressed:
-                          _isLoading
-                              ? null
-                              : _skipLogin,
-                      child: const Text(
-                        'Skip for now',
-                      ),
+                      onPressed: _isLoading ? null : _skipLogin,
+                      child: const Text('Skip for now'),
                     ),
 
-                    const SizedBox(
-                      height: 30,
-                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),

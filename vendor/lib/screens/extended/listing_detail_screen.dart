@@ -1,386 +1,213 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/reviews/service_review_summary.dart';
+
 import '../../models/service_model.dart';
-import '../../widgets/listing_details/listing_gallery.dart';
-import '../../widgets/listing_details/listing_info_section.dart';
-import '../../widgets/listing_details/listing_description_section.dart';
-import '../../widgets/listing_details/listing_detail_row.dart';
+import '../../widgets/listings/listing_ui.dart';
 
 class ListingDetailScreen extends StatelessWidget {
   final ServiceModel service;
-
-  /// Optional edit callback.
-  final VoidCallback? onEdit;
-
-  /// Optional activate/deactivate callback.
-  final VoidCallback? onToggleStatus;
-
-  /// Optional delete callback.
-  final VoidCallback? onDelete;
-
+  final VoidCallback? onEdit,
+      onToggleStatus,
+      onDelete,
+      onPromote,
+      onDuplicate,
+      onManageImages;
   const ListingDetailScreen({
     super.key,
     required this.service,
     this.onEdit,
     this.onToggleStatus,
     this.onDelete,
+    this.onPromote,
+    this.onDuplicate,
+    this.onManageImages,
   });
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-
-      // ==========================================================
-      // APP BAR
-      // ==========================================================
-
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0.5,
-
-        leading: IconButton(
-          tooltip: 'Back',
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-
-        title: const Text(
-          'Listing Details',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-
-        actions: [
-          if (onEdit != null)
-            IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(
-                Icons.edit_outlined,
-              ),
-              onPressed: onEdit,
-            ),
-        ],
-      ),
-
-      // ==========================================================
-      // BOTTOM ACTION BAR
-      // ==========================================================
-
-      bottomNavigationBar: _buildBottomBar(context),
-
-      // ==========================================================
-      // BODY
-      // ==========================================================
-
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // ----------------------------------------------------
-            // GALLERY
-            // ----------------------------------------------------
-
-            SliverToBoxAdapter(
-              child: ListingGallery(
-                gallery: service.gallery,
-              ),
-            ),
-
-            // ----------------------------------------------------
-            // BASIC INFORMATION
-            // ----------------------------------------------------
-
-            SliverToBoxAdapter(
-              child: ListingInfoSection(
-                service: service,
-              ),
-            ),
-
-            // ----------------------------------------------------
-            // DESCRIPTION
-            // ----------------------------------------------------
-
-            SliverToBoxAdapter(
-              child: ListingDescriptionSection(
-                description: service.description,
-              ),
-            ),
-
-            // ----------------------------------------------------
-            // LISTING INFORMATION
-            // ----------------------------------------------------
-
-            SliverToBoxAdapter(
-              child: _buildDetailsSection(),
-            ),
-
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 24),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // LISTING INFORMATION
-  // ============================================================
-
-  Widget _buildDetailsSection() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        16,
-        8,
-        16,
-        0,
-      ),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Listing Information',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // ------------------------------------------------------
-          // CATEGORY
-          // ------------------------------------------------------
-
-          ListingDetailRow(
-            icon: Icons.category_outlined,
-            title: 'Category',
-            value: service.categoryName ??
-                'Not available',
-          ),
-
-          // ------------------------------------------------------
-          // PRICE
-          // ------------------------------------------------------
-
-          ListingDetailRow(
-            icon: Icons.sell_outlined,
-            title: 'Price',
-            value:
-                '₹${service.price.toStringAsFixed(2)}',
-          ),
-
-          // ------------------------------------------------------
-          // STATUS
-          // ------------------------------------------------------
-
-          ListingDetailRow(
-            icon: service.isActive
-                ? Icons.check_circle_outline
-                : Icons.pause_circle_outline,
-            title: 'Status',
-            value: service.isActive
-                ? 'Active'
-                : 'Inactive',
-            valueColor: service.isActive
-                ? Colors.green
-                : Colors.orange,
-          ),
-
-          // ------------------------------------------------------
-          // SERVICE ID
-          // ------------------------------------------------------
-
-          ListingDetailRow(
-            icon: Icons.tag_outlined,
-            title: 'Service ID',
-            value: service.id,
-          ),
-
-          // ------------------------------------------------------
-          // VENDOR ID
-          // ------------------------------------------------------
-
-          ListingDetailRow(
-            icon: Icons.person_outline,
-            title: 'Vendor ID',
-            value: service.vendorId,
-          ),
-
-          // ------------------------------------------------------
-          // SLUG
-          // ------------------------------------------------------
-
-          if (service.slug.trim().isNotEmpty)
-            ListingDetailRow(
-              icon: Icons.link_outlined,
-              title: 'Slug',
-              value: service.slug,
-            ),
-
-          // ------------------------------------------------------
-          // CREATED
-          // ------------------------------------------------------
-
-          if (service.createdAt != null)
-            ListingDetailRow(
-              icon: Icons.calendar_today_outlined,
-              title: 'Created',
-              value:
-                  _formatDate(service.createdAt!),
-            ),
-
-          // ------------------------------------------------------
-          // UPDATED
-          // ------------------------------------------------------
-
-          if (service.updatedAt != null)
-            ListingDetailRow(
-              icon: Icons.update_outlined,
-              title: 'Last Updated',
-              value:
-                  _formatDate(service.updatedAt!),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // BOTTOM BAR
-  // ============================================================
-
-  Widget _buildBottomBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        16,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.06,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
+    String t(String en, String ta) => listingText(context, en, ta);
+    final colors = Theme.of(context).colorScheme;
+    Widget section(String title, Widget content) => Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ----------------------------------------------------
-            // STATUS BUTTON
-            // ----------------------------------------------------
-
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onToggleStatus,
-                icon: Icon(
-                  service.isActive
-                      ? Icons.pause_circle_outline
-                      : Icons.play_circle_outline,
-                ),
-                label: Text(
-                  service.isActive
-                      ? 'Deactivate'
-                      : 'Activate',
-                ),
-                style: OutlinedButton.styleFrom(
-                  minimumSize:
-                      const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(14),
-                  ),
-                ),
-              ),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
-
-            const SizedBox(width: 10),
-
-            // ----------------------------------------------------
-            // EDIT BUTTON
-            // ----------------------------------------------------
-
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: onEdit,
-                icon: const Icon(
-                  Icons.edit_outlined,
-                ),
-                label: const Text(
-                  'Edit',
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize:
-                      const Size.fromHeight(50),
-                  backgroundColor:
-                      Theme.of(context)
-                          .colorScheme
-                          .primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
+            const SizedBox(height: 10),
+            content,
           ],
         ),
       ),
     );
-  }
-
-  // ============================================================
-  // DATE FORMAT
-  // ============================================================
-
-  String _formatDate(DateTime date) {
-    final day =
-        date.day.toString().padLeft(2, '0');
-
-    final month =
-        date.month.toString().padLeft(2, '0');
-
-    final year =
-        date.year.toString();
-
-    final hour = date.hour > 12
-        ? date.hour - 12
-        : date.hour == 0
-            ? 12
-            : date.hour;
-
-    final minute =
-        date.minute.toString().padLeft(2, '0');
-
-    final period =
-        date.hour >= 12 ? 'PM' : 'AM';
-
-    return '$day/$month/$year • '
-        '$hour:$minute $period';
+    return Scaffold(
+      backgroundColor: colors.surfaceContainerLowest,
+      appBar: AppBar(title: Text(t('Service Details', 'சேவை விவரங்கள்'))),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          if (service.gallery.isEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: listingPhoto(null, width: double.infinity, height: 230),
+            )
+          else
+            SizedBox(
+              height: 260,
+              child: PageView.builder(
+                itemCount: service.gallery.length,
+                itemBuilder: (c, i) => Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        listingPhoto(service.gallery[i], height: 260),
+                        Positioned(
+                          right: 12,
+                          bottom: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${i + 1} / ${service.gallery.length}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 18),
+          ServiceReviewSummary(serviceId: service.id, vendorMode: true),
+          Text(
+            service.name,
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ListingStatusBadge(active: service.isActive),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            service.priceLabel,
+            style: Theme.of(context).textTheme.headlineMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            t(service.pricing.type.label, service.pricing.type.tamilLabel),
+            style: TextStyle(color: colors.onSurfaceVariant),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              if (onEdit != null)
+                FilledButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(t('Edit service', 'சேவையைத் திருத்து')),
+                ),
+              if (onManageImages != null)
+                OutlinedButton.icon(
+                  onPressed: onManageImages,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(t('Manage photos', 'படங்களை நிர்வகி')),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          section(
+            t('Description', 'விளக்கம்'),
+            Text(
+              service.description?.trim().isNotEmpty == true
+                  ? service.description!
+                  : t('No description added.', 'விளக்கம் சேர்க்கப்படவில்லை.'),
+            ),
+          ),
+          section(
+            t('Listing information', 'பட்டியல் தகவல்கள்'),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (service.categoryName != null)
+                  Text('${t('Category', 'வகை')}: ${service.categoryName}'),
+                const SizedBox(height: 8),
+                SelectableText('${t('Service ID', 'சேவை எண்')}: ${service.id}'),
+                const SizedBox(height: 8),
+                Text(
+                  '${t('Created', 'உருவாக்கப்பட்டது')}: ${MaterialLocalizations.of(context).formatMediumDate(service.createdAt.toLocal())}',
+                ),
+              ],
+            ),
+          ),
+          section(
+            t('Manage service', 'சேவையை நிர்வகி'),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (onToggleStatus != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      service.isActive
+                          ? Icons.pause_circle_outline
+                          : Icons.play_circle_outline,
+                    ),
+                    title: Text(
+                      service.isActive
+                          ? t('Deactivate', 'செயலிழக்கச் செய்')
+                          : t('Activate', 'செயல்படுத்து'),
+                    ),
+                    onTap: onToggleStatus,
+                  ),
+                if (onPromote != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.campaign_outlined),
+                    title: Text(t('Promote', 'விளம்பரப்படுத்து')),
+                    onTap: onPromote,
+                  ),
+                if (onDuplicate != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.copy_outlined),
+                    title: Text(t('Duplicate', 'நகல் எடு')),
+                    onTap: onDuplicate,
+                  ),
+                if (onDelete != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.delete_outline, color: colors.error),
+                    title: Text(
+                      t('Delete service', 'சேவையை நீக்கு'),
+                      style: TextStyle(color: colors.error),
+                    ),
+                    onTap: onDelete,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
