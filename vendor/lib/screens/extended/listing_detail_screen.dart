@@ -1,3 +1,5 @@
+import '../../widgets/vendor_page_scaffold.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/reviews/service_review_summary.dart';
@@ -45,7 +47,7 @@ class ListingDetailScreen extends StatelessWidget {
         ),
       ),
     );
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(title: Text(t('Service Details', 'சேவை விவரங்கள்'))),
       body: ListView(

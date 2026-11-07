@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
@@ -431,7 +432,7 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
     final colors = Theme.of(context).colorScheme;
     return PopScope(
       canPop: !saving && !picking,
-      child: Scaffold(
+      child: VendorPageScaffold(
         appBar: AppBar(
           title: Text(
             widget.service == null

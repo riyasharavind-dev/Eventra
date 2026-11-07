@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -196,7 +197,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   .contains(_search.toLowerCase().trim()),
         )
         .toList();
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: _supportBackground,
       appBar: AppBar(
         title: const Text('Help & Support'),
@@ -527,7 +528,7 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_saving,
-    child: Scaffold(
+    child: VendorPageScaffold(
       backgroundColor: _supportBackground,
       appBar: AppBar(title: const Text('Report an issue')),
       body: Form(
@@ -667,7 +668,7 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => VendorPageScaffold(
     backgroundColor: _supportBackground,
     appBar: AppBar(
       title: const Text('My support requests'),
@@ -877,7 +878,7 @@ class _SupportRequestDetailScreenState
       );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => VendorPageScaffold(
     backgroundColor: _supportBackground,
     appBar: AppBar(
       title: Text(_ticket.reference),

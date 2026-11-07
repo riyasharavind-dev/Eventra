@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'dart:typed_data';
@@ -916,7 +917,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: _background,
       appBar: AppBar(
         title: Text(

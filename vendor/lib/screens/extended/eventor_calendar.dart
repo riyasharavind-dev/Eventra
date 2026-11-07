@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../widgets/dashboard/minimal_booking_calendar.dart';
 
@@ -115,7 +116,7 @@ class _EventorCalendarState extends State<EventorCalendar> {
       status: status,
     );
     final selectedRows = bookingsOnDay(scoped, selected);
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: const Color(0xFFFCF8FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFCF8FA),

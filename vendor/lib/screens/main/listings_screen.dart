@@ -1,3 +1,4 @@
+import '../../widgets/vendor_filter_button.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../widgets/common/expandable_action_button.dart';
 import '../../models/business_model.dart';
@@ -463,26 +464,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Badge(
-                            isLabelVisible: activeFilters,
-                            child: IconButton.outlined(
-                              tooltip: t(
-                                'Filter & Sort',
-                                'வடிகட்டி வரிசைப்படுத்து',
-                              ),
-                              onPressed: filters,
-                              style: IconButton.styleFrom(
-                                foregroundColor: wine,
-                                side: const BorderSide(
-                                  color: Color(0xFFD58C9E),
-                                ),
-                                padding: const EdgeInsets.all(13),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              icon: const Icon(Icons.filter_alt_outlined),
+                          VendorFilterButton(
+                            onPressed: filters,
+                            tooltip: t(
+                              'Filter & Sort',
+                              'வடிகட்டி வரிசைப்படுத்து',
                             ),
+                            active: activeFilters,
                           ),
                         ],
                       ),

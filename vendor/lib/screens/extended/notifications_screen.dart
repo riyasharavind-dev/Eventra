@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'dart:async';
@@ -235,7 +236,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,

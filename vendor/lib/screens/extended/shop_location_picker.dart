@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ class _ShopLocationPickerState extends State<ShopLocationPicker> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => VendorPageScaffold(
     appBar: AppBar(title: const Text('Mark your shop')),
     body: Column(
       children: [

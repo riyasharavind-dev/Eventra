@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class LanguageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = AppSettingsScope.of(context),
         colors = Theme.of(context).colorScheme;
-    return Scaffold(
+    return VendorPageScaffold(
       appBar: AppBar(title: Text(settings.text('Language', 'மொழி'))),
       body: ListView(
         padding: const EdgeInsets.all(20),

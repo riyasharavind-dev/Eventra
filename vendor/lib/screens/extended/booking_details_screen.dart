@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -238,7 +239,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         b.longitude!.abs() <= 180;
     return PopScope(
       canPop: !busy,
-      child: Scaffold(
+      child: VendorPageScaffold(
         appBar: AppBar(
           title: Text(t('Booking Details', 'முன்பதிவு விவரங்கள்')),
           leading: BackButton(

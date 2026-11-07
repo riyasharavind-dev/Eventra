@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -143,7 +144,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     final colors = Theme.of(context).colorScheme;
     return PopScope(
       canPop: !saving,
-      child: Scaffold(
+      child: VendorPageScaffold(
         appBar: AppBar(
           title: Text(
             data?.review == null

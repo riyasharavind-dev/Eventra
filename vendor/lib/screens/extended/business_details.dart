@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
 
@@ -102,7 +103,7 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => VendorPageScaffold(
     appBar: AppBar(title: const Text('My Businesses')),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: () => open(null),
@@ -578,7 +579,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !busy && !regionsLoading,
-    child: Scaffold(
+    child: VendorPageScaffold(
       appBar: AppBar(
         title: Text(widget.business == null ? 'Add Business' : 'Edit Business'),
       ),
@@ -921,7 +922,7 @@ class _BusinessSingleDetailsScreenState
               : const Icon(Icons.open_in_new, size: 18),
         );
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => VendorPageScaffold(
     appBar: AppBar(
       title: Text(business.name),
       actions: [

@@ -1,3 +1,4 @@
+import '../../widgets/vendor_filter_button.dart';
 import '../../widgets/listings/listing_filter_sheet.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -21,7 +22,6 @@ import '../../repositories/dashboard_repository.dart';
 import '../extended/booking_details_screen.dart';
 import '../../widgets/bookings/booking_ui.dart';
 import '../extended/listing_editor_screen.dart';
-import '../extended/my_profile.dart';
 import '../extended/service_reviews_screen.dart';
 import '../../models/business_model.dart';
 
@@ -354,11 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Row(
       children: [
-        InkWell(
-          onTap: _openProfile,
-          borderRadius: BorderRadius.circular(26),
-          child: _buildProfileAvatar(),
-        ),
+        _buildProfileAvatar(),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -387,13 +383,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
         const SizedBox(width: 12),
-        IconButton(
+        VendorFilterButton(
           tooltip: _text('Filter & Sort', 'வடிகட்டி வரிசைப்படுத்து'),
           onPressed: _chooseBusiness,
-          icon: const Icon(
-            Icons.tune_rounded,
-            color: VendorBottomNavBar.inactiveIconColor,
-          ),
+          active: _selectedBusiness != 'all' || _bookingSort != 'newest',
         ),
         IconButton(
           tooltip: _text(
@@ -1358,19 +1351,6 @@ class _DashboardScreenState extends State<DashboardScreen>
       ),
     );
     if (mounted) await _loadDashboard();
-  }
-
-  void _openProfile() {
-    if (widget.onNavigate != null) {
-      widget.onNavigate!(3);
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute<void>(builder: (_) => const MyProfileScreen()),
-      ).then((_) {
-        if (mounted) _loadDashboard();
-      });
-    }
   }
 
   Future<void> _chooseBusiness() async {

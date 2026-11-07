@@ -8,10 +8,22 @@ class VendorNotification {
     this.readAt,
     this.targetType = 'message',
     this.targetId,
+    this.imageUrl,
     this.data = const {},
   });
   final String id, kind, title, body, targetType;
-  final String? targetId;
+  final String? targetId, imageUrl;
+  String? get thumbnailUrl {
+    final value = imageUrl ?? data['image_url']?.toString();
+    final uri = Uri.tryParse(value?.trim() ?? '');
+    return uri != null &&
+            ['http', 'https'].contains(uri.scheme) &&
+            uri.host.isNotEmpty &&
+            uri.userInfo.isEmpty
+        ? uri.toString()
+        : null;
+  }
+
   final DateTime createdAt;
   final DateTime? readAt;
   final Map<String, dynamic> data;
@@ -25,6 +37,7 @@ class VendorNotification {
     readAt: at,
     targetType: targetType,
     targetId: targetId,
+    imageUrl: imageUrl,
     data: data,
   );
   factory VendorNotification.fromMap(Map<String, dynamic> row) =>
@@ -35,6 +48,7 @@ class VendorNotification {
         body: row['body'] as String,
         targetType: row['target_type'] as String? ?? 'message',
         targetId: row['target_id'] as String?,
+        imageUrl: row['image_url'] as String?,
         createdAt: DateTime.parse(row['created_at'] as String),
         readAt: row['read_at'] == null
             ? null

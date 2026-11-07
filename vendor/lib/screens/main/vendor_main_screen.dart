@@ -2,7 +2,7 @@ import '../../widgets/common/main_screen_back_guard.dart';
 
 import 'package:flutter/material.dart';
 
-import '../../widgets/vendor_bottom_nav_bar.dart';
+import '../../services/vendor_navigation_controller.dart';
 import 'dashboard_screen.dart';
 import 'listings_screen.dart';
 import 'bookings_screen.dart';
@@ -17,6 +17,17 @@ class VendorMainScreen extends StatefulWidget {
 
 class _VendorMainScreenState extends State<VendorMainScreen> {
   int _currentIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    VendorNavigationController.instance.attach(this, _onNavigationChanged);
+  }
+
+  @override
+  void dispose() {
+    VendorNavigationController.instance.detach(this);
+    super.dispose();
+  }
 
   List<Widget> get _screens => [
     DashboardScreen(
@@ -36,6 +47,7 @@ class _VendorMainScreenState extends State<VendorMainScreen> {
 
     setState(() {
       _currentIndex = index;
+      VendorNavigationController.instance.setIndex(index);
     });
   }
 
@@ -46,24 +58,7 @@ class _VendorMainScreenState extends State<VendorMainScreen> {
       onDashboard: () => _onNavigationChanged(0),
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F8FA),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Positioned.fill(
-              child: IndexedStack(index: _currentIndex, children: _screens),
-            ),
-            if (MediaQuery.viewInsetsOf(context).bottom == 0)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: VendorBottomNavBar(
-                  currentIndex: _currentIndex,
-                  onTap: _onNavigationChanged,
-                ),
-              ),
-          ],
-        ),
+        body: IndexedStack(index: _currentIndex, children: _screens),
       ),
     );
   }

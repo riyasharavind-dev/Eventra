@@ -33,6 +33,11 @@ class NotificationTile extends StatelessWidget {
     return '${at.day}/${at.month}/${at.year}';
   }
 
+  Widget _fallback() => ColoredBox(
+    color: const Color(0xFFF3E5EA),
+    child: Center(child: Icon(iconFor(item.kind), color: wine, size: 25)),
+  );
+
   @override
   Widget build(BuildContext context) => Material(
     color: item.unread ? const Color(0xFFFCF3F6) : Colors.white,
@@ -43,10 +48,27 @@ class NotificationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: const Color(0xFFF3E5EA),
-              child: Icon(iconFor(item.kind), color: wine, size: 24),
+            SizedBox(
+              width: 56,
+              height: 56,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: item.thumbnailUrl == null
+                    ? _fallback()
+                    : Image.network(
+                        item.thumbnailUrl!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 168,
+                        cacheHeight: 168,
+                        loadingBuilder: (context, child, progress) =>
+                            progress == null
+                            ? child
+                            : const AppShimmer(
+                                child: SkeletonBox(width: 56, height: 56),
+                              ),
+                        errorBuilder: (_, error, stack) => _fallback(),
+                      ),
+              ),
             ),
             const SizedBox(width: 13),
             Expanded(

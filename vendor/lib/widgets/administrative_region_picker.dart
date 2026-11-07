@@ -1,3 +1,5 @@
+import 'vendor_page_scaffold.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/administrative_region.dart';
@@ -25,7 +27,7 @@ class _AdministrativeRegionPickerState
     final rows = widget.regions
         .where((r) => r.name.toLowerCase().contains(query.trim().toLowerCase()))
         .toList();
-    return Scaffold(
+    return VendorPageScaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [

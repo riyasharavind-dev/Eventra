@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -139,7 +140,7 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
   @override
   Widget build(BuildContext context) {
     final about = _about;
-    return Scaffold(
+    return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
         title: const Text('About Eventor'),

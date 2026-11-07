@@ -1,4 +1,6 @@
 import 'repositories/auth_repository.dart';
+import 'services/vendor_navigation_controller.dart';
+import 'widgets/vendor_navigation_host.dart';
 import 'widgets/account_role_gate.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -39,6 +41,12 @@ class EventorVendorApp extends StatelessWidget {
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Eventor Vendor',
+        navigatorKey: VendorNavigationController.instance.navigatorKey,
+        navigatorObservers: [VendorNavigationController.instance.observer],
+        builder: (context, child) => VendorNavigationHost(
+          controller: VendorNavigationController.instance,
+          child: child ?? const SizedBox.shrink(),
+        ),
         locale: Locale(settings.value.languageCode),
         supportedLocales: const [Locale('en'), Locale('ta')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,

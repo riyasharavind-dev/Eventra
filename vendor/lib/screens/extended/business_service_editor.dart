@@ -1,3 +1,4 @@
+import '../../widgets/vendor_page_scaffold.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
 
@@ -116,7 +117,7 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !busy,
-    child: Scaffold(
+    child: VendorPageScaffold(
       appBar: AppBar(
         title: Text(widget.service == null ? 'Add service' : 'Edit service'),
       ),
