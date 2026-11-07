@@ -91,12 +91,23 @@ class AdminRepository {
         : AdminRecord(Map<String, dynamic>.from(data as Map));
   }
 
-  Future<void> grantAccess(String email, String name, String level) async {
+  Future<Map<String, dynamic>> deleteRecord(
+    AdminModule module,
+    AdminRecord record,
+    String reason,
+    String confirmation,
+  ) async => Map<String, dynamic>.from(
     await db.rpc(
-      'admin_grant_access',
-      params: {'p_email': email, 'p_name': name, 'p_access_level': level},
-    );
-  }
+      'admin_delete_record',
+      params: {
+        'p_module': module.name,
+        'p_id': record.id(module),
+        'p_revision': record.revision,
+        'p_reason': reason,
+        'p_confirmation': confirmation,
+      },
+    ) as Map,
+  );
 
   Future<void> cleanup(AdminModule module, AdminRecord row) async {
     final byBucket = <String, List<String>>{};

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/admin_module.dart';
 import '../../repositories/admin_repository.dart';
+import '../../widgets/admin_module_card.dart';
 import 'admin_record_editor.dart';
 import 'admin_record_screen.dart';
 
@@ -104,7 +105,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
           module: widget.module,
           modules: widget.modules,
           id: row.id(widget.module),
-          canWrite: widget.canWrite,
+          canWrite: widget.canWrite && widget.module.permittedWrite != false,
           isOwner: widget.isOwner,
         ),
       ),
@@ -217,253 +218,282 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
         )
         .take(5)
         .toList();
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${widget.module.label} · ${page?.total ?? 0}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Refresh',
-                    onPressed: load,
-                    icon: const Icon(Icons.refresh),
-                  ),
-                  if (widget.canWrite && widget.module.canCreate)
-                    FilledButton.icon(
-                      onPressed: edit,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add'),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: query,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: 'Search ${widget.module.label.toLowerCase()}',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: query.text.isEmpty
-                      ? null
-                      : IconButton(
-                          onPressed: () {
-                            query.clear();
-                            offset = 0;
-                            load();
-                          },
-                          icon: const Icon(Icons.close),
+    return LayoutBuilder(
+      builder: (context, bounds) => Column(
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: bounds.maxHeight * 0.52),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${widget.module.label} · ${page?.total ?? 0}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ),
-                ),
-                onChanged: (_) {
-                  debounce?.cancel();
-                  debounce = Timer(const Duration(milliseconds: 300), () {
-                    offset = 0;
-                    load();
-                  });
-                },
-              ),
-              if (status != null) ...[
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  key: ValueKey('filter-${filters[status.name]}'),
-                  initialValue: filters[status.name] as String? ?? 'all',
-                  decoration: InputDecoration(
-                    labelText: status.label,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: 'all',
-                      child: Text('All statuses'),
+                        IconButton(
+                          tooltip: 'Refresh',
+                          onPressed: load,
+                          icon: const Icon(Icons.refresh),
+                        ),
+                        if (widget.canWrite && widget.module.canCreate)
+                          FilledButton.icon(
+                            onPressed: edit,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add'),
+                          ),
+                      ],
                     ),
-                    ...status.choices.map(
-                      (s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(adminLabel(s)),
+                    if (widget.module.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          widget.module.description,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
                       ),
+                    const SizedBox(height: 12),
+                    AdminCapabilityChips(
+                      module: widget.module,
+                      writable: widget.canWrite,
                     ),
-                  ],
-                  onChanged: (v) {
-                    if (v == null || v == 'all') {
-                      filters.remove(status.name);
-                    } else {
-                      filters[status.name] = v;
-                    }
-                    offset = 0;
-                    load();
-                  },
-                ),
-              ],
-              if (extraFilters.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: extraFilters.map(contentFilter).toList(),
-                ),
-              ],
-              if (filters.keys.any(
-                (k) =>
-                    k != status?.name && !extraFilters.any((f) => f.name == k),
-              )) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: filters.entries
-                      .where(
-                        (e) =>
-                            e.key != status?.name &&
-                            !extraFilters.any((f) => f.name == e.key),
-                      )
-                      .map(
-                        (e) => Chip(
-                          label: Text('${adminLabel(e.key)}: ${e.value}'),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: query,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Search ${widget.module.label.toLowerCase()}',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: query.text.isEmpty
+                            ? null
+                            : IconButton(
+                                onPressed: () {
+                                  query.clear();
+                                  offset = 0;
+                                  load();
+                                },
+                                icon: const Icon(Icons.close),
+                              ),
+                      ),
+                      onChanged: (_) {
+                        debounce?.cancel();
+                        debounce = Timer(const Duration(milliseconds: 300), () {
+                          offset = 0;
+                          load();
+                        });
+                      },
+                    ),
+                    if (status != null) ...[
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('filter-${filters[status.name]}'),
+                        initialValue: filters[status.name] as String? ?? 'all',
+                        decoration: InputDecoration(
+                          labelText: status.label,
+                          border: const OutlineInputBorder(),
+                          isDense: true,
                         ),
-                      )
-                      .toList(),
+                        items: [
+                          const DropdownMenuItem(
+                            value: 'all',
+                            child: Text('All statuses'),
+                          ),
+                          ...status.choices.map(
+                            (s) => DropdownMenuItem(
+                              value: s,
+                              child: Text(adminLabel(s)),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v == null || v == 'all') {
+                            filters.remove(status.name);
+                          } else {
+                            filters[status.name] = v;
+                          }
+                          offset = 0;
+                          load();
+                        },
+                      ),
+                    ],
+                    if (extraFilters.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: extraFilters.map(contentFilter).toList(),
+                      ),
+                    ],
+                    if (filters.keys.any(
+                      (k) =>
+                          k != status?.name &&
+                          !extraFilters.any((f) => f.name == k),
+                    )) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: filters.entries
+                            .where(
+                              (e) =>
+                                  e.key != status?.name &&
+                                  !extraFilters.any((f) => f.name == e.key),
+                            )
+                            .map(
+                              (e) => Chip(
+                                label: Text('${adminLabel(e.key)}: ${e.value}'),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
-          ),
-        ),
-        if (loading) const LinearProgressIndicator(),
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const Text('Could not load this module.'),
-                TextButton(onPressed: load, child: const Text('Retry')),
-              ],
+              ),
             ),
           ),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, size) {
-              if (page == null && loading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (page?.rows.isEmpty ?? true) {
-                return const Center(child: Text('No matching records.'));
-              }
-              if (size.maxWidth >= 850) {
-                return SingleChildScrollView(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      showCheckboxColumn: false,
-                      columns: [
-                        DataColumn(label: Text(widget.module.label)),
-                        ...display.map((f) => DataColumn(label: Text(f.label))),
-                      ],
-                      rows: page!.rows
-                          .map(
-                            (row) => DataRow(
-                              onSelectChanged: (_) => open(row),
-                              cells: [
-                                DataCell(
-                                  SizedBox(
-                                    width: 220,
-                                    child: Text(
-                                      row.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ),
-                                ...display.map(
-                                  (f) => DataCell(
+          if (loading) const LinearProgressIndicator(),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text('Could not load this module.'),
+                  TextButton(onPressed: load, child: const Text('Retry')),
+                ],
+              ),
+            ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, size) {
+                if (page == null && loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (page?.rows.isEmpty ?? true) {
+                  return const Center(child: Text('No matching records.'));
+                }
+                if (size.maxWidth >= 850) {
+                  return SingleChildScrollView(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        showCheckboxColumn: false,
+                        columns: [
+                          DataColumn(label: Text(widget.module.label)),
+                          ...display.map(
+                            (f) => DataColumn(label: Text(f.label)),
+                          ),
+                        ],
+                        rows: page!.rows
+                            .map(
+                              (row) => DataRow(
+                                onSelectChanged: (_) => open(row),
+                                cells: [
+                                  DataCell(
                                     SizedBox(
-                                      width: f.type == 'timestamptz'
-                                          ? 190
-                                          : 170,
+                                      width: 220,
                                       child: Text(
-                                        row.display(f.name),
+                                        row.title,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                          .toList(),
+                                  ...display.map(
+                                    (f) => DataCell(
+                                      SizedBox(
+                                        width: f.type == 'timestamptz'
+                                            ? 190
+                                            : 170,
+                                        child: Text(
+                                          row.display(f.name),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ),
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: load,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: page!.rows.length,
+                    itemBuilder: (context, index) {
+                      final row = page!.rows[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(row.title),
+                          subtitle: Text(
+                            display
+                                .take(3)
+                                .map(
+                                  (f) => '${f.label}: ${row.display(f.name)}',
+                                )
+                                .join('\n'),
+                            maxLines: 5,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => open(row),
+                        ),
+                      );
+                    },
                   ),
                 );
-              }
-              return RefreshIndicator(
-                onRefresh: load,
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: page!.rows.length,
-                  itemBuilder: (context, index) {
-                    final row = page!.rows[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(row.title),
-                        subtitle: Text(
-                          display
-                              .take(3)
-                              .map((f) => '${f.label}: ${row.display(f.name)}')
-                              .join('\n'),
-                          maxLines: 5,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => open(row),
-                      ),
-                    );
-                  },
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  '${page?.total == 0 ? 0 : offset + 1}–${(offset + (page?.rows.length ?? 0))} of ${page?.total ?? 0}',
                 ),
-              );
-            },
+                IconButton(
+                  tooltip: 'Previous page',
+                  onPressed: loading || offset == 0
+                      ? null
+                      : () {
+                          offset = (offset - 30).clamp(0, 1 << 30);
+                          load();
+                        },
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                IconButton(
+                  tooltip: 'Next page',
+                  onPressed: loading || offset + 30 >= (page?.total ?? 0)
+                      ? null
+                      : () {
+                          offset += 30;
+                          load();
+                        },
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                '${page?.total == 0 ? 0 : offset + 1}–${(offset + (page?.rows.length ?? 0))} of ${page?.total ?? 0}',
-              ),
-              IconButton(
-                tooltip: 'Previous page',
-                onPressed: loading || offset == 0
-                    ? null
-                    : () {
-                        offset = (offset - 30).clamp(0, 1 << 30);
-                        load();
-                      },
-                icon: const Icon(Icons.chevron_left),
-              ),
-              IconButton(
-                tooltip: 'Next page',
-                onPressed: loading || offset + 30 >= (page?.total ?? 0)
-                    ? null
-                    : () {
-                        offset += 30;
-                        load();
-                      },
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

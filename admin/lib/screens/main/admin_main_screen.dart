@@ -1,6 +1,7 @@
 import '../../repositories/admin_connections_repository.dart';
 import '../extended/admin_team_screen.dart';
 import '../extended/admin_catalog_screen.dart';
+import '../extended/admin_workspace_screen.dart';
 import '../management/admin_connections_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   late final AdminRepository repo;
   List<AdminModule> modules = [];
   Map<String, dynamic>? session;
-  String selected = 'dashboard', moduleSearch = '';
+  String selected = 'workspace', moduleSearch = '';
   Map<String, dynamic> filters = {};
   int refreshKey = 0;
   bool loading = true;
@@ -159,6 +160,17 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 children: [
+                  ListTile(
+                    selected: selected == 'workspace',
+                    leading: const Icon(Icons.grid_view_rounded),
+                    title: const Text('All Modules'),
+                    onTap: () {
+                      if (drawer) {
+                        Navigator.pop(context);
+                      }
+                      open('workspace', {});
+                    },
+                  ),
                   if (session?['access_level'] == 'owner') ...[
                     ListTile(
                       leading: const Icon(Icons.group_outlined),
@@ -321,7 +333,9 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          selected == 'shared_catalog'
+          selected == 'workspace'
+              ? 'Control Centre'
+              : selected == 'shared_catalog'
               ? 'Categories & Event Types'
               : selected == 'team_access'
               ? 'Team & Access'
@@ -356,7 +370,19 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
           if (!mobile) navigation(),
           if (!mobile) const VerticalDivider(width: 1),
           Expanded(
-            child: selected == 'shared_catalog'
+            child: selected == 'workspace'
+                ? AdminWorkspaceScreen(
+                    key: ValueKey('workspace-$refreshKey'),
+                    isOwner: session?['access_level'] == 'owner',
+                    modules: modules,
+                    onOpen: open,
+                    canWrite: (name) =>
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions'] as Map?)?[name] == true),
+                  )
+                : selected == 'shared_catalog'
                 ? AdminCatalogScreen(
                     key: ValueKey('catalog-$refreshKey'),
                     repo: repo,

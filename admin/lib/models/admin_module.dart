@@ -125,7 +125,9 @@ class AdminField {
 
 class AdminModule {
   final String name, label, section, pk;
-  final bool canCreate;
+  final bool canCreate, canDelete;
+  final String description, managementMode;
+  final bool? permittedWrite;
   final List<AdminField> fields;
   final List<String> actions;
   const AdminModule({
@@ -134,6 +136,10 @@ class AdminModule {
     required this.section,
     this.pk = 'id',
     this.canCreate = false,
+    this.canDelete = false,
+    this.description = '',
+    this.managementMode = 'records',
+    this.permittedWrite,
     this.fields = const [],
     this.actions = const [],
   });
@@ -143,6 +149,10 @@ class AdminModule {
     section: m['section'] as String,
     pk: m['pk'] as String,
     canCreate: m['can_create'] == true,
+    canDelete: m['can_delete'] == true,
+    description: m['description'] as String? ?? '',
+    managementMode: m['management_mode'] as String? ?? 'records',
+    permittedWrite: m['permitted_write'] as bool?,
     fields: (m['fields'] as List? ?? [])
         .map((f) => AdminField.fromMap(Map<String, dynamic>.from(f as Map)))
         .toList(),

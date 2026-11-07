@@ -28,6 +28,51 @@ class EventorAdminApp extends StatelessWidget {
     themeMode: ThemeMode.light,
     theme: ThemeData(
       useMaterial3: true,
+      scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFE8EAF0)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE1E4EC)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE1E4EC)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      dataTableTheme: const DataTableThemeData(
+        headingRowColor: WidgetStatePropertyAll(Color(0xFFF2F3F8)),
+        headingTextStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF252936),
+        ),
+        dataRowMinHeight: 64,
+        dataRowMaxHeight: 76,
+        dividerThickness: 0.5,
+      ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF9F0101),
         brightness: Brightness.light,

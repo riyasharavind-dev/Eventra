@@ -34,6 +34,8 @@ void adminError(BuildContext context, Object error) {
 
 String adminActionLabel(String action) =>
     const {
+      'suspend_account': 'Suspend account',
+      'restore_account': 'Restore account',
       'accepted': 'Accept booking',
       'rejected': 'Reject',
       'completed': 'Mark completed',
@@ -74,6 +76,12 @@ List<String> availableAdminActions(
 }) {
   final v = row.values;
   return module.actions.where((a) {
+    if (module.name == 'users') {
+      if (!owner || row.values['_managed_admin'] == true) return false;
+      return a == 'suspend_account'
+          ? row.values['_account_suspended'] != true
+          : row.values['_account_suspended'] == true;
+    }
     if (module.name == 'bookings') {
       return v['status'] == 'pending'
           ? ['accepted', 'rejected', 'cancelled'].contains(a)
@@ -309,6 +317,8 @@ class _ActionDialogState extends State<_ActionDialog> {
       'manual_review',
       'delete_account',
       'revoke',
+      'suspend_account',
+      'restore_account',
     ].contains(widget.action);
     return AlertDialog(
       title: Text('${adminActionLabel(widget.action)}?'),
@@ -355,7 +365,15 @@ class _ActionDialogState extends State<_ActionDialog> {
                 onChanged: (v) => text = v,
                 validator: (v) =>
                     (reply || required) &&
-                        (v?.trim().length ?? 0) < (reply ? 1 : 3)
+                        (v?.trim().length ?? 0) <
+                            (reply
+                                ? 1
+                                : [
+                                    'suspend_account',
+                                    'restore_account',
+                                  ].contains(widget.action)
+                                ? 5
+                                : 3)
                     ? 'Enter a ${reply ? 'reply' : 'reason'}'
                     : null,
               ),

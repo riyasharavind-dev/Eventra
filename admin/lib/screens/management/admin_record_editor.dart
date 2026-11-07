@@ -148,6 +148,9 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
       return;
     }
     final filters = <String, dynamic>{};
+    if (widget.module.name == 'businesses' && f.name == 'primary_category_id') {
+      filters['parent_id'] = null;
+    }
     if (f.name == 'business_id' && values['vendor_id'] != null) {
       filters['vendor_id'] = values['vendor_id'];
     }
@@ -263,7 +266,9 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
     final locked =
         widget.record != null &&
         (f.name == widget.module.pk ||
-            (widget.module.name == 'services' && f.name == 'vendor_id'));
+            (['services', 'businesses'].contains(widget.module.name) &&
+                f.name == 'vendor_id') ||
+            (widget.module.name == 'support_tickets' && f.name == 'user_id'));
     if (f.type == 'bool') {
       return SwitchListTile(
         contentPadding: EdgeInsets.zero,

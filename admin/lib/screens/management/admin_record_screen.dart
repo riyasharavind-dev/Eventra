@@ -78,6 +78,81 @@ class _AdminRecordScreenState extends State<AdminRecordScreen> {
     }
   }
 
+  Future<void> deleteRecord() async {
+    if (row == null || busy) return;
+    final form = GlobalKey<FormState>();
+    String reason = '', confirmation = '';
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Delete this record?'),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Form(
+              key: form,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'This permanently removes “${row!.title}”. Linked records prevent deletion. Uploaded files are retained for separate review.',
+                  ),
+                  const SizedBox(height: 16),
+                  SelectableText('Record ID: ${widget.id}'),
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: 'Reason'),
+                    onChanged: (v) => reason = v,
+                    validator: (v) => (v?.trim().length ?? 0) < 5
+                        ? 'Enter a reason (at least 5 characters)'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Type the exact record ID',
+                    ),
+                    onChanged: (v) => confirmation = v,
+                    validator: (v) => v?.trim() == widget.id
+                        ? null
+                        : 'Record ID does not match',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (form.currentState!.validate()) Navigator.pop(c, true);
+            },
+            child: const Text('Delete permanently'),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+    setState(() => busy = true);
+    try {
+      await widget.repo.deleteRecord(
+        widget.module,
+        row!,
+        reason.trim(),
+        confirmation.trim(),
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) adminError(context, e);
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> openRelated(String module, Map<String, dynamic> filters) async {
     final target = widget.modules.where((m) => m.name == module).firstOrNull;
     if (target == null) {
@@ -93,7 +168,7 @@ class _AdminRecordScreenState extends State<AdminRecordScreen> {
             module: target,
             modules: widget.modules,
             filters: filters,
-            canWrite: widget.canWrite,
+            canWrite: widget.canWrite && target.permittedWrite != false,
             isOwner: widget.isOwner,
           ),
         ),
@@ -548,6 +623,18 @@ class _AdminRecordScreenState extends State<AdminRecordScreen> {
               onPressed: busy ? null : load,
               icon: const Icon(Icons.refresh),
             ),
+            if (widget.isOwner &&
+                widget.canWrite &&
+                widget.module.canDelete &&
+                !published)
+              IconButton(
+                tooltip: 'Delete record',
+                onPressed: busy || row == null ? null : deleteRecord,
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
             if (widget.canWrite &&
                 widget.module.editable.isNotEmpty &&
                 !published)
@@ -578,6 +665,25 @@ class _AdminRecordScreenState extends State<AdminRecordScreen> {
                         onPressed: load,
                         child: const Text(
                           'Refresh failed. Retry before making changes.',
+                        ),
+                      ),
+                    if (widget.module.name == 'users')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            row!.values['_account_suspended'] == true
+                                ? Icons.block
+                                : Icons.verified_user_outlined,
+                          ),
+                          title: Text(
+                            row!.values['_managed_admin'] == true
+                                ? 'Admin account · Manage in Team & Access'
+                                : row!.values['_account_suspended'] == true
+                                ? 'Account suspended'
+                                : 'Account active',
+                          ),
                         ),
                       ),
                     if (widget.canWrite)
