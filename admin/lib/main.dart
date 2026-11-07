@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/supabase_config.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/main/admin_main_screen.dart';
+import 'screens/extended/admin_session_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final callbackUri = kIsWeb ? Uri.base : null;
   await Supabase.initialize(
     url: SupabaseConfig.url,
     // ignore: deprecated_member_use
     anonKey: SupabaseConfig.anonKey,
+    authOptions: FlutterAuthClientOptions(detectSessionInUri: !kIsWeb),
   );
-  runApp(const EventorAdminApp());
+  runApp(EventorAdminApp(callbackUri: callbackUri));
 }
 
 class EventorAdminApp extends StatelessWidget {
-  const EventorAdminApp({super.key});
+  final Uri? callbackUri;
+  const EventorAdminApp({super.key, this.callbackUri});
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Eventor Admin',
+    initialRoute: '/',
     themeMode: ThemeMode.light,
     theme: ThemeData(
       useMaterial3: true,
@@ -29,20 +33,6 @@ class EventorAdminApp extends StatelessWidget {
         brightness: Brightness.light,
       ),
     ),
-    home: const _AdminSessionGate(),
+    home: AdminSessionGate(callbackUri: callbackUri),
   );
-}
-
-class _AdminSessionGate extends StatelessWidget {
-  const _AdminSessionGate();
-  @override
-  Widget build(BuildContext context) {
-    final auth = Supabase.instance.client.auth;
-    return StreamBuilder<AuthState>(
-      stream: auth.onAuthStateChange,
-      builder: (c, s) => auth.currentSession == null
-          ? const LoginScreen()
-          : const AdminMainScreen(),
-    );
-  }
 }

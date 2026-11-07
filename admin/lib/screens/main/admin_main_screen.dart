@@ -1,4 +1,6 @@
 import '../../repositories/admin_connections_repository.dart';
+import '../extended/admin_team_screen.dart';
+import '../extended/admin_catalog_screen.dart';
 import '../management/admin_connections_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -49,6 +51,15 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         setState(() {
           session = identity;
           modules = catalog;
+          if (identity['access_level'] != 'owner' &&
+              [
+                'dashboard',
+                'database_connections',
+                'storage_buckets',
+                'team_access',
+              ].contains(selected)) {
+            selected = catalog.isEmpty ? 'none' : catalog.first.name;
+          }
           loading = false;
         });
       }
@@ -148,44 +159,71 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 children: [
-                  ListTile(
-                    selected: selected == 'dashboard',
-                    leading: const Icon(Icons.dashboard_outlined),
-                    title: const Text('Dashboard'),
-                    onTap: () {
-                      if (drawer) {
-                        Navigator.pop(context);
-                      }
-                      open('dashboard', {});
-                    },
-                  ),
-                  ListTile(
-                    selected: selected == 'database_connections',
-                    leading: const Icon(Icons.hub_outlined),
-                    title: const Text('Database Connections'),
-                    onTap: () {
-                      if (drawer) Navigator.pop(context);
-                      open('database_connections', {});
-                    },
-                  ),
-                  ListTile(
-                    selected: selected == 'storage_buckets',
-                    leading: const Icon(Icons.cloud_outlined),
-                    title: const Text('Storage Buckets'),
-                    onTap: () {
-                      if (drawer) Navigator.pop(context);
-                      open('storage_buckets', {});
-                    },
-                  ),
-                  ListTile(
-                    selected: selected == 'customer_app',
-                    leading: const Icon(Icons.phone_android_outlined),
-                    title: const Text('Customer App'),
-                    onTap: () {
-                      if (drawer) Navigator.pop(context);
-                      open('customer_app', {});
-                    },
-                  ),
+                  if (session?['access_level'] == 'owner') ...[
+                    ListTile(
+                      leading: const Icon(Icons.group_outlined),
+                      title: const Text('Team & Access'),
+                      selected: selected == 'team_access',
+                      onTap: () {
+                        if (drawer) Navigator.pop(context);
+                        open('team_access', {});
+                      },
+                    ),
+                    ListTile(
+                      selected: selected == 'dashboard',
+                      leading: const Icon(Icons.dashboard_outlined),
+                      title: const Text('Dashboard'),
+                      onTap: () {
+                        if (drawer) {
+                          Navigator.pop(context);
+                        }
+                        open('dashboard', {});
+                      },
+                    ),
+                    ListTile(
+                      selected: selected == 'database_connections',
+                      leading: const Icon(Icons.hub_outlined),
+                      title: const Text('Database Connections'),
+                      onTap: () {
+                        if (drawer) Navigator.pop(context);
+                        open('database_connections', {});
+                      },
+                    ),
+                    ListTile(
+                      selected: selected == 'storage_buckets',
+                      leading: const Icon(Icons.cloud_outlined),
+                      title: const Text('Storage Buckets'),
+                      onTap: () {
+                        if (drawer) Navigator.pop(context);
+                        open('storage_buckets', {});
+                      },
+                    ),
+                  ],
+                  if (session?['access_level'] == 'owner' ||
+                      session?['access_level'] == 'admin')
+                    ListTile(
+                      selected: selected == 'customer_app',
+                      leading: const Icon(Icons.phone_android_outlined),
+                      title: const Text('Customer App'),
+                      onTap: () {
+                        if (drawer) Navigator.pop(context);
+                        open('customer_app', {});
+                      },
+                    ),
+                  if (modules.any(
+                    (m) => ['category_nodes', 'event_types'].contains(m.name),
+                  ))
+                    ListTile(
+                      selected: selected == 'shared_catalog',
+                      leading: const Icon(Icons.account_tree_outlined),
+                      title: const Text('Categories & Event Types'),
+                      onTap: () {
+                        if (drawer) {
+                          Navigator.pop(context);
+                        }
+                        open('shared_catalog', {});
+                      },
+                    ),
                   for (final section in sections) ...[
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 8, 8),
@@ -283,7 +321,11 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          selected == 'database_connections'
+          selected == 'shared_catalog'
+              ? 'Categories & Event Types'
+              : selected == 'team_access'
+              ? 'Team & Access'
+              : selected == 'database_connections'
               ? 'Database Connections'
               : selected == 'storage_buckets'
               ? 'Storage Buckets'
@@ -314,7 +356,21 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
           if (!mobile) navigation(),
           if (!mobile) const VerticalDivider(width: 1),
           Expanded(
-            child: selected == 'dashboard'
+            child: selected == 'shared_catalog'
+                ? AdminCatalogScreen(
+                    key: ValueKey('catalog-$refreshKey'),
+                    repo: repo,
+                    modules: modules,
+                    onOpen: open,
+                    canWrite: (name) =>
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions'] as Map?)?[name] == true),
+                  )
+                : selected == 'team_access'
+                ? AdminTeamScreen(key: ValueKey('team-$refreshKey'))
+                : selected == 'dashboard'
                 ? AdminDashboardScreen(
                     key: ValueKey('dashboard-$refreshKey'),
                     repo: repo,
@@ -341,7 +397,12 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                 ? AdminHomeFeedScreen(
                     key: ValueKey('home-feed-$refreshKey'),
                     repo: repo,
-                    canWrite: session?['access_level'] != 'viewer',
+                    canWrite:
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions'] as Map?)?[selected] ==
+                                true),
                   )
                 : module == null
                 ? const Center(child: Text('Select an admin module.'))
@@ -351,7 +412,12 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                     module: module,
                     modules: modules,
                     filters: filters,
-                    canWrite: session?['access_level'] != 'viewer',
+                    canWrite:
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions'] as Map?)?[selected] ==
+                                true),
                     isOwner: session?['access_level'] == 'owner',
                   ),
           ),

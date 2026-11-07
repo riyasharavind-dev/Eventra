@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../repositories/auth_repository.dart';
+import '../extended/admin_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -135,6 +136,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Text(busy ? 'Signing in…' : 'Sign in'),
                   ),
+                ),
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                const AdminPasswordScreen(forgot: true),
+                          ),
+                        ),
+                  child: const Text('Forgot Password?'),
                 ),
                 const SizedBox(height: 16),
                 const Text(

@@ -170,9 +170,7 @@ class AdminRepository {
         : module == 'businesses'
         ? 'business-media'
         : 'banners';
-    final prefix = module == 'services' && vendorId != null
-        ? 'services/$vendorId'
-        : 'admins/$user/$module';
+    final prefix = 'admins/$user/$module';
     final path = '$prefix/${DateTime.now().microsecondsSinceEpoch}-$field.$ext';
     await db.storage
         .from(bucket)

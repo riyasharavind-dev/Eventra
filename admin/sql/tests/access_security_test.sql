@@ -124,7 +124,7 @@ select pg_temp.expect_denied($q$select public.admin_grant_access('security-c1@ex
 select pg_temp.expect_denied($q$insert into storage.objects(bucket_id,name) values('banners','admins/fa000000-0000-4000-8000-000000000006/ad.jpg')$q$,'viewer cannot upload admin media');
 reset role;
 set local role authenticated;
-do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated"}',true);end $$;
+do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}',true);end $$;
 select pg_temp.assert_access(public.admin_catalog() is not null,'owner admin catalog works');
 insert into storage.objects(bucket_id,name) values('banners','admins/fa000000-0000-4000-8000-000000000005/security.jpg');
 select pg_temp.assert_access(public.eventra_admin_can_write(),'owner admin write authority preserved');

@@ -290,9 +290,16 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
         builder: (state) => InputDecorator(
           decoration: InputDecoration(
             labelText:
-                widget.module.name == 'social_links' && f.name == 'icon_url'
+                widget.module.name == 'category_nodes' && f.name == 'parent_id'
+                ? 'Parent category'
+                : widget.module.name == 'social_links' && f.name == 'icon_url'
                 ? 'Social icon URL'
                 : f.label,
+            helperText:
+                widget.module.name == 'category_nodes' && f.name == 'parent_id'
+                ? 'Leave empty for a main category. Select a parent for a subcategory.'
+                : null,
+            helperMaxLines: 3,
             errorText: state.errorText,
             border: const OutlineInputBorder(),
           ),

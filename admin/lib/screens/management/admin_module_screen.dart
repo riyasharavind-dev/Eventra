@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../models/admin_module.dart';
 import '../../repositories/admin_repository.dart';
-import '../../widgets/admin_management_helpers.dart';
 import 'admin_record_editor.dart';
 import 'admin_record_screen.dart';
 
@@ -170,87 +169,6 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
     );
   }
 
-  Future<void> grant() async {
-    final form = GlobalKey<FormState>();
-    String email = '', name = '', level = 'admin';
-    final values = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Grant admin access'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: form,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Grant access to an existing Auth account. Passwords are managed by Supabase Auth.',
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Account email'),
-                  onChanged: (v) => email = v,
-                  validator: (v) =>
-                      v?.contains('@') == true ? null : 'Enter email',
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Admin name'),
-                  onChanged: (v) => name = v,
-                  validator: (v) =>
-                      v?.trim().isNotEmpty == true ? null : 'Enter name',
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: level,
-                  decoration: const InputDecoration(labelText: 'Access level'),
-                  items: const [
-                    DropdownMenuItem(value: 'owner', child: Text('Owner')),
-                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                    DropdownMenuItem(value: 'viewer', child: Text('Read only')),
-                  ],
-                  onChanged: (v) => level = v!,
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (form.currentState!.validate()) {
-                Navigator.pop(c, {
-                  'email': email.trim(),
-                  'name': name.trim(),
-                  'level': level,
-                });
-              }
-            },
-            child: const Text('Grant access'),
-          ),
-        ],
-      ),
-    );
-    if (values == null) {
-      return;
-    }
-    try {
-      await widget.repo.grantAccess(
-        values['email']!,
-        values['name']!,
-        values['level']!,
-      );
-      if (mounted) {
-        await load();
-      }
-    } catch (e) {
-      if (mounted) {
-        adminError(context, e);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final status = widget.module.fields
@@ -324,11 +242,6 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
                       onPressed: edit,
                       icon: const Icon(Icons.add),
                       label: const Text('Add'),
-                    ),
-                  if (widget.isOwner && widget.module.name == 'admins')
-                    FilledButton(
-                      onPressed: grant,
-                      child: const Text('Grant access'),
                     ),
                 ],
               ),

@@ -124,7 +124,7 @@ select pg_temp.expect_denied($q$select public.admin_grant_access('security-c1@ex
 select pg_temp.expect_denied($q$insert into storage.objects(bucket_id,name) values('banners','admins/fa000000-0000-4000-8000-000000000006/ad.jpg')$q$,'viewer cannot upload admin media');
 reset role;
 set local role authenticated;
-do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated"}',true);end $$;
+do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}',true);end $$;
 select pg_temp.assert_access(public.admin_catalog() is not null,'owner admin catalog works');
 insert into storage.objects(bucket_id,name) values('banners','admins/fa000000-0000-4000-8000-000000000005/security.jpg');
 select pg_temp.assert_access(public.eventra_admin_can_write(),'owner admin write authority preserved');
@@ -145,13 +145,13 @@ select pg_temp.expect_denied($q$select public.admin_system_records('eventra_admi
 reset role;
 set local role authenticated;
 do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000006","role":"authenticated"}',true);end $$;
-select pg_temp.assert_access(public.admin_connections_inventory() ? 'buckets','viewer can inspect connections');
-select pg_temp.assert_access(public.admin_storage_objects('profile') ? 'rows','viewer can browse file metadata');
+select pg_temp.expect_denied('select public.admin_connections_inventory()','viewer cannot inspect owner-only connections');
+select pg_temp.expect_denied($q$select public.admin_storage_objects('profile')$q$,'viewer cannot browse global file metadata');
 select pg_temp.expect_denied($q$select public.admin_system_records('auth.users')$q$,'system source injection denied');
-select pg_temp.expect_denied($q$select public.admin_storage_objects('profile','',-1,30)$q$,'negative storage pagination denied',array['P0001']);
+select pg_temp.expect_denied($q$select public.admin_storage_objects('profile','',-1,30)$q$,'viewer cannot bypass scope with invalid pagination',array['42501']);
 reset role;
 set local role authenticated;
-do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated"}',true);end $$;
+do $$ begin perform set_config('request.jwt.claims','{"sub":"fa000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}',true);end $$;
 do $$ declare m jsonb;page jsonb;cnt integer:=0;inv jsonb;src jsonb;begin
  inv:=public.admin_connections_inventory();
  perform pg_temp.assert_access(not exists(select 1 from jsonb_array_elements(inv->'sources') s where s->>'schema'='public' and s->>'module' is null),'every public table/view connected to module');
@@ -169,7 +169,7 @@ do $$ declare m jsonb;page jsonb;cnt integer:=0;inv jsonb;src jsonb;begin
   page:=public.admin_system_records((src->>'schema')||'.'||(src->>'name'),0,2);
   if page is null or not page ? 'rows' then raise exception 'Missing system response';end if;
  end loop;
- perform pg_temp.assert_access(true,'all five system sources have sanitized read-only endpoints');
+ perform pg_temp.assert_access(true,'all eight system sources have sanitized read-only endpoints');
  for src in select * from jsonb_array_elements(inv->'buckets') loop
   page:=public.admin_storage_objects(src->>'id','',0,2);
   if page is null or not page ? 'rows' then raise exception 'Missing storage response';end if;
