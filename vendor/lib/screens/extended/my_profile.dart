@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -25,7 +27,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
   static const Color _wine = Color(0xFF80152C);
   static const Color _gold = Color(0xFFFFCB48);
   static const Color _background = Color(0xFFF8F8FA);
-  static const Color _iconGrey = Color(0xFF777783);
 
   final _formKey = GlobalKey<FormState>();
   final _aboutController = TextEditingController();
@@ -407,7 +408,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             children: [
               SizedBox(
                 width: 28,
-                child: Icon(icon, size: 22, color: _iconGrey),
+                child: Icon(icon, size: 22, color: AppIconColors.standard),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -436,7 +437,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: _iconGrey),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppIconColors.standard,
+              ),
             ],
           ),
         ),
@@ -478,11 +482,12 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: const Color(0xFFF0EDF0)),
                       boxShadow: [
                         BoxShadow(
-                          color: _wine.withValues(alpha: 0.07),
-                          blurRadius: 22,
-                          offset: const Offset(0, 8),
+                          color: _wine.withValues(alpha: 0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -534,7 +539,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             labelText: _text('Full Name', 'முழுப் பெயர்'),
                             prefixIcon: const Icon(
                               Icons.person_outline_rounded,
-                              color: _iconGrey,
+                              color: AppIconColors.standard,
                             ),
                             filled: true,
                             fillColor: _background,
@@ -585,7 +590,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                               padding: EdgeInsets.only(bottom: 55),
                               child: Icon(
                                 Icons.notes_rounded,
-                                color: _iconGrey,
+                                color: AppIconColors.standard,
                               ),
                             ),
                             filled: true,
@@ -634,7 +639,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             helperMaxLines: 3,
                             prefixIcon: const Icon(
                               Icons.language_rounded,
-                              color: _iconGrey,
+                              color: AppIconColors.standard,
                             ),
                             filled: true,
                             fillColor: _background,
@@ -730,7 +735,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             child: Icon(
                               Icons.event_available_outlined,
                               size: 22,
-                              color: _iconGrey,
+                              color: AppIconColors.standard,
                             ),
                           ),
                           title: Text(
@@ -893,7 +898,11 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.person_off_outlined, size: 52, color: Colors.grey),
+            const Icon(
+              Icons.person_off_outlined,
+              size: 52,
+              color: AppIconColors.standard,
+            ),
             const SizedBox(height: 16),
             Text(
               message ?? _errorMessage ?? 'Unable to load profile.',
@@ -929,7 +938,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         ),
         backgroundColor: _background,
         foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: AppIconColors.standard),
         surfaceTintColor: Colors.transparent,
       ),
       body: SafeArea(child: _buildBody()),

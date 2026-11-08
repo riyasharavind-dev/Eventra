@@ -1,3 +1,7 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../repositories/auth_repository.dart';
@@ -11,7 +15,34 @@ class AccountRoleGate extends StatefulWidget {
   State<AccountRoleGate> createState() => _AccountRoleGateState();
 }
 
-class _AccountRoleGateState extends State<AccountRoleGate> {
+class _AccountRoleGateState extends State<AccountRoleGate>
+    with LiveDataState<AccountRoleGate> {
+  @override
+  Set<String> get liveDatasets => {'own:access', 'own:users', 'own:admins'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    // Successful revalidation must not unmount the app or erase an open form.
+    try {
+      await AuthRepository().validateAccountRole();
+    } catch (error, stack) {
+      final denied =
+          error is AccountAccessException ||
+          (error is PostgrestException &&
+              const ['42501', 'PGRST301', '28000'].contains(error.code));
+      if (!denied) {
+        rethrow; // Offline revalidation must preserve the open app/form.
+      }
+      if (!mounted) return;
+      setState(() {
+        _check = Future<void>.error(error, stack)..ignore();
+      });
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
+  @override
+  bool get liveAlwaysActive => true;
+
   late Future<void> _check;
   @override
   void initState() {

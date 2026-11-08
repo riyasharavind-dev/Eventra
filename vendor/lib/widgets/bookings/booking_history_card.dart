@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/booking_model.dart';
@@ -67,83 +68,111 @@ class BookingHistoryCard extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                child: InkWell(
-                  onTap: busy ? null : onOpen,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Padding(
-                    padding: const EdgeInsets.all(9),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(9),
-                          child: SizedBox(
-                            width: 52,
-                            height: 64,
-                            child: b.serviceGallery.isEmpty
-                                ? const ColoredBox(
-                                    color: Color(0xFFF8EDF0),
-                                    child: Icon(
-                                      Icons.event_outlined,
-                                      color: Color(0xFF850E2B),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF0EDF0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF80152C).withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    onTap: busy ? null : onOpen,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 54,
+                              height: 64,
+                              child: b.serviceGallery.isEmpty
+                                  ? const ColoredBox(
+                                      color: Color(0xFFF5E8EC),
+                                      child: Icon(
+                                        Icons.event_outlined,
+                                        color: AppIconColors.standard,
+                                      ),
+                                    )
+                                  : Image.network(
+                                      b.serviceGallery.first,
+                                      fit: BoxFit.cover,
+                                      gaplessPlayback: true,
+                                      errorBuilder: (_, error, stack) =>
+                                          const ColoredBox(
+                                            color: Color(0xFFF5E8EC),
+                                            child: Icon(
+                                              Icons.image_outlined,
+                                              color: AppIconColors.standard,
+                                            ),
+                                          ),
                                     ),
-                                  )
-                                : Image.network(
-                                    b.serviceGallery.first,
-                                    fit: BoxFit.cover,
-                                    gaplessPlayback: true,
-                                    errorBuilder: (_, error, stack) =>
-                                        const Icon(Icons.image_outlined),
-                                  ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                b.serviceName,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  b.serviceName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF17171B),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                b.customerName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              if (b.location.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    '⌖ ${b.location}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFF777783),
+                                const SizedBox(height: 4),
+                                Text(
+                                  b.customerName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF73737D),
+                                  ),
+                                ),
+                                if (b.location.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      '⌖ ${b.location}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF73737D),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              const SizedBox(height: 6),
-                              BookingStatusChip(status: b.status),
-                            ],
+                                const SizedBox(height: 8),
+                                BookingStatusChip(status: b.status),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 18),
-                          child: Icon(Icons.chevron_right, size: 16),
-                        ),
-                      ],
+                          const Padding(
+                            padding: EdgeInsets.only(top: 20),
+                            child: Icon(
+                              Icons.chevron_right,
+                              size: 18,
+                              color: AppIconColors.standard,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

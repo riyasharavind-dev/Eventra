@@ -13,6 +13,7 @@ class VendorPageScaffold extends StatelessWidget {
   final Color? backgroundColor;
   final bool? resizeToAvoidBottomInset;
   final bool extendBody, extendBodyBehindAppBar;
+  final bool reserveNavigationSpace;
   const VendorPageScaffold({
     super.key,
     this.appBar,
@@ -22,6 +23,7 @@ class VendorPageScaffold extends StatelessWidget {
     this.backgroundColor,
     this.bottomNavigationBar,
     this.resizeToAvoidBottomInset,
+    this.reserveNavigationSpace = false,
     this.extendBody = false,
     this.extendBodyBehindAppBar = false,
   });
@@ -33,7 +35,7 @@ class VendorPageScaffold extends StatelessWidget {
       builder: (context, _) {
         final detail = ModalRoute.of(context)?.isFirst == false;
         final space =
-            detail &&
+            (detail || reserveNavigationSpace) &&
                 controller.active &&
                 MediaQuery.viewInsetsOf(context).bottom == 0
             ? 100.0 + math.max(8.0, MediaQuery.paddingOf(context).bottom)
@@ -44,7 +46,23 @@ class VendorPageScaffold extends StatelessWidget {
           resizeToAvoidBottomInset: resizeToAvoidBottomInset,
           extendBody: extendBody,
           extendBodyBehindAppBar: extendBodyBehindAppBar,
-          body: body,
+          // Scaffold.extendBody adds the reserved navigation height to the
+          // body's MediaQuery padding. Nested main-tab SafeAreas would consume
+          // that padding and leave a solid empty strip behind the floating bar.
+          // Keep the reservation for snackbars/FABs, but let page content paint
+          // through it using only the device's actual bottom safe area.
+          body: extendBody && space > 0 && body != null
+              ? Builder(
+                  builder: (innerContext) => MediaQuery(
+                    data: MediaQuery.of(innerContext).copyWith(
+                      padding: MediaQuery.paddingOf(
+                        innerContext,
+                      ).copyWith(bottom: MediaQuery.paddingOf(context).bottom),
+                    ),
+                    child: body!,
+                  ),
+                )
+              : body,
           floatingActionButton: floatingActionButton,
           floatingActionButtonLocation: floatingActionButtonLocation,
           bottomNavigationBar: space > 0

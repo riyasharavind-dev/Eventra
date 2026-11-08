@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class LegalDocumentContent extends StatelessWidget {
   const LegalDocumentContent({super.key, required this.text});

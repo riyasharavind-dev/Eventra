@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -32,7 +33,20 @@ class ReviewRatingCard extends StatefulWidget {
   State<ReviewRatingCard> createState() => _ReviewRatingCardState();
 }
 
-class _ReviewRatingCardState extends State<ReviewRatingCard> {
+class _ReviewRatingCardState extends State<ReviewRatingCard>
+    with LiveDataState<ReviewRatingCard> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:service_reviews',
+    'own:service_metrics',
+    'public:service_reviews',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    refresh();
+    await loading;
+  }
+
   late ReviewRepository repo;
   late Future<ReviewSummary> loading;
   bool opening = false;
@@ -147,7 +161,11 @@ class _ReviewRatingCardState extends State<ReviewRatingCard> {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Icon(Icons.star_rounded, size: 19, color: colors.primary),
+                    Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: const Color(0xFFFFCB48),
+                    ),
                     Text(
                       message,
                       style: TextStyle(
@@ -187,10 +205,10 @@ class _ReviewRatingCardState extends State<ReviewRatingCard> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.star_rounded,
-                          color: colors.primary,
-                          size: 28,
+                          color: Color(0xFFFFCB48),
+                          size: 32,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -242,11 +260,30 @@ class _ReviewRatingCardState extends State<ReviewRatingCard> {
         return Semantics(
           label: title,
           button: tap != null,
-          child: Material(
-            color: widget.compact ? colors.surfaceContainerLow : colors.surface,
-            borderRadius: BorderRadius.circular(widget.compact ? 10 : 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.compact ? const Color(0xFFF5E8EC) : Colors.white,
+              borderRadius: BorderRadius.circular(widget.compact ? 12 : 20),
+              border: Border.all(
+                color: widget.compact
+                    ? const Color(0xFFF2D1DC)
+                    : const Color(0xFFF0EDF0),
+              ),
+              boxShadow: widget.compact
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: const Color(0xFF80152C).withValues(alpha: 0.05),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+            ),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(onTap: tap, child: body),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(onTap: tap, child: body),
+            ),
           ),
         );
       },

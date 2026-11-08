@@ -1,3 +1,5 @@
+import 'services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,6 +25,10 @@ class EventorAdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
+    builder: (context, child) => AppLiveDataHost(
+      client: Supabase.instance.client,
+      child: child ?? const SizedBox.shrink(),
+    ),
     title: 'Eventor Admin',
     initialRoute: '/',
     themeMode: ThemeMode.light,

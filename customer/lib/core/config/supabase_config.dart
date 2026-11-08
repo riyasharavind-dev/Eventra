@@ -1,4 +1,4 @@
-class SupabaseConfig {
+﻿class SupabaseConfig {
   static const String url =
       'https://hrrimcxwpfdikbmywznf.supabase.co';
 

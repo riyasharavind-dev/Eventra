@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../repositories/admin_connections_repository.dart';
 import '../extended/admin_team_screen.dart';
 import '../extended/admin_catalog_screen.dart';
@@ -21,7 +22,21 @@ class AdminMainScreen extends StatefulWidget {
   State<AdminMainScreen> createState() => _AdminMainScreenState();
 }
 
-class _AdminMainScreenState extends State<AdminMainScreen> {
+class _AdminMainScreenState extends State<AdminMainScreen>
+    with LiveDataState<AdminMainScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:admins',
+    'admin:modules',
+    'admin:team_permissions',
+    'own:access',
+    'own:team_permissions',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   late final AdminRepository repo;
   List<AdminModule> modules = [];
   Map<String, dynamic>? session;
@@ -39,7 +54,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
 
   Future<void> load() async {
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
     });
     try {

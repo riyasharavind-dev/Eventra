@@ -1,4 +1,4 @@
-class ServiceReviewModel {
+﻿class ServiceReviewModel {
   final String id,
       serviceId,
       vendorId,

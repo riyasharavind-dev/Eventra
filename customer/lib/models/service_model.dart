@@ -1,4 +1,4 @@
-import 'service_pricing.dart';
+﻿import 'service_pricing.dart';
 
 class ServiceModel {
   final String id;

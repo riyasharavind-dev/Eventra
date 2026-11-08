@@ -36,7 +36,7 @@ class _EventorSplashScreenState extends State<EventorSplashScreen>
   Widget build(BuildContext context) {
     if (_showNextScreen) return widget.nextScreen;
     return Scaffold(
-      backgroundColor: const Color(0xFF59000D),
+      backgroundColor: const Color(0xFF80152C),
       body: SizedBox.expand(
         child: FadeTransition(
           opacity: CurvedAnimation(
@@ -53,7 +53,7 @@ class _EventorSplashScreenState extends State<EventorSplashScreen>
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFD977),
+                  color: Color(0xFFFFCB48),
                 ),
               ),
             ),

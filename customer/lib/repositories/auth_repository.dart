@@ -1,3 +1,4 @@
+import '../models/app_account_identity.dart';
 import '../utils/auth_error_message.dart';
 
 import 'dart:io';
@@ -8,20 +9,46 @@ import '../models/auth_model.dart';
 import 'profile_repository.dart';
 
 class AuthRepository {
-  Future<void> validateAccountRole() async {
-    if (_supabase.auth.currentSession == null) {
+  AuthRepository({SupabaseClient? client})
+    : _supabase = client ?? Supabase.instance.client;
+
+  Future<AppAccountIdentity> getAccountIdentity() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (_supabase.auth.currentSession == null || userId == null) {
       throw const AccountAccessException('Please sign in to continue.');
     }
-    final role = await _supabase.rpc('get_my_account_role');
-    if (role != 'customer') {
-      await _supabase.auth.signOut(scope: SignOutScope.local);
+    try {
+      final data = await _supabase.rpc(
+        'get_my_app_account',
+        params: {'p_app_role': 'customer'},
+      );
+      final identity = AppAccountIdentity.fromMap(
+        Map<String, dynamic>.from(data as Map),
+      );
+      if (_supabase.auth.currentUser?.id != userId ||
+          identity.userId != userId ||
+          identity.accountRole != 'customer') {
+        throw const AccountAccessException(
+          'Please sign in with your customer account.',
+        );
+      }
+      return identity;
+    } on PostgrestException catch (error) {
+      if (error.code != '42501') rethrow;
+      if (_supabase.auth.currentUser?.id == userId) {
+        await _supabase.auth.signOut(scope: SignOutScope.local);
+      }
       throw const AccountAccessException(
         'This account cannot sign in to the Customer app. Please use a customer account.',
       );
     }
   }
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+  Future<void> validateAccountRole() async {
+    await getAccountIdentity();
+  }
+
+  final SupabaseClient _supabase;
 
   // =========================================================
   // SIGN UP

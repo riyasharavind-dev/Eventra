@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -33,11 +36,25 @@ class BookingsScreen extends StatefulWidget {
 }
 
 class _BookingsScreenState extends State<BookingsScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, LiveDataState<BookingsScreen> {
+  @override
+  bool get liveCanRefresh => busyIds.isEmpty;
+  @override
+  Set<String> get liveDatasets => {
+    'own:bookings',
+    'own:booking_status_history',
+    'own:booking_vendor_notes',
+    'own:services',
+    'own:businesses',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load(quiet: true);
+  }
+
   late final BookingRepository repo;
   RealtimeChannel? _bookingChannel;
   StreamSubscription<RemoteMessage>? _bookingMessages;
-  Timer? _refreshDebounce;
 
   final TextEditingController search = TextEditingController();
   final Set<String> busyIds = {};
@@ -85,7 +102,6 @@ class _BookingsScreenState extends State<BookingsScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _refreshDebounce?.cancel();
     unawaited(_bookingMessages?.cancel());
     final channel = _bookingChannel;
     if (channel != null) unawaited(repo.stopWatching(channel));
@@ -94,11 +110,7 @@ class _BookingsScreenState extends State<BookingsScreen>
   }
 
   void _scheduleRefresh() {
-    if (!mounted) return;
-    _refreshDebounce?.cancel();
-    _refreshDebounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) unawaited(load(quiet: true));
-    });
+    AppLiveData.instance.invalidate({'own:bookings'});
   }
 
   @override
@@ -242,7 +254,7 @@ class _BookingsScreenState extends State<BookingsScreen>
                   ? Icons.event_note_outlined
                   : Icons.cloud_off_outlined,
               size: 48,
-              color: _wine,
+              color: AppIconColors.standard,
             ),
             const SizedBox(height: 14),
             Text(
@@ -320,11 +332,9 @@ class _BookingsScreenState extends State<BookingsScreen>
                         Text(
                           t('Bookings', 'முன்பதிவுகள்'),
                           style: const TextStyle(
-                            color: _ink,
-                            fontSize: 29,
-                            height: 1.1,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.7,
+                            color: Colors.black,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -347,18 +357,16 @@ class _BookingsScreenState extends State<BookingsScreen>
                             SizedBox(
                               width: 49,
                               height: 49,
-                              child: IconButton.outlined(
+                              child: IconButton(
                                 tooltip: t(
                                   'Open booking calendar',
                                   'முன்பதிவு நாட்காட்டியைத் திற',
                                 ),
                                 onPressed: openCalendar,
                                 style: IconButton.styleFrom(
-                                  foregroundColor: _wine,
-                                  backgroundColor: Colors.white,
-                                  side: const BorderSide(
-                                    color: Color(0xFFE8E5EB),
-                                  ),
+                                  foregroundColor: AppIconColors.standard,
+                                  backgroundColor: Colors.transparent,
+                                  side: BorderSide.none,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15),
                                   ),
@@ -503,7 +511,10 @@ class _BookingsScreenState extends State<BookingsScreen>
                               trailing: IconButton(
                                 onPressed: load,
                                 tooltip: t('Retry', 'மீண்டும் முயற்சி'),
-                                icon: const Icon(Icons.refresh, color: _wine),
+                                icon: const Icon(
+                                  Icons.refresh,
+                                  color: AppIconColors.standard,
+                                ),
                               ),
                             ),
                           ),

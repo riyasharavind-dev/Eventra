@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 class VendorNavigationController extends ChangeNotifier {
   static final instance = VendorNavigationController();
+  static const guideRouteName = '/vendor/trial';
+  static const floatingActionsRouteName = '/vendor/listings/actions';
   final navigatorKey = GlobalKey<NavigatorState>();
   late final NavigatorObserver observer = _VendorRouteObserver(this);
   final List<Route<dynamic>> _routes = [];
@@ -10,7 +12,13 @@ class VendorNavigationController extends ChangeNotifier {
   int index = 0;
   bool _scheduled = false, _switching = false;
   bool get active => _owner != null;
-  bool get modalOpen => _routes.isNotEmpty && _routes.last is PopupRoute;
+  // The lightweight + menu leaves navigation available. Blocking dialogs,
+  // confirmation sheets and other popup routes retain their modal behavior.
+  bool get modalOpen =>
+      _routes.any((route) => route.settings.name == guideRouteName) ||
+      _routes.isNotEmpty &&
+          _routes.last is PopupRoute &&
+          _routes.last.settings.name != floatingActionsRouteName;
   void attach(Object owner, ValueChanged<int> select, {int selected = 0}) {
     _owner = owner;
     _select = select;

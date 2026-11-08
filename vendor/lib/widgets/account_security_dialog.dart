@@ -452,13 +452,19 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
     return PopScope(
       canPop: !_busy,
       child: AlertDialog(
-        title: Text(_title),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          _title,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
         content: SizedBox(
           width: 420,
           child: _loading
               ? const SizedBox(
                   height: 100,
-                  child: Center(child: AppShimmerIndicator()),
+                  child: Center(
+                    child: AppShimmerIndicator(color: Color(0xFF80152C)),
+                  ),
                 )
               : SingleChildScrollView(
                   child: Form(
@@ -482,7 +488,7 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
                             child: Text(
                               _error!,
                               style: const TextStyle(
-                                color: Color(0xFF9F0101),
+                                color: Color(0xFFC62828),
                                 height: 1.5,
                               ),
                             ),
@@ -490,7 +496,10 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
                         if (_account == null)
                           TextButton(
                             onPressed: _load,
-                            child: const Text('Retry'),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(color: Color(0xFF80152C)),
+                            ),
                           ),
                       ],
                     ),
@@ -500,14 +509,18 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
         actions: [
           TextButton(
             onPressed: _busy ? null : () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Close', style: TextStyle(color: Color(0xFF73737D))),
           ),
           if (!activeDeletion &&
               !(widget.action == AccountSecurityAction.email && _emailSent))
             FilledButton(
               onPressed: canSave ? _save : null,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF9F0101),
+                backgroundColor: const Color(0xFF80152C),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
                 _busy

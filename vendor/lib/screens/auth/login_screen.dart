@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../../widgets/common/app_shimmer.dart';
 import '../../utils/auth_error_message.dart';
 
@@ -53,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 14,
         fontWeight: FontWeight.w400,
       ),
-      prefixIcon: Icon(icon, size: 21, color: _hintColor),
+      prefixIcon: Icon(icon, size: 21, color: AppIconColors.standard),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white,
@@ -156,10 +158,49 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
                     // ==================================
-                    // HEADING — NO LOGO
+                    // BRAND BADGE
+                    // ==================================
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5E8EC),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.storefront_rounded,
+                              size: 16,
+                              color: AppIconColors.standard,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'EVENTOR VENDOR',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: _wine,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // ==================================
+                    // HEADING
                     // ==================================
                     const Text(
                       'Welcome back',
@@ -172,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 8),
 
                     const Text(
                       'Sign in to continue to your account.',
@@ -262,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
                             size: 20,
-                            color: _hintColor,
+                            color: AppIconColors.standard,
                           ),
                         ),
                       ),
@@ -280,8 +321,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ==================================
                     // SIGN IN BUTTON
                     // ==================================
-                    SizedBox(
+                    Container(
                       height: 52,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _wine.withValues(alpha: 0.25),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _signIn,
                         style: ElevatedButton.styleFrom(

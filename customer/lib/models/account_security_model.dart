@@ -1,4 +1,4 @@
-class AccountDeletionRequest {
+﻿class AccountDeletionRequest {
   const AccountDeletionRequest({
     required this.id,
     required this.status,

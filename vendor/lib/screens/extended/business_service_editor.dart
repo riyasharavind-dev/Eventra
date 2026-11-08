@@ -118,8 +118,12 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
   Widget build(BuildContext context) => PopScope(
     canPop: !busy,
     child: VendorPageScaffold(
+      backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: Text(widget.service == null ? 'Add service' : 'Edit service'),
+        title: Text(
+          widget.service == null ? 'Add service' : 'Edit service',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
       ),
       body: AbsorbPointer(
         absorbing: busy,
@@ -130,12 +134,32 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
             children: [
               Text(
                 widget.business.name,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF17171B),
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               TextFormField(
                 controller: name,
-                decoration: const InputDecoration(labelText: 'Service name'),
+                decoration: InputDecoration(
+                  labelText: 'Service name',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                  ),
+                ),
                 validator: (v) =>
                     (v?.trim().length ?? 0) < 2 ? 'Enter a service name' : null,
               ),
@@ -143,7 +167,23 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
               DropdownButtonFormField<String>(
                 initialValue: category,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                  ),
+                ),
                 items: allowed
                     .map(
                       (c) => DropdownMenuItem(
@@ -156,14 +196,33 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 validator: (v) =>
                     v == null ? 'Choose a business category' : null,
               ),
-              if (allowed.isEmpty)
-                const Text('Edit the business and choose categories first.'),
+              if (allowed.isEmpty) ...[
+                const SizedBox(height: 6),
+                const Text(
+                  'Edit the business and choose categories first.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF73737D)),
+                ),
+              ],
               const SizedBox(height: 16),
               TextFormField(
                 controller: description,
                 maxLines: 4,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Service description',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -176,7 +235,23 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: 'Price (INR)'),
+                decoration: InputDecoration(
+                  labelText: 'Price (INR)',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                  ),
+                ),
                 validator: (v) {
                   final n = double.tryParse(v?.trim() ?? '');
                   return n == null || !n.isFinite || n < 0
@@ -188,8 +263,22 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
               TextFormField(
                 controller: gallery,
                 maxLines: 4,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Gallery image URLs (one per line)',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                  ),
                 ),
                 validator: (v) {
                   for (final line
@@ -208,20 +297,48 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 },
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Enable service'),
-                value: enabled,
-                onChanged: (v) => setState(() => enabled = v),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE8E5EB)),
+                ),
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: const Color(0xFF80152C),
+                  title: const Text(
+                    'Enable service',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  value: enabled,
+                  onChanged: (v) => setState(() => enabled = v),
+                ),
               ),
-              if (widget.business.availabilityStatus != 'active')
+              if (widget.business.availabilityStatus != 'active') ...[
+                const SizedBox(height: 8),
                 const Text(
                   'This service stays hidden until the business is active.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF73737D)),
                 ),
+              ],
               const SizedBox(height: 24),
-              FilledButton(
-                onPressed: save,
-                child: Text(busy ? 'Saving…' : 'Save service'),
+              SizedBox(
+                height: 52,
+                child: FilledButton(
+                  onPressed: save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF80152C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    busy ? 'Saving…' : 'Save service',
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                ),
               ),
             ],
           ),

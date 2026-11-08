@@ -1,4 +1,4 @@
-class BookingModel {
+﻿class BookingModel {
   final String id;
 
   final String customerId;

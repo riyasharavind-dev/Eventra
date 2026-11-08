@@ -23,26 +23,26 @@ class AppStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color foregroundColor = isActive
-        ? Colors.green.shade700
-        : Colors.grey.shade700;
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFF73737D);
 
     final Color backgroundColor = isActive
-        ? Colors.green.withValues(alpha: 0.12)
-        : Colors.grey.withValues(alpha: 0.12);
+        ? const Color(0xFFE8F5E9)
+        : const Color(0xFFF4F2F4);
 
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
-        vertical: 6,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           color: foregroundColor,
         ),

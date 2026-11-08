@@ -1,4 +1,4 @@
-import 'home_feed.dart';
+﻿import 'home_feed.dart';
 import 'service_pricing.dart';
 
 String normalizeSearch(String value) =>

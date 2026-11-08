@@ -1,3 +1,4 @@
+import '../models/shop_region_boundary.dart';
 import '../models/administrative_region.dart';
 
 import 'dart:math';
@@ -23,6 +24,16 @@ class BusinessWorkspaceRepository {
     final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
   }
+
+  Future<ShopRegionBoundary> boundary(String regionId) async =>
+      ShopRegionBoundary.fromMap(
+        Map<String, dynamic>.from(
+          await db.rpc(
+            'get_shop_region_boundary',
+            params: {'p_region_id': regionId},
+          ) as Map,
+        ),
+      );
 
   Future<List<AdministrativeRegion>> regions({
     required String level,
@@ -88,6 +99,9 @@ class BusinessWorkspaceRepository {
     Map<String, dynamic> data,
     List<String> ids,
   ) async {
+    if (ids.length != 1 || data['primary_category_id'] != ids.single) {
+      throw StateError('Select exactly one main business category.');
+    }
     final result = await db.rpc(
       'save_vendor_business_location',
       params: {'p_id': id, 'p_data': data, 'p_categories': ids},

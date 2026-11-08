@@ -1,4 +1,4 @@
-class SupportFaq {
+﻿class SupportFaq {
   const SupportFaq({
     required this.category,
     required this.question,

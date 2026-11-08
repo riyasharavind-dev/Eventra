@@ -1,3 +1,7 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
+import '../../widgets/business/business_list_card.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
@@ -68,7 +72,18 @@ class BusinessDetailsScreen extends StatefulWidget {
   State<BusinessDetailsScreen> createState() => _BusinessDetailsScreenState();
 }
 
-class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
+class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
+    with LiveDataState<BusinessDetailsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:businesses',
+    'own:business_category_nodes',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await refresh();
+  }
+
   final repo = BusinessWorkspaceRepository();
   late Future<List<BusinessModel>> loading;
 
@@ -104,11 +119,23 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
 
   @override
   Widget build(BuildContext context) => VendorPageScaffold(
-    appBar: AppBar(title: const Text('My Businesses')),
+    backgroundColor: const Color(0xFFF8F8FA),
+    appBar: AppBar(
+      title: const Text(
+        'My Businesses',
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+      ),
+    ),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: () => open(null),
+      backgroundColor: const Color(0xFF80152C),
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       icon: const Icon(Icons.add),
-      label: const Text('Add business'),
+      label: const Text(
+        'Add business',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
     ),
     body: FutureBuilder<List<BusinessModel>>(
       future: loading,
@@ -119,7 +146,13 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('Could not load businesses.'),
-                TextButton(onPressed: refresh, child: const Text('Retry')),
+                TextButton(
+                  onPressed: refresh,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF80152C),
+                  ),
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           );
@@ -132,53 +165,78 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
         final all = snapshot.data!;
         final rows = all;
         return AppShimmerRefreshIndicator(
+          color: const Color(0xFF80152C),
           onRefresh: refresh,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              Text(
+              const Text(
                 'One vendor. All your businesses.',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF17171B),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               const Text(
                 'Manage each business with its own categories, services, contact details and shop location.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF73737D),
+                  height: 1.4,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               if (rows.isEmpty)
-                Padding(
+                Container(
                   padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'Add your first business to get started.',
-                    textAlign: TextAlign.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF0EDF0)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF5E8EC),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.storefront_outlined,
+                          size: 28,
+                          color: AppIconColors.standard,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Add your first business to get started.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF17171B),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ...rows.map(
-                (b) => Card(
-                  clipBehavior: Clip.antiAlias,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: InkWell(
-                    onTap: () => open(b),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        businessImage(b.bannerUrl ?? b.logoUrl),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-                          child: ReviewRatingCard(
-                            businessId: b.id,
-                            vendorMode: true,
-                            compact: true,
-                            refreshKey: loading,
-                          ),
-                        ),
-                        ListTile(
-                          title: Text(b.name),
-                          subtitle: Text(b.shopAddress ?? b.address ?? ''),
-                          trailing: const Icon(Icons.chevron_right),
-                        ),
-                      ],
+                (b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: BusinessListCard(
+                    key: ValueKey(b.id),
+                    business: b,
+                    onOpen: () => open(b),
+                    rating: ReviewRatingCard(
+                      businessId: b.id,
+                      vendorMode: true,
+                      compact: true,
+                      refreshKey: loading,
                     ),
                   ),
                 ),
@@ -205,7 +263,6 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
   final fields = <String, TextEditingController>{};
   late final String id;
   List<Map<String, dynamic>> categories = [];
-  final Set<String> selected = {};
   String? primary, logo, banner;
 
   bool busy = false, loading = true;
@@ -277,10 +334,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
           ? null
           : businessRootCategory(savedPrimary, allCategories);
       categories = allCategories.where((c) => c['parent_id'] == null).toList();
-      selected
-        ..clear()
-        ..addAll(roots);
-      primary = roots.contains(rootPrimary) ? rootPrimary : roots.firstOrNull;
+      primary = rootPrimary ?? roots.firstOrNull;
     } catch (e) {
       loadError = e;
     }
@@ -436,6 +490,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
             : null,
       );
       if (!mounted) return;
+      setState(() => regionsLoading = false);
       final result = await Navigator.push<AdministrativeRegion>(
         context,
         MaterialPageRoute(
@@ -455,11 +510,19 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
         ),
       );
       if (!mounted || result == null) return;
+      final expectedParent = level == 'district'
+          ? stateId
+          : level == 'subdistrict'
+          ? districtId
+          : null;
+      if (result.level != level || result.parentId != expectedParent) {
+        throw StateError('Location selection changed. Please select again.');
+      }
       setState(() {
         if (level == 'state') {
           states = rows;
           if (stateId != result.id) {
-            if (stateId != null) clearPin();
+            clearPin();
             stateId = result.id;
             districtId = null;
             subdistrictId = null;
@@ -469,7 +532,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
         } else if (level == 'district') {
           districts = rows;
           if (districtId != result.id) {
-            if (districtId != null) clearPin();
+            clearPin();
             districtId = result.id;
             subdistrictId = null;
             subdistricts = [];
@@ -477,7 +540,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
         } else {
           subdistricts = rows;
           if (subdistrictId != result.id) {
-            if (subdistrictId != null) clearPin();
+            clearPin();
             subdistrictId = result.id;
           }
         }
@@ -494,39 +557,44 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
       businessError(context, 'Select state, district and sub-district first.');
       return;
     }
-    final region =
-        subdistricts
-            .where((r) => r.id == subdistrictId && r.latitude != null)
-            .firstOrNull ??
-        districts
-            .where((r) => r.id == districtId && r.latitude != null)
-            .firstOrNull;
-    final lat = double.tryParse(value('latitude')),
-        lng = double.tryParse(value('longitude'));
-    final point = await Navigator.push<LatLng>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ShopLocationPicker(
-          initialLocation: lat != null && lng != null ? LatLng(lat, lng) : null,
-          cityCenter: region?.latitude != null && region?.longitude != null
-              ? LatLng(region!.latitude!, region.longitude!)
-              : null,
+    if (regionsLoading || busy) return;
+    setState(() => regionsLoading = true);
+    try {
+      final boundary = await repo.boundary(subdistrictId!);
+      if (!mounted) return;
+      setState(() => regionsLoading = false);
+      final lat = double.tryParse(value('latitude')),
+          lng = double.tryParse(value('longitude'));
+      final point = await Navigator.push<LatLng>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ShopLocationPicker(
+            boundary: boundary,
+            initialLocation: lat != null && lng != null
+                ? LatLng(lat, lng)
+                : null,
+            cityCenter: boundary.center,
+          ),
         ),
-      ),
-    );
-    if (!mounted || point == null) return;
-    setState(() {
-      fields['latitude']!.text = point.latitude.toString();
-      fields['longitude']!.text = point.longitude.toString();
-    });
+      );
+      if (!mounted || point == null) return;
+      setState(() {
+        fields['latitude']!.text = point.latitude.toString();
+        fields['longitude']!.text = point.longitude.toString();
+      });
+    } catch (e) {
+      if (mounted) businessError(context, e);
+    } finally {
+      if (mounted) setState(() => regionsLoading = false);
+    }
   }
 
   Future<void> save() async {
     if (busy || !form.currentState!.validate()) {
       return;
     }
-    if (selected.isEmpty || primary == null || !selected.contains(primary)) {
-      businessError(context, 'Select categories and a primary category.');
+    if (primary == null) {
+      businessError(context, 'Select one business category.');
       return;
     }
     if (stateId == null || districtId == null || subdistrictId == null) {
@@ -542,26 +610,30 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
     }
     setState(() => busy = true);
     try {
-      final result = await repo.save(id, {
-        for (final key in [
-          'name',
-          'description',
-          'phone',
-          'whatsapp',
-          'email',
-          'address',
-        ])
-          key: optional(key),
-        'latitude': double.tryParse(value('latitude')),
-        'longitude': double.tryParse(value('longitude')),
-        'shop_address': value('address'),
-        'shop_state_id': stateId,
-        'shop_district_id': districtId,
-        'shop_subdistrict_id': subdistrictId,
-        'primary_category_id': primary,
-        'logo_url': logo,
-        'banner_url': banner,
-      }, selected.toList());
+      final result = await repo.save(
+        id,
+        {
+          for (final key in [
+            'name',
+            'description',
+            'phone',
+            'whatsapp',
+            'email',
+            'address',
+          ])
+            key: optional(key),
+          'latitude': double.tryParse(value('latitude')),
+          'longitude': double.tryParse(value('longitude')),
+          'shop_address': value('address'),
+          'shop_state_id': stateId,
+          'shop_district_id': districtId,
+          'shop_subdistrict_id': subdistrictId,
+          'primary_category_id': primary,
+          'logo_url': logo,
+          'banner_url': banner,
+        },
+        [primary!],
+      );
       if (mounted) {
         Navigator.pop(context, result);
       }
@@ -642,56 +714,34 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                         ),
                       ],
                     ),
-                    heading('Categories'),
+                    heading('Category'),
                     const Text(
-                      'Choose the main categories this business offers. Select one as its primary category. Subcategories are chosen when adding services.',
+                      'Choose one main category for this business. Subcategories are chosen when adding services.',
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: categories
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey('business-category-$primary'),
+                      initialValue: primary,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Business category',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: categories
                           .map(
-                            (c) => FilterChip(
-                              label: Text(categoryLabel(c)),
-                              selected: selected.contains(c['id']),
-                              onSelected: (on) => setState(() {
-                                final key = c['id'] as String;
-                                if (on) {
-                                  selected.add(key);
-                                  primary ??= key;
-                                } else {
-                                  selected.remove(key);
-                                  if (primary == key) {
-                                    primary = selected.firstOrNull;
-                                  }
-                                }
-                              }),
+                            (c) => DropdownMenuItem(
+                              value: c['id'] as String,
+                              child: Text(
+                                categoryLabel(c),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                           .toList(),
+                      validator: (v) =>
+                          v == null ? 'Select one business category' : null,
+                      onChanged: (v) => setState(() => primary = v),
                     ),
-                    if (selected.isNotEmpty)
-                      DropdownButtonFormField<String>(
-                        key: ValueKey(primary),
-                        initialValue: primary,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Primary category',
-                        ),
-                        items: categories
-                            .where((c) => selected.contains(c['id']))
-                            .map(
-                              (c) => DropdownMenuItem(
-                                value: c['id'] as String,
-                                child: Text(
-                                  categoryLabel(c),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) => setState(() => primary = v),
-                      ),
                     heading('Contact details'),
                     field(
                       'phone',
@@ -710,8 +760,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                     ),
                     heading('Shop location'),
                     field('address', 'Shop address', lines: 3, required: true),
-                    if (regionsLoading) const ShimmerLoadingBar(),
+                    SizedBox(
+                      height: 4,
+                      child: regionsLoading ? const ShimmerLoadingBar() : null,
+                    ),
                     Card(
+                      key: const ValueKey('shop-state'),
                       child: ListTile(
                         leading: const Icon(Icons.public),
                         title: const Text('State'),
@@ -727,6 +781,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                       ),
                     ),
                     Card(
+                      key: const ValueKey('shop-district'),
                       child: ListTile(
                         leading: const Icon(Icons.location_city_outlined),
                         title: const Text('District'),
@@ -742,6 +797,7 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                       ),
                     ),
                     Card(
+                      key: const ValueKey('shop-subdistrict'),
                       child: ListTile(
                         leading: const Icon(Icons.place_outlined),
                         title: const Text('Sub-district'),
@@ -805,7 +861,22 @@ class BusinessSingleDetailsScreen extends StatefulWidget {
 }
 
 class _BusinessSingleDetailsScreenState
-    extends State<BusinessSingleDetailsScreen> {
+    extends State<BusinessSingleDetailsScreen>
+    with LiveDataState<BusinessSingleDetailsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:businesses',
+    'own:business_category_nodes',
+    'own:services',
+    'public:category_nodes',
+    'public:administrative_regions',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    refresh();
+    await loading;
+  }
+
   final repo = BusinessWorkspaceRepository();
   late BusinessModel business;
   late Future<void> loading;
@@ -824,20 +895,26 @@ class _BusinessSingleDetailsScreenState
 
   Future<void> load() async {
     business = await repo.get(business.id);
-    locationRegions = await repo.regionDetails([
-      ?business.shopStateId,
-      ?business.shopDistrictId,
-      ?business.shopSubdistrictId,
+    final results = await Future.wait<Object>([
+      repo.regionDetails([
+        ?business.shopStateId,
+        ?business.shopDistrictId,
+        ?business.shopSubdistrictId,
+      ]),
+      repo.categoryIds(business.id),
+      repo.categories(),
+      repo.services(business.id),
     ]);
-    ids = await repo.categoryIds(business.id);
-    categories = await repo.categories();
+    locationRegions = results[0] as List<AdministrativeRegion>;
+    ids = results[1] as List<String>;
+    categories = results[2] as List<Map<String, dynamic>>;
+    services = results[3] as List<Map<String, dynamic>>;
     displayCategoryIds = ids
         .map((id) => businessRootCategory(id, categories))
         .toSet();
     displayPrimaryCategoryId = business.primaryCategoryId == null
         ? null
         : businessRootCategory(business.primaryCategoryId!, categories);
-    services = await repo.services(business.id);
   }
 
   Future<void> refresh() async {
@@ -895,18 +972,35 @@ class _BusinessSingleDetailsScreenState
     }
   }
 
-  Widget section(String title, List<Widget> children) => Card(
+  Widget section(String title, List<Widget> children) => Container(
     margin: const EdgeInsets.only(bottom: 16),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          ...children,
-        ],
-      ),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFF0EDF0)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF80152C).withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
+        ),
+        const SizedBox(height: 14),
+        ...children,
+      ],
     ),
   );
   Widget info(String title, String? text, {VoidCallback? onTap}) =>
@@ -961,16 +1055,21 @@ class _BusinessSingleDetailsScreenState
               padding: const EdgeInsets.all(16),
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   child: businessImage(b.bannerUrl, height: 190),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Row(
                   children: [
-                    SizedBox(
+                    Container(
                       width: 72,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                      height: 72,
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFCB48),
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
                         child: businessImage(b.logoUrl, height: 72),
                       ),
                     ),
@@ -981,7 +1080,11 @@ class _BusinessSingleDetailsScreenState
                         children: [
                           Text(
                             b.name,
-                            style: Theme.of(context).textTheme.headlineSmall,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF17171B),
+                            ),
                           ),
                         ],
                       ),
@@ -996,24 +1099,69 @@ class _BusinessSingleDetailsScreenState
                 ),
                 const SizedBox(height: 16),
                 section('About this business', [
-                  if (b.description?.isNotEmpty == true) Text(b.description!),
-                  const SizedBox(height: 8),
+                  if (b.description?.isNotEmpty == true)
+                    Text(
+                      b.description!,
+                      style: const TextStyle(
+                        height: 1.5,
+                        color: Color(0xFF17171B),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
                     children: categories
                         .where(
                           (c) =>
                               c['parent_id'] == null &&
                               displayCategoryIds.contains(c['id']),
                         )
-                        .map(
-                          (c) => Chip(
-                            avatar: c['id'] == displayPrimaryCategoryId
-                                ? const Icon(Icons.star, size: 16)
-                                : null,
-                            label: Text(c['name'].toString()),
-                          ),
-                        )
+                        .map((c) {
+                          final isPrimary = c['id'] == displayPrimaryCategoryId;
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isPrimary
+                                  ? const Color(0xFFFFCB48)
+                                        .withValues(alpha: 0.2)
+                                  : const Color(0xFFF5E8EC),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isPrimary
+                                    ? const Color(0xFFFFCB48)
+                                    : const Color(0xFF80152C)
+                                          .withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isPrimary) ...[
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    size: 15,
+                                    color: Color(0xFF8A6200),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  c['name'].toString(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: isPrimary
+                                        ? const Color(0xFF8A6200)
+                                        : const Color(0xFF80152C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        })
                         .toList(),
                   ),
                   if (ids.isEmpty)

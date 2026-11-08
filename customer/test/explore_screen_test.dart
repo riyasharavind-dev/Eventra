@@ -1,3 +1,4 @@
+import 'package:eventor_customer/services/app_live_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:eventor_customer/models/category_node_model.dart';
@@ -67,6 +68,31 @@ void main() {
     expect(data.servicesFor(null).length, 3);
     expect(data.servicesFor('missing'), isEmpty);
   });
+  testWidgets(
+    'Realtime updates Explore while retaining its selected parent category',
+    (tester) async {
+      final repo = PreviewExploreRepository(data);
+      await tester.pumpWidget(
+        MaterialApp(home: ExploreScreen(repository: repo)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('parent-decoration')));
+      await tester.pumpAndSettle();
+      repo.data = ExploreData(
+        categories: data.categories,
+        services: [
+          service('Live Flowers', 'flower'),
+          service('Food', 'catering'),
+        ],
+      );
+      AppLiveData.instance.invalidate({'public:services'});
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      expect(find.text('Live Flowers'), findsOneWidget);
+      expect(find.text('Food'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'Explore shows only parent categories, filters services, and opens a card',
     (tester) async {

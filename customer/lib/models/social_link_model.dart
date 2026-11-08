@@ -1,4 +1,4 @@
-class SocialLinkModel {
+﻿class SocialLinkModel {
   const SocialLinkModel({
     required this.id,
     required this.icon,

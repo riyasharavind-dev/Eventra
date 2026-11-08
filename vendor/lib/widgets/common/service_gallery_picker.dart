@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -37,9 +39,7 @@ class ServiceGalleryPicker extends StatelessWidget {
         width: double.infinity,
         height: 130,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.shade300,
-          ),
+          border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Column(
@@ -48,15 +48,12 @@ class ServiceGalleryPicker extends StatelessWidget {
             Icon(
               Icons.add_photo_alternate_outlined,
               size: 42,
-              color: Colors.grey,
+              color: AppIconColors.standard,
             ),
             SizedBox(height: 8),
             Text(
               'Add service images',
-              style: TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -84,10 +81,7 @@ class ServiceGalleryPicker extends StatelessWidget {
           return _buildAddMoreButton();
         }
 
-        return _buildImageItem(
-          image: images[index],
-          index: index,
-        );
+        return _buildImageItem(image: images[index], index: index);
       },
     );
   }
@@ -96,19 +90,13 @@ class ServiceGalleryPicker extends StatelessWidget {
   // IMAGE ITEM
   // ============================================================
 
-  Widget _buildImageItem({
-    required XFile image,
-    required int index,
-  }) {
+  Widget _buildImageItem({required XFile image, required int index}) {
     return Stack(
       children: [
         Positioned.fill(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.file(
-              File(image.path),
-              fit: BoxFit.cover,
-            ),
+            child: Image.file(File(image.path), fit: BoxFit.cover),
           ),
         ),
 
@@ -117,20 +105,14 @@ class ServiceGalleryPicker extends StatelessWidget {
           top: 4,
           right: 4,
           child: GestureDetector(
-            onTap: enabled
-                ? () => onRemoveImage(index)
-                : null,
+            onTap: enabled ? () => onRemoveImage(index) : null,
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -147,16 +129,10 @@ class ServiceGalleryPicker extends StatelessWidget {
       onTap: enabled ? onAddImages : null,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.shade300,
-          ),
+          border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Icon(
-          Icons.add,
-          size: 30,
-          color: Colors.grey,
-        ),
+        child: const Icon(Icons.add, size: 30, color: AppIconColors.standard),
       ),
     );
   }

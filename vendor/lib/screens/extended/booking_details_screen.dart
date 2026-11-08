@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -22,7 +25,21 @@ class BookingDetailsScreen extends StatefulWidget {
   State<BookingDetailsScreen> createState() => _BookingDetailsScreenState();
 }
 
-class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
+class _BookingDetailsScreenState extends State<BookingDetailsScreen>
+    with LiveDataState<BookingDetailsScreen> {
+  @override
+  bool get liveCanRefresh => !busy;
+  @override
+  Set<String> get liveDatasets => {
+    'own:bookings',
+    'own:booking_status_history',
+    'own:booking_vendor_notes',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   late final BookingRepository repo;
   late int noteVersion;
   late BookingModel booking;
@@ -189,17 +206,33 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     }
   }
 
-  Widget section(String title, List<Widget> children) => Padding(
-    padding: const EdgeInsets.only(bottom: 24),
+  Widget section(String title, List<Widget> children) => Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFF0EDF0)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF80152C).withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         ...children,
       ],
     ),
@@ -240,8 +273,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     return PopScope(
       canPop: !busy,
       child: VendorPageScaffold(
+        backgroundColor: const Color(0xFFF8F8FA),
         appBar: AppBar(
-          title: Text(t('Booking Details', 'முன்பதிவு விவரங்கள்')),
+          title: Text(
+            t('Booking Details', 'முன்பதிவு விவரங்கள்'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
           leading: BackButton(
             onPressed: busy ? null : () => Navigator.maybePop(context),
           ),
@@ -375,8 +412,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         info(t('Email', 'மின்னஞ்சல்'), b.customerEmail),
                         info(t('Phone', 'தொலைபேசி'), b.customerPhone),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 10,
+                          runSpacing: 10,
                           children: [
                             OutlinedButton.icon(
                               onPressed: canCall
@@ -384,23 +421,53 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                       Uri(scheme: 'tel', path: b.customerPhone),
                                     )
                                   : null,
-                              icon: const Icon(Icons.call_outlined),
+                              icon: const Icon(Icons.call_outlined, size: 18),
                               label: Text(t('Call', 'அழைப்பு')),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF80152C),
+                                side: const BorderSide(
+                                  color: Color(0xFF80152C),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                             OutlinedButton.icon(
                               onPressed: canWhatsApp
                                   ? () => launch(Uri.https('wa.me', '/$digits'))
                                   : null,
-                              icon: const Icon(Icons.chat_outlined),
+                              icon: const Icon(Icons.chat_outlined, size: 18),
                               label: const Text('WhatsApp'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF25D366),
+                                side: const BorderSide(
+                                  color: Color(0xFF25D366),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                             if (b.customerEmail.isNotEmpty)
                               OutlinedButton.icon(
                                 onPressed: () => launch(
                                   Uri(scheme: 'mailto', path: b.customerEmail),
                                 ),
-                                icon: const Icon(Icons.email_outlined),
+                                icon: const Icon(
+                                  Icons.email_outlined,
+                                  size: 18,
+                                ),
                                 label: Text(t('Email', 'மின்னஞ்சல்')),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF17171B),
+                                  side: const BorderSide(
+                                    color: Color(0xFFE8E5E8),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
                               ),
                           ],
                         ),
@@ -479,7 +546,27 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                             maxLength: 3000,
                             enabled: !busy && !loading && error == null,
                             decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: const Color(0xFFFBF9FA),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE8E5E8),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE8E5E8),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF80152C),
+                                  width: 1.5,
+                                ),
+                              ),
                               hintText: t(
                                 'Team, equipment and preparation notes…',
                                 'குழு, உபகரணங்கள் மற்றும் தயாரிப்புக் குறிப்புகள்…',
@@ -488,19 +575,29 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           ),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: TextButton.icon(
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF80152C),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                               onPressed: busy || loading || error != null
                                   ? null
                                   : saveNotes,
-                              icon: const Icon(Icons.save_outlined),
+                              icon: const Icon(Icons.save_outlined, size: 18),
                               label: Text(
                                 t('Save notes', 'குறிப்புகளைச் சேமி'),
                               ),
                             ),
                           ),
                           TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF73737D),
+                            ),
                             onPressed: busy || loading ? null : reloadNotes,
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(Icons.refresh, size: 18),
                             label: Text(
                               t(
                                 'Reload saved notes',
@@ -517,76 +614,190 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           final when = DateTime.tryParse(
                             h['occurred_at'].toString(),
                           )?.toLocal();
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.history),
-                            title: Text(
-                              h['entry_kind'] == 'snapshot'
-                                  ? t(
-                                      'Existing status recorded',
-                                      'முந்தைய நிலை பதிவு செய்யப்பட்டது',
-                                    )
-                                  : bookingStatus(
-                                      context,
-                                      h['status'].toString(),
-                                    ),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFBF9FA),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFF0EDF0),
+                              ),
                             ),
-                            subtitle: Text(
-                              [
-                                if (h['entry_kind'] == 'snapshot')
-                                  bookingStatus(
-                                    context,
-                                    h['status'].toString(),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5E8EC),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                if (when != null)
-                                  '${bookingDate(context, when)} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(when))}',
-                                switch (h['actor_kind']) {
-                                  'vendor' => t('Vendor', 'விற்பனையாளர்'),
-                                  'customer' => t('Customer', 'வாடிக்கையாளர்'),
-                                  _ => t('System', 'செயலி'),
-                                },
-                                if (h['reason'] != null) h['reason'].toString(),
-                              ].join('\n'),
+                                  child: const Icon(
+                                    Icons.history,
+                                    color: AppIconColors.standard,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        h['entry_kind'] == 'snapshot'
+                                            ? t(
+                                                'Existing status recorded',
+                                                'முந்தைய நிலை பதிவு செய்யப்பட்டது',
+                                              )
+                                            : bookingStatus(
+                                                context,
+                                                h['status'].toString(),
+                                              ),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: Color(0xFF17171B),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        [
+                                          if (h['entry_kind'] == 'snapshot')
+                                            bookingStatus(
+                                              context,
+                                              h['status'].toString(),
+                                            ),
+                                          if (when != null)
+                                            '${bookingDate(context, when)} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(when))}',
+                                          switch (h['actor_kind']) {
+                                            'vendor' => t(
+                                              'Vendor',
+                                              'விற்பனையாளர்',
+                                            ),
+                                            'customer' => t(
+                                              'Customer',
+                                              'வாடிக்கையாளர்',
+                                            ),
+                                            _ => t('System', 'செயலி'),
+                                          },
+                                          if (h['reason'] != null)
+                                            h['reason'].toString(),
+                                        ].join(' · '),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF73737D),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }),
                       ]),
                       if (!loading && error == null)
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 12,
+                          runSpacing: 12,
                           children: [
                             if (b.status == 'pending') ...[
                               FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF80152C),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 2,
+                                  shadowColor: const Color(0xFF80152C)
+                                      .withValues(alpha: 0.3),
+                                ),
                                 onPressed: busy
                                     ? null
                                     : () => action('accepted'),
-                                child: Text(t('Accept', 'ஏற்கவும்')),
+                                child: Text(
+                                  t('Accept', 'ஏற்கவும்'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                               OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFC62828),
+                                  side: const BorderSide(
+                                    color: Color(0xFFEF9A9A),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
                                 onPressed: busy
                                     ? null
                                     : () => action('rejected'),
-                                child: Text(t('Reject', 'நிராகரி')),
+                                child: Text(
+                                  t('Reject', 'நிராகரி'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                             ],
                             if (b.status == 'accepted')
                               FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00A86B),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 2,
+                                  shadowColor: const Color(0xFF00A86B)
+                                      .withValues(alpha: 0.3),
+                                ),
                                 onPressed: busy
                                     ? null
                                     : () => action('completed'),
                                 child: Text(
                                   t('Mark as Completed', 'முடிந்ததாகக் குறி'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                             if (['pending', 'accepted'].contains(b.status))
                               TextButton(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFC62828),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                ),
                                 onPressed: busy
                                     ? null
                                     : () => action('cancelled'),
                                 child: Text(
                                   t('Cancel booking', 'முன்பதிவை ரத்து செய்'),
-                                  style: TextStyle(color: colors.error),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                           ],

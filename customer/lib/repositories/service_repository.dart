@@ -24,6 +24,16 @@ class ServiceRepository {
     return services;
   }
 
+  Future<List<ServiceModel>> getServicesByIds(List<String> ids) async {
+    final result = <ServiceModel>[];
+    for (var start = 0; start < ids.length; start += 100) {
+      final end = start + 100 < ids.length ? start + 100 : ids.length;
+      final rows = await _supabase.from('services').select(_fields).inFilter('id', ids.sublist(start,end));
+      result.addAll(rows.map(ServiceModel.fromMap));
+    }
+    return result;
+  }
+
   Future<ServiceModel?> getServiceById(String serviceId) async {
     final row = await _supabase
         .from('services')

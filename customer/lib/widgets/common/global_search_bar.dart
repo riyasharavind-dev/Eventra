@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Reusable search input with a clean, compact UI.
 class GlobalSearchBar extends StatelessWidget {

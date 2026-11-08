@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/event_type_model.dart';
@@ -5,23 +7,24 @@ import '../../repositories/event_type_repository.dart';
 import '../../widgets/event_types/event_type_form_dialog.dart';
 
 class EventTypesScreen extends StatefulWidget {
-  const EventTypesScreen({
-    super.key,
-  });
+  const EventTypesScreen({super.key});
 
   @override
-  State<EventTypesScreen> createState() =>
-      _EventTypesScreenState();
+  State<EventTypesScreen> createState() => _EventTypesScreenState();
 }
 
-class _EventTypesScreenState
-    extends State<EventTypesScreen> {
-  final EventTypeRepository _repository =
-      EventTypeRepository();
+class _EventTypesScreenState extends State<EventTypesScreen>
+    with LiveDataState<EventTypesScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:event_types'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadEventTypes();
+  }
 
-  final TextEditingController
-      _searchController =
-      TextEditingController();
+  final EventTypeRepository _repository = EventTypeRepository();
+
+  final TextEditingController _searchController = TextEditingController();
 
   List<EventTypeModel> _eventTypes = [];
 
@@ -32,18 +35,14 @@ class _EventTypesScreenState
   void initState() {
     super.initState();
 
-    _searchController.addListener(
-      _refreshSearch,
-    );
+    _searchController.addListener(_refreshSearch);
 
     _loadEventTypes();
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(
-      _refreshSearch,
-    );
+    _searchController.removeListener(_refreshSearch);
     _searchController.dispose();
 
     super.dispose();
@@ -56,14 +55,13 @@ class _EventTypesScreenState
   Future<void> _loadEventTypes() async {
     if (mounted) {
       setState(() {
-        _loading = true;
+        if (!liveRefreshing) _loading = true;
         _error = null;
       });
     }
 
     try {
-      final result =
-          await _repository.getEventTypes();
+      final result = await _repository.getEventTypes();
 
       if (!mounted) return;
 
@@ -91,27 +89,17 @@ class _EventTypesScreenState
     }
   }
 
-  List<EventTypeModel>
-      get _filteredEventTypes {
-    final query =
-        _searchController.text
-            .trim()
-            .toLowerCase();
+  List<EventTypeModel> get _filteredEventTypes {
+    final query = _searchController.text.trim().toLowerCase();
 
     if (query.isEmpty) {
       return _eventTypes;
     }
 
     return _eventTypes.where((event) {
-      return event.name
-              .toLowerCase()
-              .contains(query) ||
-          event.slug
-              .toLowerCase()
-              .contains(query) ||
-          (event.description ?? '')
-              .toLowerCase()
-              .contains(query);
+      return event.name.toLowerCase().contains(query) ||
+          event.slug.toLowerCase().contains(query) ||
+          (event.description ?? '').toLowerCase().contains(query);
     }).toList();
   }
 
@@ -120,8 +108,7 @@ class _EventTypesScreenState
   // ============================================================
 
   Future<void> _addEventType() async {
-    final result =
-        await showDialog<EventTypeModel>(
+    final result = await showDialog<EventTypeModel>(
       context: context,
       builder: (context) {
         return const EventTypeFormDialog();
@@ -133,23 +120,17 @@ class _EventTypesScreenState
     }
 
     try {
-      await _repository.createEventType(
-        result,
-      );
+      await _repository.createEventType(result);
 
       if (!mounted) return;
 
-      _showMessage(
-        'Event type created successfully',
-      );
+      _showMessage('Event type created successfully');
 
       await _loadEventTypes();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        _formatError(e),
-      );
+      _showError(_formatError(e));
     }
   }
 
@@ -157,16 +138,11 @@ class _EventTypesScreenState
   // EDIT
   // ============================================================
 
-  Future<void> _editEventType(
-    EventTypeModel eventType,
-  ) async {
-    final result =
-        await showDialog<EventTypeModel>(
+  Future<void> _editEventType(EventTypeModel eventType) async {
+    final result = await showDialog<EventTypeModel>(
       context: context,
       builder: (context) {
-        return EventTypeFormDialog(
-          eventType: eventType,
-        );
+        return EventTypeFormDialog(eventType: eventType);
       },
     );
 
@@ -175,23 +151,17 @@ class _EventTypesScreenState
     }
 
     try {
-      await _repository.updateEventType(
-        result,
-      );
+      await _repository.updateEventType(result);
 
       if (!mounted) return;
 
-      _showMessage(
-        'Event type updated successfully',
-      );
+      _showMessage('Event type updated successfully');
 
       await _loadEventTypes();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        _formatError(e),
-      );
+      _showError(_formatError(e));
     }
   }
 
@@ -199,29 +169,21 @@ class _EventTypesScreenState
   // TOGGLE
   // ============================================================
 
-  Future<void> _toggleEventType(
-    EventTypeModel eventType,
-  ) async {
+  Future<void> _toggleEventType(EventTypeModel eventType) async {
     try {
-      await _repository.toggleEventType(
-        eventType,
-      );
+      await _repository.toggleEventType(eventType);
 
       if (!mounted) return;
 
       _showMessage(
-        eventType.isActive
-            ? 'Event type deactivated'
-            : 'Event type activated',
+        eventType.isActive ? 'Event type deactivated' : 'Event type activated',
       );
 
       await _loadEventTypes();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        _formatError(e),
-      );
+      _showError(_formatError(e));
     }
   }
 
@@ -229,17 +191,12 @@ class _EventTypesScreenState
   // DELETE
   // ============================================================
 
-  Future<void> _deleteEventType(
-    EventTypeModel eventType,
-  ) async {
-    final confirmed =
-        await showDialog<bool>(
+  Future<void> _deleteEventType(EventTypeModel eventType) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Delete Event Type?',
-          ),
+          title: const Text('Delete Event Type?'),
           content: Text(
             'Are you sure you want to delete '
             '"${eventType.name}"?\n\n'
@@ -250,25 +207,18 @@ class _EventTypesScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context)
-                    .pop(false);
+                Navigator.of(context).pop(false);
               },
-              child:
-                  const Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor:
-                    Theme.of(context)
-                        .colorScheme
-                        .error,
+                backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
-                Navigator.of(context)
-                    .pop(true);
+                Navigator.of(context).pop(true);
               },
-              child:
-                  const Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -280,15 +230,11 @@ class _EventTypesScreenState
     }
 
     try {
-      await _repository.deleteEventType(
-        eventType.id,
-      );
+      await _repository.deleteEventType(eventType.id);
 
       if (!mounted) return;
 
-      _showMessage(
-        'Event type deleted',
-      );
+      _showMessage('Event type deleted');
 
       await _loadEventTypes();
     } catch (e) {
@@ -305,29 +251,18 @@ class _EventTypesScreenState
   // SNACKBAR
   // ============================================================
 
-  void _showMessage(
-    String message,
-  ) {
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showError(
-    String message,
-  ) {
+  void _showError(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          backgroundColor:
-              Theme.of(context)
-                  .colorScheme
-                  .error,
+          backgroundColor: Theme.of(context).colorScheme.error,
           content: Text(message),
         ),
       );
@@ -336,10 +271,7 @@ class _EventTypesScreenState
   String _formatError(Object error) {
     final text = error.toString();
 
-    if (text.contains('23505') ||
-        text.toLowerCase().contains(
-              'duplicate',
-            )) {
+    if (text.contains('23505') || text.toLowerCase().contains('duplicate')) {
       return 'This event name or slug already exists.';
     }
 
@@ -352,21 +284,15 @@ class _EventTypesScreenState
 
   @override
   Widget build(BuildContext context) {
-    final filtered =
-        _filteredEventTypes;
+    final filtered = _filteredEventTypes;
 
     return Scaffold(
-      backgroundColor:
-          Theme.of(context)
-              .colorScheme
-              .surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // HEADER
               Row(
@@ -374,21 +300,13 @@ class _EventTypesScreenState
                   Container(
                     width: 50,
                     height: 50,
-                    decoration:
-                        BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer,
-                      borderRadius:
-                          BorderRadius.circular(
-                        14,
-                      ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.event_outlined,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onPrimaryContainer,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ),
 
@@ -396,40 +314,28 @@ class _EventTypesScreenState
 
                   const Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Event Types',
                           style: TextStyle(
                             fontSize: 26,
-                            fontWeight:
-                                FontWeight.w800,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         SizedBox(height: 4),
                         Text(
                           'Manage event and occasion types used across Eventor.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color:
-                                Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
                   ),
 
                   FilledButton.icon(
-                    onPressed:
-                        _addEventType,
-                    icon: const Icon(
-                      Icons.add,
-                    ),
-                    label: const Text(
-                      'Add Event',
-                    ),
+                    onPressed: _addEventType,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Event'),
                   ),
                 ],
               ),
@@ -438,47 +344,27 @@ class _EventTypesScreenState
 
               // SEARCH
               TextField(
-                controller:
-                    _searchController,
-                decoration:
-                    InputDecoration(
-                  hintText:
-                      'Search event types...',
-                  prefixIcon:
-                      const Icon(
-                    Icons.search,
-                  ),
-                  suffixIcon:
-                      _searchController
-                              .text
-                              .isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                _searchController
-                                    .clear();
-                              },
-                              icon:
-                                  const Icon(
-                                Icons.clear,
-                              ),
-                            )
-                          : null,
-                  border:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      12,
-                    ),
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search event types...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                          icon: const Icon(Icons.clear),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              Expanded(
-                child:
-                    _buildContent(filtered),
-              ),
+              Expanded(child: _buildContent(filtered)),
             ],
           ),
         ),
@@ -490,51 +376,29 @@ class _EventTypesScreenState
   // CONTENT
   // ============================================================
 
-  Widget _buildContent(
-    List<EventTypeModel> events,
-  ) {
+  Widget _buildContent(List<EventTypeModel> events) {
     if (_loading) {
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
       return Center(
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 50,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 50, color: Colors.red),
             const SizedBox(height: 12),
             const Text(
               'Failed to load event types',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              textAlign:
-                  TextAlign.center,
-            ),
+            Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed:
-                  _loadEventTypes,
-              icon: const Icon(
-                Icons.refresh,
-              ),
-              label:
-                  const Text('Retry'),
+              onPressed: _loadEventTypes,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
             ),
           ],
         ),
@@ -544,38 +408,24 @@ class _EventTypesScreenState
     if (events.isEmpty) {
       return Center(
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.event_busy_outlined,
-              size: 60,
-            ),
+            const Icon(Icons.event_busy_outlined, size: 60),
             const SizedBox(height: 14),
             const Text(
               'No Event Types',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             const Text(
               'Create your first event type.',
-              style: TextStyle(
-                color: Colors.grey,
-              ),
+              style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed:
-                  _addEventType,
-              icon:
-                  const Icon(Icons.add),
-              label: const Text(
-                'Add Event Type',
-              ),
+              onPressed: _addEventType,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Event Type'),
             ),
           ],
         ),
@@ -585,21 +435,16 @@ class _EventTypesScreenState
     return RefreshIndicator(
       onRefresh: _loadEventTypes,
       child: GridView.builder(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-        gridDelegate:
-            const SliverGridDelegateWithMaxCrossAxisExtent(
+        physics: const AlwaysScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 420,
           mainAxisExtent: 235,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
         itemCount: events.length,
-        itemBuilder:
-            (context, index) {
-          return _buildEventCard(
-            events[index],
-          );
+        itemBuilder: (context, index) {
+          return _buildEventCard(events[index]);
         },
       ),
     );
@@ -609,66 +454,37 @@ class _EventTypesScreenState
   // CARD
   // ============================================================
 
-  Widget _buildEventCard(
-    EventTypeModel event,
-  ) {
-    final theme =
-        Theme.of(context);
+  Widget _buildEventCard(EventTypeModel event) {
+    final theme = Theme.of(context);
 
     return Card(
       elevation: 0,
-      clipBehavior:
-          Clip.antiAlias,
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(
-          18,
-        ),
-        side: BorderSide(
-          color: theme
-              .colorScheme
-              .outlineVariant,
-        ),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding:
-            const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
                   width: 46,
                   height: 46,
-                  decoration:
-                      BoxDecoration(
+                  decoration: BoxDecoration(
                     color: event.isActive
-                        ? theme
-                            .colorScheme
-                            .primaryContainer
-                        : theme
-                            .colorScheme
-                            .surfaceContainerHighest,
-                    borderRadius:
-                        BorderRadius.circular(
-                      13,
-                    ),
+                        ? theme.colorScheme.primaryContainer
+                        : theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(13),
                   ),
                   child: Icon(
-                    _getIcon(
-                      event.icon,
-                    ),
-                    color: event
-                            .isActive
-                        ? theme
-                            .colorScheme
-                            .onPrimaryContainer
-                        : theme
-                            .colorScheme
-                            .onSurfaceVariant,
+                    _getIcon(event.icon),
+                    color: event.isActive
+                        ? theme.colorScheme.onPrimaryContainer
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
 
@@ -676,118 +492,79 @@ class _EventTypesScreenState
 
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         event.name,
                         maxLines: 1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            const TextStyle(
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           fontSize: 17,
-                          fontWeight:
-                              FontWeight.w800,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(
-                        height: 3,
-                      ),
+                      const SizedBox(height: 3),
                       Text(
                         event.slug,
                         maxLines: 1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
-                          color: theme
-                              .colorScheme
-                              .onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                PopupMenuButton<
-                    String>(
-                  onSelected:
-                      (value) {
+                PopupMenuButton<String>(
+                  onSelected: (value) {
                     switch (value) {
                       case 'edit':
-                        _editEventType(
-                          event,
-                        );
+                        _editEventType(event);
                         break;
 
                       case 'toggle':
-                        _toggleEventType(
-                          event,
-                        );
+                        _toggleEventType(event);
                         break;
 
                       case 'delete':
-                        _deleteEventType(
-                          event,
-                        );
+                        _deleteEventType(event);
                         break;
                     }
                   },
-                  itemBuilder:
-                      (context) {
+                  itemBuilder: (context) {
                     return [
                       const PopupMenuItem(
                         value: 'edit',
                         child: ListTile(
-                          leading: Icon(
-                            Icons
-                                .edit_outlined,
-                          ),
-                          title:
-                              Text('Edit'),
+                          leading: Icon(Icons.edit_outlined),
+                          title: Text('Edit'),
                         ),
                       ),
                       PopupMenuItem(
                         value: 'toggle',
                         child: ListTile(
-                          leading:
-                              Icon(
+                          leading: Icon(
                             event.isActive
-                                ? Icons
-                                    .visibility_off_outlined
-                                : Icons
-                                    .visibility_outlined,
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
                           ),
-                          title:
-                              Text(
-                            event.isActive
-                                ? 'Deactivate'
-                                : 'Activate',
+                          title: Text(
+                            event.isActive ? 'Deactivate' : 'Activate',
                           ),
                         ),
                       ),
                       const PopupMenuItem(
                         value: 'delete',
                         child: ListTile(
-                          leading:
-                              Icon(
-                            Icons
-                                .delete_outline,
-                            color:
-                                Colors.red,
+                          leading: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
                           ),
-                          title:
-                              Text(
+                          title: Text(
                             'Delete',
-                            style:
-                                TextStyle(
-                              color:
-                                  Colors.red,
-                            ),
+                            style: TextStyle(color: Colors.red),
                           ),
                         ),
                       ),
@@ -800,21 +577,15 @@ class _EventTypesScreenState
             const SizedBox(height: 16),
 
             Text(
-              event.description
-                          ?.trim()
-                          .isNotEmpty ==
-                      true
+              event.description?.trim().isNotEmpty == true
                   ? event.description!
                   : 'No description',
               maxLines: 3,
-              overflow:
-                  TextOverflow.ellipsis,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
-                color: theme
-                    .colorScheme
-                    .onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
 
@@ -822,17 +593,13 @@ class _EventTypesScreenState
 
             Row(
               children: [
-                _statusBadge(
-                  event.isActive,
-                ),
+                _statusBadge(event.isActive),
                 const Spacer(),
                 Text(
                   'Order: ${event.sortOrder}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme
-                        .colorScheme
-                        .onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -847,52 +614,30 @@ class _EventTypesScreenState
   // STATUS
   // ============================================================
 
-  Widget _statusBadge(
-    bool active,
-  ) {
-    final color =
-        active ? Colors.green : Colors.grey;
+  Widget _statusBadge(bool active) {
+    final color = active ? Colors.green : Colors.grey;
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
-      decoration:
-          BoxDecoration(
-        color: color.withValues(
-          alpha: 0.10,
-        ),
-        borderRadius:
-            BorderRadius.circular(
-          20,
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisSize:
-            MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 7,
             height: 7,
-            decoration:
-                BoxDecoration(
-              color: color,
-              shape:
-                  BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(
-            active
-                ? 'ACTIVE'
-                : 'INACTIVE',
+            active ? 'ACTIVE' : 'INACTIVE',
             style: TextStyle(
               color: color,
               fontSize: 10,
-              fontWeight:
-                  FontWeight.w800,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -904,11 +649,8 @@ class _EventTypesScreenState
   // ICON
   // ============================================================
 
-  IconData _getIcon(
-    String? icon,
-  ) {
-    switch (
-        icon?.toLowerCase()) {
+  IconData _getIcon(String? icon) {
+    switch (icon?.toLowerCase()) {
       case 'favorite':
         return Icons.favorite_outline;
 

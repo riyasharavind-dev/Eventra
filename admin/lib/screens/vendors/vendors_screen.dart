@@ -1,25 +1,29 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/vendor_model.dart';
 import '../../repositories/vendor_repository.dart';
 
 class VendorsScreen extends StatefulWidget {
-  const VendorsScreen({
-    super.key,
-  });
+  const VendorsScreen({super.key});
 
   @override
-  State<VendorsScreen> createState() =>
-      _VendorsScreenState();
+  State<VendorsScreen> createState() => _VendorsScreenState();
 }
 
-class _VendorsScreenState
-    extends State<VendorsScreen> {
-  final VendorRepository _repository =
-      VendorRepository();
+class _VendorsScreenState extends State<VendorsScreen>
+    with LiveDataState<VendorsScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:vendors'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadVendors();
+  }
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final VendorRepository _repository = VendorRepository();
+
+  final TextEditingController _searchController = TextEditingController();
 
   List<VendorModel> _vendors = [];
 
@@ -46,13 +50,12 @@ class _VendorsScreenState
   Future<void> _loadVendors() async {
     if (mounted) {
       setState(() {
-        _isLoading = true;
+        if (!liveRefreshing) _isLoading = true;
       });
     }
 
     try {
-      final vendors =
-          await _repository.getVendors();
+      final vendors = await _repository.getVendors();
 
       if (!mounted) return;
 
@@ -67,9 +70,7 @@ class _VendorsScreenState
         _isLoading = false;
       });
 
-      _showError(
-        'Failed to load vendors.\n$e',
-      );
+      _showError('Failed to load vendors.\n$e');
     }
   }
 
@@ -78,22 +79,18 @@ class _VendorsScreenState
   // ============================================================
 
   List<VendorModel> get _filteredVendors {
-    final query =
-        _searchQuery.trim().toLowerCase();
+    final query = _searchQuery.trim().toLowerCase();
 
     if (query.isEmpty) {
       return _vendors;
     }
 
     return _vendors.where((vendor) {
-      final name =
-          vendor.name.toLowerCase();
+      final name = vendor.name.toLowerCase();
 
-      final email =
-          vendor.email.toLowerCase();
+      final email = vendor.email.toLowerCase();
 
-      final id =
-          vendor.id.toLowerCase();
+      final id = vendor.id.toLowerCase();
 
       return name.contains(query) ||
           email.contains(query) ||
@@ -105,17 +102,12 @@ class _VendorsScreenState
   // DELETE
   // ============================================================
 
-  Future<void> _deleteVendor(
-    VendorModel vendor,
-  ) async {
-    final confirmed =
-        await showDialog<bool>(
+  Future<void> _deleteVendor(VendorModel vendor) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Delete Vendor?',
-          ),
+          title: const Text('Delete Vendor?'),
           content: Text(
             'Are you sure you want to delete '
             '"${vendor.name}"?',
@@ -123,27 +115,16 @@ class _VendorsScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Cancel',
-              ),
+              child: const Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor:
-                    Colors.red,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
-              child: const Text(
-                'Delete',
-              ),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -155,23 +136,17 @@ class _VendorsScreenState
     }
 
     try {
-      await _repository.deleteVendor(
-        vendor.id,
-      );
+      await _repository.deleteVendor(vendor.id);
 
       if (!mounted) return;
 
-      _showMessage(
-        'Vendor deleted successfully',
-      );
+      _showMessage('Vendor deleted successfully');
 
       await _loadVendors();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        'Failed to delete vendor.\n$e',
-      );
+      _showError('Failed to delete vendor.\n$e');
     }
   }
 
@@ -184,9 +159,7 @@ class _VendorsScreenState
     return Column(
       children: [
         _buildHeader(),
-        Expanded(
-          child: _buildBody(),
-        ),
+        Expanded(child: _buildBody()),
       ],
     );
   }
@@ -197,35 +170,26 @@ class _VendorsScreenState
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        16,
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       child: Column(
         children: [
           Row(
             children: [
               const Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Vendors',
                       style: TextStyle(
                         fontSize: 24,
-                        fontWeight:
-                            FontWeight.w800,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Manage Eventor vendors',
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ],
                 ),
@@ -233,29 +197,19 @@ class _VendorsScreenState
 
               // Vendor count
               Container(
-                padding:
-                    const EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 8,
                 ),
-                decoration:
-                    BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
-                  borderRadius:
-                      BorderRadius.circular(
-                    20,
-                  ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${_vendors.length} Vendors',
                   style: TextStyle(
-                    fontWeight:
-                        FontWeight.w700,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ),
@@ -264,12 +218,8 @@ class _VendorsScreenState
 
               IconButton(
                 tooltip: 'Refresh',
-                onPressed: _isLoading
-                    ? null
-                    : _loadVendors,
-                icon: const Icon(
-                  Icons.refresh,
-                ),
+                onPressed: _isLoading ? null : _loadVendors,
+                icon: const Icon(Icons.refresh),
               ),
             ],
           ),
@@ -278,44 +228,29 @@ class _VendorsScreenState
 
           // Search
           TextField(
-            controller:
-                _searchController,
+            controller: _searchController,
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
               });
             },
             decoration: InputDecoration(
-              hintText:
-                  'Search vendors by name, email or ID...',
-              prefixIcon:
-                  const Icon(
-                Icons.search,
-              ),
-              suffixIcon:
-                  _searchQuery.isNotEmpty
-                      ? IconButton(
-                          onPressed: () {
-                            _searchController
-                                .clear();
+              hintText: 'Search vendors by name, email or ID...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        _searchController.clear();
 
-                            setState(() {
-                              _searchQuery =
-                                  '';
-                            });
-                          },
-                          icon:
-                              const Icon(
-                            Icons.clear,
-                          ),
-                        )
-                      : null,
-              border:
-                  OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
@@ -330,14 +265,10 @@ class _VendorsScreenState
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final vendors =
-        _filteredVendors;
+    final vendors = _filteredVendors;
 
     if (vendors.isEmpty) {
       return _buildEmptyState();
@@ -346,22 +277,11 @@ class _VendorsScreenState
     return RefreshIndicator(
       onRefresh: _loadVendors,
       child: ListView.separated(
-        padding:
-            const EdgeInsets.fromLTRB(
-          24,
-          0,
-          24,
-          24,
-        ),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         itemCount: vendors.length,
-        separatorBuilder:
-            (context, index) =>
-                const SizedBox(height: 12),
-        itemBuilder:
-            (context, index) {
-          return _buildVendorCard(
-            vendors[index],
-          );
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _buildVendorCard(vendors[index]);
         },
       ),
     );
@@ -371,42 +291,27 @@ class _VendorsScreenState
   // VENDOR CARD
   // ============================================================
 
-  Widget _buildVendorCard(
-    VendorModel vendor,
-  ) {
+  Widget _buildVendorCard(VendorModel vendor) {
     return Card(
       elevation: 0,
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        side: BorderSide(
-          color: Colors.grey.shade200,
-        ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             // Avatar
             CircleAvatar(
               radius: 28,
-              backgroundColor:
-                  Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
-                _getInitial(
-                  vendor.name,
-                ),
+                _getInitial(vendor.name),
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight:
-                      FontWeight.w800,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimaryContainer,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
               ),
             ),
@@ -416,16 +321,13 @@ class _VendorsScreenState
             // Vendor information
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     vendor.name,
-                    style:
-                        const TextStyle(
+                    style: const TextStyle(
                       fontSize: 17,
-                      fontWeight:
-                          FontWeight.w700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
 
@@ -434,25 +336,16 @@ class _VendorsScreenState
                   Row(
                     children: [
                       Icon(
-                        Icons
-                            .email_outlined,
+                        Icons.email_outlined,
                         size: 16,
-                        color: Colors
-                            .grey.shade600,
+                        color: Colors.grey.shade600,
                       ),
-                      const SizedBox(
-                        width: 6,
-                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           vendor.email,
-                          style: TextStyle(
-                            color: Colors
-                                .grey.shade700,
-                          ),
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
+                          style: TextStyle(color: Colors.grey.shade700),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -463,26 +356,19 @@ class _VendorsScreenState
                   Row(
                     children: [
                       Icon(
-                        Icons
-                            .fingerprint,
+                        Icons.fingerprint,
                         size: 16,
-                        color: Colors
-                            .grey.shade600,
+                        color: Colors.grey.shade600,
                       ),
-                      const SizedBox(
-                        width: 6,
-                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           vendor.id,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors
-                                .grey.shade600,
+                            color: Colors.grey.shade600,
                           ),
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -492,11 +378,7 @@ class _VendorsScreenState
 
                   Text(
                     'Joined ${_formatDate(vendor.createdAt)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors
-                          .grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -509,21 +391,14 @@ class _VendorsScreenState
                   _deleteVendor(vendor);
                 }
               },
-              itemBuilder:
-                  (context) => const [
+              itemBuilder: (context) => const [
                 PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(
-                        Icons
-                            .delete_outline,
-                        color: Colors.red,
-                      ),
+                      Icon(Icons.delete_outline, color: Colors.red),
                       SizedBox(width: 8),
-                      Text(
-                        'Delete',
-                      ),
+                      Text('Delete'),
                     ],
                   ),
                 ),
@@ -542,11 +417,9 @@ class _VendorsScreenState
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.storefront_outlined,
@@ -558,11 +431,7 @@ class _VendorsScreenState
 
             const Text(
               'No vendors found',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 8),
@@ -571,11 +440,8 @@ class _VendorsScreenState
               _searchQuery.isNotEmpty
                   ? 'Try another search.'
                   : 'No vendors are registered yet.',
-              textAlign:
-                  TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -587,24 +453,17 @@ class _VendorsScreenState
   // HELPERS
   // ============================================================
 
-  String _getInitial(
-    String name,
-  ) {
-    final trimmed =
-        name.trim();
+  String _getInitial(String name) {
+    final trimmed = name.trim();
 
     if (trimmed.isEmpty) {
       return '?';
     }
 
-    return trimmed
-        .substring(0, 1)
-        .toUpperCase();
+    return trimmed.substring(0, 1).toUpperCase();
   }
 
-  String _formatDate(
-    DateTime? date,
-  ) {
+  String _formatDate(DateTime? date) {
     if (date == null) {
       return 'Unknown';
     }
@@ -614,26 +473,14 @@ class _VendorsScreenState
         '${date.year}';
   }
 
-  void _showMessage(
-    String message,
-  ) {
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showError(
-    String message,
-  ) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 }

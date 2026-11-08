@@ -1,3 +1,11 @@
+import '../../services/app_live_data.dart';
+import '../../repositories/service_repository.dart';
+
+import 'dart:async';
+
+import '../../repositories/recommendation_repository.dart';
+import '../../widgets/recommendations/service_recommendations_section.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
@@ -20,15 +28,60 @@ class ServiceDetailsScreen extends StatefulWidget {
   State<ServiceDetailsScreen> createState() => _ServiceDetailsScreenState();
 }
 
-class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
+class _ServiceDetailsScreenState extends State<ServiceDetailsScreen>
+    with LiveDataState<ServiceDetailsScreen> {
+  late ServiceModel _service;
+  bool _available = true;
+  @override
+  Set<String> get liveDatasets => {
+    'public:services',
+    'public:businesses',
+    'public:vendors',
+    'public:service_reviews',
+    'public:service_metrics',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    if (changed.any(
+      (d) =>
+          d == 'public:services' ||
+          d == 'public:businesses' ||
+          d == 'public:vendors',
+    )) {
+      final fresh = await ServiceRepository().getServiceById(_service.id);
+      if (!mounted) return;
+      setState(() {
+        _available = fresh != null && fresh.isActive;
+        if (fresh != null) _service = fresh;
+      });
+    }
+    await _recommendations.refresh();
+  }
+
+  late final RecommendationController _recommendations;
   bool _isFavorite = false;
   bool _savingFavorite = true;
   late final SavedServicesRepository _saved;
   @override
   void initState() {
     super.initState();
+    _service = widget.service;
     _saved = SavedServicesRepository();
+    final recommendations = RecommendationRepository();
+    _recommendations = RecommendationController(
+      repository: recommendations,
+      serviceId: widget.service.id,
+    );
+    // Load related items immediately; recording interest is independent of this query.
+    unawaited(_recommendations.refresh());
+    unawaited(recommendations.signal(widget.service.id, 'view'));
     _loadFavorite();
+  }
+
+  @override
+  void dispose() {
+    _recommendations.dispose();
+    super.dispose();
   }
 
   Future<void> _loadFavorite() async {
@@ -47,7 +100,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     setState(() => _savingFavorite = true);
     try {
       final next = !_isFavorite;
-      await _saved.setSaved(widget.service, next);
+      await _saved.setSaved(_service, next);
       if (mounted) setState(() => _isFavorite = next);
     } catch (_) {
       if (mounted) {
@@ -80,8 +133,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   // ============================================================
 
   Future<void> _bookService() async {
+    if (!_available) return;
     final bool? bookingCreated = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => BookingScreen(service: widget.service)),
+      MaterialPageRoute(builder: (_) => BookingScreen(service: _service)),
     );
 
     if (!mounted) {
@@ -89,6 +143,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     }
 
     if (bookingCreated == true) {
+      RecommendationRepository.changes.value++;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Booking request created successfully.'),
@@ -104,7 +159,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ServiceModel service = widget.service;
+    final ServiceModel service = _service;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -112,76 +167,89 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       // ========================================================
       // FIXED BOTTOM ACTION BAR
       // ========================================================
-      bottomNavigationBar: ServiceActionBar(
-        onAddToPlan: _addToPlan,
-        onBookService: _bookService,
-      ),
+      bottomNavigationBar: !_available
+          ? null
+          : ServiceActionBar(
+              onAddToPlan: _addToPlan,
+              onBookService: _bookService,
+            ),
 
       // ========================================================
       // SCREEN CONTENT
       // ========================================================
-      body: CustomScrollView(
-        slivers: [
-          // ======================================================
-          // APP BAR
-          // ======================================================
+      body: !_available
+          ? const Center(child: Text('This service is no longer available.'))
+          : CustomScrollView(
+              slivers: [
+                // ======================================================
+                // APP BAR
+                // ======================================================
 
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
+                SliverAppBar(
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
 
-            title: const Text(
-              'Service Details',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
+                  title: const Text(
+                    'Service Details',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  ),
 
-            actions: [
-              IconButton(
-                tooltip: 'Favorite',
+                  actions: [
+                    IconButton(
+                      tooltip: 'Favorite',
 
-                onPressed: _savingFavorite ? null : _toggleFavorite,
+                      onPressed: _savingFavorite ? null : _toggleFavorite,
 
-                icon: Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      icon: Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
 
-                  color: _isFavorite ? Colors.red : Colors.black,
+                        color: _isFavorite ? Colors.red : Colors.black,
+                      ),
+                    ),
+
+                    const SizedBox(width: 4),
+                  ],
                 ),
-              ),
 
-              const SizedBox(width: 4),
-            ],
-          ),
+                // ======================================================
+                // GALLERY
+                // ======================================================
+                SliverToBoxAdapter(
+                  child: ServiceGallery(gallery: service.gallery),
+                ),
 
-          // ======================================================
-          // GALLERY
-          // ======================================================
-          SliverToBoxAdapter(child: ServiceGallery(gallery: service.gallery)),
+                // ======================================================
+                // SERVICE INFO
+                // ======================================================
+                SliverToBoxAdapter(child: ServiceInfoSection(service: service)),
 
-          // ======================================================
-          // SERVICE INFO
-          // ======================================================
-          SliverToBoxAdapter(child: ServiceInfoSection(service: service)),
+                // ======================================================
+                // DESCRIPTION
+                // ======================================================
+                SliverToBoxAdapter(
+                  child: ServiceDescriptionSection(service: service),
+                ),
 
-          // ======================================================
-          // DESCRIPTION
-          // ======================================================
-          SliverToBoxAdapter(
-            child: ServiceDescriptionSection(service: service),
-          ),
+                // ======================================================
+                // SERVICE DETAILS
+                // ======================================================
+                SliverToBoxAdapter(
+                  child: ServiceDetailsSection(service: service),
+                ),
 
-          // ======================================================
-          // SERVICE DETAILS
-          // ======================================================
-          SliverToBoxAdapter(child: ServiceDetailsSection(service: service)),
-
-          // ======================================================
-          // BOTTOM SPACE
-          // ======================================================
-          const SliverToBoxAdapter(child: SizedBox(height: 30)),
-        ],
-      ),
+                // ======================================================
+                // BOTTOM SPACE
+                // ======================================================
+                SliverToBoxAdapter(
+                  child: ServiceRecommendationsSection(
+                    controller: _recommendations,
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+              ],
+            ),
     );
   }
 }

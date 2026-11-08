@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_filter_button.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../widgets/common/expandable_action_button.dart';
@@ -32,7 +35,23 @@ class ListingsScreen extends StatefulWidget {
   State<ListingsScreen> createState() => _ListingsScreenState();
 }
 
-class _ListingsScreenState extends State<ListingsScreen> {
+class _ListingsScreenState extends State<ListingsScreen>
+    with LiveDataState<ListingsScreen> {
+  @override
+  bool get liveCanRefresh => busyIds.isEmpty && !adding;
+  @override
+  Set<String> get liveDatasets => {
+    'own:services',
+    'own:businesses',
+    'own:service_reviews',
+    'own:service_metrics',
+    'public:category_nodes',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   late final ServiceRepository repo;
   SupabaseClient get db => widget.client ?? Supabase.instance.client;
   final search = TextEditingController();
@@ -84,20 +103,32 @@ class _ListingsScreenState extends State<ListingsScreen> {
     }
     final request = ++generation;
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
       businessError = null;
     });
     try {
-      final rows = await repo.getMyServices();
+      final rowsFuture = repo.getMyServices();
+      final businessFuture = loadBusinessNames().then<Object>(
+        (v) => v,
+        onError: (Object e) => e,
+      );
+      final metricsFuture = (() async {
+        try {
+          return Map<String, dynamic>.from(
+            (widget.loadMetrics != null
+                    ? await widget.loadMetrics!()
+                    : await db.rpc('get_vendor_listing_metrics'))
+                as Map,
+          );
+        } catch (_) {
+          return <String, dynamic>{};
+        }
+      })();
+      final rows = await rowsFuture;
       Map<String, dynamic> metrics = {};
       try {
-        metrics = Map<String, dynamic>.from(
-          (widget.loadMetrics != null
-                  ? await widget.loadMetrics!()
-                  : await db.rpc('get_vendor_listing_metrics'))
-              as Map,
-        );
+        metrics = await metricsFuture;
       } catch (_) {
         // Leave unknown metrics blank rather than showing invented zeroes.
       }
@@ -105,7 +136,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
       Object? namesError;
       bool activeBusiness = hasActiveBusiness;
       try {
-        final businesses = await loadBusinessNames();
+        final result = await businessFuture;
+        if (result is! List<Map<String, dynamic>>) throw result;
+        final businesses = result;
         activeBusiness = businesses.any((b) => b['is_active'] == true);
         names = {
           for (final b in businesses) b['id'] as String: b['name'].toString(),
@@ -120,6 +153,15 @@ class _ListingsScreenState extends State<ListingsScreen> {
         services = rows;
         listingMetrics = metrics;
         businessNames = names;
+        if (business != 'all' &&
+            business != 'unassigned' &&
+            !names.containsKey(business)) {
+          business = 'all';
+        }
+        if (category != 'all' &&
+            !rows.any((s) => s.categoryNodeId == category)) {
+          category = 'all';
+        }
         hasActiveBusiness = activeBusiness;
         businessError = namesError;
         loading = false;
@@ -278,7 +320,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
           await load();
         }
       } else if (target == 'toggle') {
-        final updated = await repo.toggleServiceStatus(s);
+        final fresh = await repo.getServiceById(s.id);
+        if (fresh == null) throw StateError('Service no longer exists.');
+        final updated = await repo.toggleServiceStatus(fresh);
         if (!mounted) {
           return;
         }
@@ -350,51 +394,75 @@ class _ListingsScreenState extends State<ListingsScreen> {
     String? actionLabel,
     VoidCallback? onAction,
     IconData icon = Icons.inventory_2_outlined,
-  }) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            retry ? Icons.cloud_off_outlined : icon,
-            size: 48,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(description, textAlign: TextAlign.center),
-          ],
-          if (actionLabel != null) ...[
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: adding ? null : onAction,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(actionLabel),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF850E2B),
-                foregroundColor: Colors.white,
+  }) {
+    const wine = Color(0xFF80152C);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5E8EC),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                retry ? Icons.cloud_off_outlined : icon,
+                size: 32,
+                color: AppIconColors.standard,
               ),
             ),
-          ],
-          if (retry)
-            TextButton(
-              onPressed: load,
-              child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF17171B),
+              ),
             ),
-        ],
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF73737D)),
+              ),
+            ],
+            if (actionLabel != null) ...[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: adding ? null : onAction,
+                icon: const Icon(Icons.add_rounded),
+                label: Text(actionLabel),
+                style: FilledButton.styleFrom(
+                  backgroundColor: wine,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                ),
+              ),
+            ],
+            if (retry)
+              TextButton(
+                onPressed: load,
+                style: TextButton.styleFrom(foregroundColor: wine),
+                child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    const wine = Color(0xFF850E2B);
+    const wine = Color(0xFF80152C);
     final rows = filtered(), base = filtered(chosenStatus: 'all');
     final activeFilters =
         business != 'all' ||
@@ -402,7 +470,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         sort != 'newest' ||
         status != 'all';
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F8FA),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: MediaQuery.viewInsetsOf(context).bottom > 0
           ? null
@@ -444,9 +512,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
                       Text(
                         t('Listings', 'சேவைகள்'),
                         style: const TextStyle(
-                          fontSize: 25,
+                          fontSize: 26,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF171720),
+                          color: Color(0xFF17171B),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -487,28 +555,33 @@ class _ListingsScreenState extends State<ListingsScreen> {
                                   onSelected: (_) => setState(() => status = v),
                                   showCheckmark: false,
                                   selectedColor: wine,
-                                  backgroundColor: const Color(0xFFF4F5F8),
-                                  side: BorderSide.none,
+                                  backgroundColor: Colors.white,
+                                  side: BorderSide(
+                                    color: status == v
+                                        ? wine
+                                        : const Color(0xFFE8E5EB),
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(17),
+                                    borderRadius: BorderRadius.circular(18),
                                   ),
                                   label: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
                                         Icons.circle,
-                                        size: 9,
+                                        size: 8,
                                         color: status == v
                                             ? Colors.white
                                             : v == 'active'
                                             ? const Color(0xFF00BE83)
                                             : const Color(0xFF89909F),
                                       ),
-                                      const SizedBox(width: 5),
+                                      const SizedBox(width: 6),
                                       Text(
                                         '${_statusLabel(v)} (${v == 'all' ? base.length : base.where((s) => s.isActive == (v == 'active')).length})',
                                         style: TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
                                           color: status == v
                                               ? Colors.white
                                               : const Color(0xFF252839),

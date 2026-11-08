@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
@@ -12,7 +14,20 @@ class SavedServicesScreen extends StatefulWidget {
   State<SavedServicesScreen> createState() => _SavedServicesScreenState();
 }
 
-class _SavedServicesScreenState extends State<SavedServicesScreen> {
+class _SavedServicesScreenState extends State<SavedServicesScreen>
+    with LiveDataState<SavedServicesScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'public:services',
+    'public:businesses',
+    'public:vendors',
+    'local_saved_services',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   late final SavedServicesRepository _repo;
   late Future<List<ServiceModel>> _future;
   String? _opening;
@@ -20,11 +35,30 @@ class _SavedServicesScreenState extends State<SavedServicesScreen> {
   void initState() {
     super.initState();
     _repo = widget.repository ?? SavedServicesRepository();
-    _future = _repo.getSaved();
+    _future = _readSaved();
+  }
+
+  Future<List<ServiceModel>> _readSaved() async {
+    final saved = await _repo.getSaved();
+    try {
+      final fresh = await ServiceRepository().getServicesByIds(
+        saved.map((s) => s.id).toList(),
+      );
+      final byId = {for (final s in fresh) s.id: s};
+      return saved
+          .map(
+            (s) =>
+                byId[s.id] ??
+                ServiceModel.fromMap({...s.toMap(), 'is_active': false}),
+          )
+          .toList();
+    } catch (_) {
+      return saved;
+    }
   }
 
   Future<void> _load() async {
-    final future = _repo.getSaved();
+    final future = _readSaved();
     setState(() {
       _future = future;
     });

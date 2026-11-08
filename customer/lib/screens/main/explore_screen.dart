@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/explore_data.dart';
@@ -16,7 +18,21 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
+class _ExploreScreenState extends State<ExploreScreen>
+    with LiveDataState<ExploreScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'public:category_nodes',
+    'public:services',
+    'public:businesses',
+    'public:vendors',
+    'public:event_types',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   late final ExploreRepository _repository;
   final _scroll = ScrollController();
   ExploreData? _data;
@@ -39,7 +55,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _load() async {
     final generation = ++_generation;
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

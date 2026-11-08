@@ -1,1 +1,1 @@
-enum AccountSecurityAction { password, email, phone, deleteAccount }
+﻿enum AccountSecurityAction { password, email, phone, deleteAccount }

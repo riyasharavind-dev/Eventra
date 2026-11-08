@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
@@ -5,22 +7,24 @@ import '../../repositories/service_repository.dart';
 import '../../widgets/services/service_details_dialog.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({
-    super.key,
-  });
+  const ServicesScreen({super.key});
 
   @override
-  State<ServicesScreen> createState() =>
-      _ServicesScreenState();
+  State<ServicesScreen> createState() => _ServicesScreenState();
 }
 
-class _ServicesScreenState
-    extends State<ServicesScreen> {
-  final ServiceRepository _repository =
-      ServiceRepository();
+class _ServicesScreenState extends State<ServicesScreen>
+    with LiveDataState<ServicesScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:services'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadServices();
+  }
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final ServiceRepository _repository = ServiceRepository();
+
+  final TextEditingController _searchController = TextEditingController();
 
   List<ServiceModel> _services = [];
 
@@ -48,12 +52,11 @@ class _ServicesScreenState
 
   Future<void> _loadServices() async {
     setState(() {
-      _isLoading = true;
+      if (!liveRefreshing) _isLoading = true;
     });
 
     try {
-      final services =
-          await _repository.getServices();
+      final services = await _repository.getServices();
 
       if (!mounted) return;
 
@@ -68,9 +71,7 @@ class _ServicesScreenState
         _isLoading = false;
       });
 
-      _showError(
-        'Failed to load services.\n$e',
-      );
+      _showError('Failed to load services.\n$e');
     }
   }
 
@@ -79,18 +80,15 @@ class _ServicesScreenState
   // ============================================================
 
   List<ServiceModel> get _filteredServices {
-    final query =
-        _searchQuery.trim().toLowerCase();
+    final query = _searchQuery.trim().toLowerCase();
 
     return _services.where((service) {
       // Status
-      if (_statusFilter == 'active' &&
-          !service.isActive) {
+      if (_statusFilter == 'active' && !service.isActive) {
         return false;
       }
 
-      if (_statusFilter == 'inactive' &&
-          service.isActive) {
+      if (_statusFilter == 'inactive' && service.isActive) {
         return false;
       }
 
@@ -117,15 +115,11 @@ class _ServicesScreenState
   // VIEW DETAILS
   // ============================================================
 
-  void _showDetails(
-    ServiceModel service,
-  ) {
+  void _showDetails(ServiceModel service) {
     showDialog(
       context: context,
       builder: (_) {
-        return ServiceDetailsDialog(
-          service: service,
-        );
+        return ServiceDetailsDialog(service: service);
       },
     );
   }
@@ -134,29 +128,21 @@ class _ServicesScreenState
   // TOGGLE
   // ============================================================
 
-  Future<void> _toggleService(
-    ServiceModel service,
-  ) async {
+  Future<void> _toggleService(ServiceModel service) async {
     try {
-      await _repository.toggleService(
-        service,
-      );
+      await _repository.toggleService(service);
 
       if (!mounted) return;
 
       _showMessage(
-        service.isActive
-            ? 'Service deactivated'
-            : 'Service activated',
+        service.isActive ? 'Service deactivated' : 'Service activated',
       );
 
       await _loadServices();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        'Failed to update service.\n$e',
-      );
+      _showError('Failed to update service.\n$e');
     }
   }
 
@@ -164,17 +150,12 @@ class _ServicesScreenState
   // DELETE
   // ============================================================
 
-  Future<void> _deleteService(
-    ServiceModel service,
-  ) async {
-    final confirmed =
-        await showDialog<bool>(
+  Future<void> _deleteService(ServiceModel service) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Delete Service?',
-          ),
+          title: const Text('Delete Service?'),
           content: Text(
             'Are you sure you want to delete '
             '"${service.name}"?',
@@ -182,29 +163,16 @@ class _ServicesScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  false,
-                );
+                Navigator.pop(context, false);
               },
-              child: const Text(
-                'Cancel',
-              ),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  true,
-                );
+                Navigator.pop(context, true);
               },
-              style: FilledButton.styleFrom(
-                backgroundColor:
-                    Colors.red,
-              ),
-              child: const Text(
-                'Delete',
-              ),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -216,23 +184,17 @@ class _ServicesScreenState
     }
 
     try {
-      await _repository.deleteService(
-        service.id,
-      );
+      await _repository.deleteService(service.id);
 
       if (!mounted) return;
 
-      _showMessage(
-        'Service deleted successfully',
-      );
+      _showMessage('Service deleted successfully');
 
       await _loadServices();
     } catch (e) {
       if (!mounted) return;
 
-      _showError(
-        'Failed to delete service.\n$e',
-      );
+      _showError('Failed to delete service.\n$e');
     }
   }
 
@@ -240,9 +202,7 @@ class _ServicesScreenState
   // SEARCH
   // ============================================================
 
-  void _onSearchChanged(
-    String value,
-  ) {
+  void _onSearchChanged(String value) {
     setState(() {
       _searchQuery = value;
     });
@@ -258,9 +218,7 @@ class _ServicesScreenState
       children: [
         _buildHeader(),
 
-        Expanded(
-          child: _buildBody(),
-        ),
+        Expanded(child: _buildBody()),
       ],
     );
   }
@@ -271,35 +229,26 @@ class _ServicesScreenState
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        16,
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       child: Column(
         children: [
           Row(
             children: [
               const Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Services',
                       style: TextStyle(
                         fontSize: 24,
-                        fontWeight:
-                            FontWeight.w800,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Manage vendor services',
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ],
                 ),
@@ -307,12 +256,8 @@ class _ServicesScreenState
 
               IconButton(
                 tooltip: 'Refresh',
-                onPressed: _isLoading
-                    ? null
-                    : _loadServices,
-                icon: const Icon(
-                  Icons.refresh,
-                ),
+                onPressed: _isLoading ? null : _loadServices,
+                icon: const Icon(Icons.refresh),
               ),
             ],
           ),
@@ -323,41 +268,23 @@ class _ServicesScreenState
             children: [
               Expanded(
                 child: TextField(
-                  controller:
-                      _searchController,
-                  onChanged:
-                      _onSearchChanged,
-                  decoration:
-                      InputDecoration(
-                    hintText:
-                        'Search services...',
-                    prefixIcon:
-                        const Icon(
-                      Icons.search,
-                    ),
-                    suffixIcon:
-                        _searchQuery.isNotEmpty
-                            ? IconButton(
-                                onPressed: () {
-                                  _searchController
-                                      .clear();
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search services...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              _searchController.clear();
 
-                                  _onSearchChanged(
-                                    '',
-                                  );
-                                },
-                                icon:
-                                    const Icon(
-                                  Icons.clear,
-                                ),
-                              )
-                            : null,
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                              _onSearchChanged('');
+                            },
+                            icon: const Icon(Icons.clear),
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -367,39 +294,20 @@ class _ServicesScreenState
 
               SizedBox(
                 width: 150,
-                child: DropdownButtonFormField<
-                    String>(
-                  initialValue:
-                      _statusFilter,
-                  decoration:
-                      InputDecoration(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _statusFilter,
+                  decoration: InputDecoration(
                     labelText: 'Status',
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   items: const [
-                    DropdownMenuItem(
-                      value: 'all',
-                      child: Text(
-                        'All',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'active',
-                      child: Text(
-                        'Active',
-                      ),
-                    ),
+                    DropdownMenuItem(value: 'all', child: Text('All')),
+                    DropdownMenuItem(value: 'active', child: Text('Active')),
                     DropdownMenuItem(
                       value: 'inactive',
-                      child: Text(
-                        'Inactive',
-                      ),
+                      child: Text('Inactive'),
                     ),
                   ],
                   onChanged: (value) {
@@ -426,13 +334,10 @@ class _ServicesScreenState
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final services =
-        _filteredServices;
+    final services = _filteredServices;
 
     if (services.isEmpty) {
       return _buildEmptyState();
@@ -441,22 +346,11 @@ class _ServicesScreenState
     return RefreshIndicator(
       onRefresh: _loadServices,
       child: ListView.separated(
-        padding:
-            const EdgeInsets.fromLTRB(
-          24,
-          0,
-          24,
-          24,
-        ),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         itemCount: services.length,
-        separatorBuilder:
-            (_, _) =>
-                const SizedBox(height: 12),
-        itemBuilder:
-            (context, index) {
-          return _buildServiceCard(
-            services[index],
-          );
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _buildServiceCard(services[index]);
         },
       ),
     );
@@ -466,30 +360,22 @@ class _ServicesScreenState
   // SERVICE CARD
   // ============================================================
 
-  Widget _buildServiceCard(
-    ServiceModel service,
-  ) {
+  Widget _buildServiceCard(ServiceModel service) {
     return Card(
       elevation: 0,
-      clipBehavior:
-          Clip.antiAlias,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        side: BorderSide(
-          color: Colors.grey.shade200,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
       child: InkWell(
         onTap: () {
           _showDetails(service);
         },
         child: Padding(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildImage(service),
 
@@ -497,26 +383,21 @@ class _ServicesScreenState
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Expanded(
                           child: Text(
                             service.name,
-                            style:
-                                const TextStyle(
+                            style: const TextStyle(
                               fontSize: 17,
-                              fontWeight:
-                                  FontWeight.w700,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
 
-                        _buildStatusBadge(
-                          service.isActive,
-                        ),
+                        _buildStatusBadge(service.isActive),
                       ],
                     ),
 
@@ -526,14 +407,11 @@ class _ServicesScreenState
                       service.slug,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors
-                            .grey.shade600,
+                        color: Colors.grey.shade600,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 12,
-                    ),
+                    const SizedBox(height: 12),
 
                     Wrap(
                       spacing: 16,
@@ -541,86 +419,60 @@ class _ServicesScreenState
                       children: [
                         _metaItem(
                           Icons.storefront_outlined,
-                          service.vendorName ??
-                              'Unknown vendor',
+                          service.vendorName ?? 'Unknown vendor',
                         ),
                         _metaItem(
                           Icons.category_outlined,
-                          service.categoryName ??
-                              'No category',
+                          service.categoryName ?? 'No category',
                         ),
                         _metaItem(
                           Icons.event_outlined,
-                          service.eventTypeName ??
-                              'No event type',
+                          service.eventTypeName ?? 'No event type',
                         ),
                       ],
                     ),
 
-                    const SizedBox(
-                      height: 14,
-                    ),
+                    const SizedBox(height: 14),
 
                     Row(
                       children: [
                         Text(
                           '₹${service.price.toStringAsFixed(2)}',
-                          style:
-                              const TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
-                            fontWeight:
-                                FontWeight.w800,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
 
                         const Spacer(),
 
                         IconButton(
-                          tooltip:
-                              'View Details',
+                          tooltip: 'View Details',
                           onPressed: () {
-                            _showDetails(
-                              service,
-                            );
+                            _showDetails(service);
                           },
-                          icon:
-                              const Icon(
-                            Icons
-                                .visibility_outlined,
-                          ),
+                          icon: const Icon(Icons.visibility_outlined),
                         ),
 
                         IconButton(
-                          tooltip: service
-                                  .isActive
-                              ? 'Deactivate'
-                              : 'Activate',
+                          tooltip: service.isActive ? 'Deactivate' : 'Activate',
                           onPressed: () {
-                            _toggleService(
-                              service,
-                            );
+                            _toggleService(service);
                           },
                           icon: Icon(
                             service.isActive
-                                ? Icons
-                                    .visibility_off_outlined
-                                : Icons
-                                    .visibility_outlined,
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
                           ),
                         ),
 
                         IconButton(
-                          tooltip:
-                              'Delete',
+                          tooltip: 'Delete',
                           onPressed: () {
-                            _deleteService(
-                              service,
-                            );
+                            _deleteService(service);
                           },
-                          icon:
-                              const Icon(
-                            Icons
-                                .delete_outline,
+                          icon: const Icon(
+                            Icons.delete_outline,
                             color: Colors.red,
                           ),
                         ),
@@ -640,21 +492,17 @@ class _ServicesScreenState
   // IMAGE
   // ============================================================
 
-  Widget _buildImage(
-    ServiceModel service,
-  ) {
+  Widget _buildImage(ServiceModel service) {
     if (service.gallery.isEmpty) {
       return Container(
         width: 120,
         height: 90,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          borderRadius:
-              BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(
-          Icons
-              .miscellaneous_services_outlined,
+          Icons.miscellaneous_services_outlined,
           size: 35,
           color: Colors.grey,
         ),
@@ -662,23 +510,18 @@ class _ServicesScreenState
     }
 
     return ClipRRect(
-      borderRadius:
-          BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(12),
       child: Image.network(
         service.gallery.first,
         width: 120,
         height: 90,
         fit: BoxFit.cover,
-        errorBuilder:
-            (_, _, _) {
+        errorBuilder: (_, _, _) {
           return Container(
             width: 120,
             height: 90,
             color: Colors.grey.shade100,
-            child: const Icon(
-              Icons.broken_image_outlined,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
           );
         },
       ),
@@ -689,43 +532,25 @@ class _ServicesScreenState
   // STATUS
   // ============================================================
 
-  Widget _buildStatusBadge(
-    bool isActive,
-  ) {
-    final background =
-        isActive
-            ? Colors.green.withValues(
-                alpha: 0.10,
-              )
-            : Colors.red.withValues(
-                alpha: 0.10,
-              );
+  Widget _buildStatusBadge(bool isActive) {
+    final background = isActive
+        ? Colors.green.withValues(alpha: 0.10)
+        : Colors.red.withValues(alpha: 0.10);
 
-    final foreground =
-        isActive
-            ? Colors.green.shade700
-            : Colors.red.shade700;
+    final foreground = isActive ? Colors.green.shade700 : Colors.red.shade700;
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: background,
-        borderRadius:
-            BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        isActive
-            ? 'Active'
-            : 'Inactive',
+        isActive ? 'Active' : 'Inactive',
         style: TextStyle(
           color: foreground,
           fontSize: 12,
-          fontWeight:
-              FontWeight.w700,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -735,27 +560,13 @@ class _ServicesScreenState
   // META ITEM
   // ============================================================
 
-  Widget _metaItem(
-    IconData icon,
-    String text,
-  ) {
+  Widget _metaItem(IconData icon, String text) {
     return Row(
-      mainAxisSize:
-          MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.grey.shade600,
-        ),
+        Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(width: 5),
-        Text(
-          text,
-          style: TextStyle(
-            color: Colors.grey.shade700,
-            fontSize: 13,
-          ),
-        ),
+        Text(text, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
       ],
     );
   }
@@ -767,15 +578,12 @@ class _ServicesScreenState
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons
-                  .miscellaneous_services_outlined,
+              Icons.miscellaneous_services_outlined,
               size: 60,
               color: Colors.grey.shade400,
             ),
@@ -784,11 +592,7 @@ class _ServicesScreenState
 
             const Text(
               'No services found',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 8),
@@ -797,11 +601,8 @@ class _ServicesScreenState
               _searchQuery.isNotEmpty
                   ? 'Try another search.'
                   : 'No vendor services are available yet.',
-              textAlign:
-                  TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -813,26 +614,14 @@ class _ServicesScreenState
   // MESSAGE
   // ============================================================
 
-  void _showMessage(
-    String message,
-  ) {
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showError(
-    String message,
-  ) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 }

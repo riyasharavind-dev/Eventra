@@ -1,3 +1,4 @@
+import '../models/app_account_identity.dart';
 import '../utils/auth_error_message.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -5,20 +6,46 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/auth_model.dart';
 
 class AuthRepository {
-  Future<void> validateAccountRole() async {
-    if (_supabase.auth.currentSession == null) {
+  AuthRepository({SupabaseClient? client})
+    : _supabase = client ?? Supabase.instance.client;
+
+  Future<AppAccountIdentity> getAccountIdentity() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (_supabase.auth.currentSession == null || userId == null) {
       throw const AccountAccessException('Please sign in to continue.');
     }
-    final role = await _supabase.rpc('get_my_account_role');
-    if (role != 'vendor') {
-      await _supabase.auth.signOut(scope: SignOutScope.local);
+    try {
+      final data = await _supabase.rpc(
+        'get_my_app_account',
+        params: {'p_app_role': 'vendor'},
+      );
+      final identity = AppAccountIdentity.fromMap(
+        Map<String, dynamic>.from(data as Map),
+      );
+      if (_supabase.auth.currentUser?.id != userId ||
+          identity.userId != userId ||
+          identity.accountRole != 'vendor') {
+        throw const AccountAccessException(
+          'Please sign in with your vendor account.',
+        );
+      }
+      return identity;
+    } on PostgrestException catch (error) {
+      if (error.code != '42501') rethrow;
+      if (_supabase.auth.currentUser?.id == userId) {
+        await _supabase.auth.signOut(scope: SignOutScope.local);
+      }
       throw const AccountAccessException(
         'This account cannot sign in to the Vendor app. Please use a vendor account.',
       );
     }
   }
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+  Future<void> validateAccountRole() async {
+    await getAccountIdentity();
+  }
+
+  final SupabaseClient _supabase;
 
   // ============================================================
   // SIGN UP - VENDOR

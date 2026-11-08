@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
@@ -685,9 +687,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
                     size: 18,
 
-                    color: selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey.shade700,
+                    color: AppIconColors.standard,
                   ),
 
                 const SizedBox(width: 7),

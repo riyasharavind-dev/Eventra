@@ -1,4 +1,4 @@
-class EditProfileResult {
+﻿class EditProfileResult {
   final bool saved;
   final String name;
   final String phone;

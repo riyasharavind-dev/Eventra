@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/customer_bottom_nav_bar.dart';
@@ -20,46 +22,25 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   // ===========================================================================
 
   int _currentIndex = 0;
+  final _visited = <int>{0};
 
   // ===========================================================================
   // BOOKINGS REFRESH KEY
   // ===========================================================================
-
-  int _bookingsRefreshKey = 0;
 
   // ===========================================================================
   // NAVIGATION
   // ===========================================================================
 
   void _onNavigationChanged(int index) {
-    // -------------------------------------------------------------------------
-    // Same tab tapped
-    // -------------------------------------------------------------------------
-
+    if (index < 0 || index > 3) return;
     if (_currentIndex == index) {
-      // If Bookings is tapped again,
-      // force BookingsScreen to recreate.
-      if (index == 2) {
-        setState(() {
-          _bookingsRefreshKey++;
-        });
-      }
-
+      if (index == 2) AppLiveData.instance.invalidate({'own:bookings'});
       return;
     }
-
-    // -------------------------------------------------------------------------
-    // Different tab
-    // -------------------------------------------------------------------------
-
     setState(() {
       _currentIndex = index;
-
-      // Whenever Bookings is opened,
-      // recreate BookingsScreen.
-      if (index == 2) {
-        _bookingsRefreshKey++;
-      }
+      _visited.add(index);
     });
   }
 
@@ -78,7 +59,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
 
       const ExploreScreen(),
 
-      BookingsScreen(key: ValueKey<int>(_bookingsRefreshKey)),
+      const BookingsScreen(),
 
       const MeScreen(),
     ];
@@ -92,7 +73,18 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            child: IndexedStack(index: _currentIndex, children: screens),
+            child: IndexedStack(
+              index: _currentIndex,
+              children: [
+                for (var i = 0; i < screens.length; i++)
+                  _visited.contains(i)
+                      ? TickerMode(
+                          enabled: i == _currentIndex,
+                          child: screens[i],
+                        )
+                      : const SizedBox.shrink(),
+              ],
+            ),
           ),
           if (MediaQuery.viewInsetsOf(context).bottom == 0)
             Positioned(

@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -24,9 +26,9 @@ class VendorBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = booking;
-    const muted = Color(0xFF7B8194);
-    const ink = Color(0xFF171720);
-    const wine = Color(0xFF850E2B);
+    const muted = Color(0xFF73737D);
+    const ink = Color(0xFF17171B);
+    const wine = Color(0xFF80152C);
     final start = bookingTime(context, b.eventStartTime);
     final end = bookingTime(context, b.eventEndTime);
     final dates = b.eventEndDate != null && b.eventEndDate != b.eventDate
@@ -50,155 +52,189 @@ class VendorBookingCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 13, color: muted),
-          const SizedBox(width: 5),
+          Icon(icon, size: 14, color: AppIconColors.standard),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: muted),
+              style: const TextStyle(fontSize: 11, color: muted, height: 1.3),
             ),
           ),
         ],
       ),
     );
 
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 1,
-      shadowColor: const Color(0x16000000),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(17),
-        side: const BorderSide(color: Color(0xFFECECF1)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: wine.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: busy ? null : onOpen,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(9),
-              child: LayoutBuilder(
-                builder: (context, size) => Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: listingPhoto(
-                        b.serviceGallery.firstOrNull,
-                        width: size.maxWidth < 320 ? 82 : 98,
-                        height: 112,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            b.serviceName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: ink,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          BookingStatusChip(status: b.status),
-                          detail(Icons.calendar_today_outlined, dates),
-                          detail(Icons.schedule_outlined, time),
-                          detail(
-                            Icons.location_on_outlined,
-                            b.location.trim().isEmpty
-                                ? bookingText(
-                                    context,
-                                    'Location not specified',
-                                    'இடம் குறிப்பிடப்படவில்லை',
-                                  )
-                                : b.location,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '₹$amount',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: ink,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 36,
-                      height: 48,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        tooltip: bookingText(
-                          context,
-                          'Open booking',
-                          'முன்பதிவைத் திற',
-                        ),
-                        onPressed: busy ? null : onOpen,
-                        icon: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 18,
-                          color: Colors.black,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: busy ? null : onOpen,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: LayoutBuilder(
+                  builder: (context, size) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: listingPhoto(
+                          b.serviceGallery.firstOrNull,
+                          width: size.maxWidth < 320 ? 86 : 100,
+                          height: 114,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              b.serviceName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: ink,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            BookingStatusChip(status: b.status),
+                            const SizedBox(height: 3),
+                            detail(Icons.calendar_today_outlined, dates),
+                            detail(Icons.schedule_outlined, time),
+                            detail(
+                              Icons.location_on_outlined,
+                              b.location.trim().isEmpty
+                                  ? bookingText(
+                                      context,
+                                      'Location not specified',
+                                      'இடம் குறிப்பிடப்படவில்லை',
+                                    )
+                                  : b.location,
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              '₹$amount',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: wine,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 32,
+                        height: 48,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          tooltip: bookingText(
+                            context,
+                            'Open booking',
+                            'முன்பதிவைத் திற',
+                          ),
+                          onPressed: busy ? null : onOpen,
+                          icon: const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 24,
+                            color: AppIconColors.standard,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (busy)
-              const ShimmerLoadingBar(minHeight: 2, color: wine)
-            else if (b.status == 'pending')
-              Padding(
-                padding: const EdgeInsets.fromLTRB(9, 0, 9, 9),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: onReject,
-                        child: Text(bookingText(context, 'Reject', 'நிராகரி')),
+              if (busy)
+                const ShimmerLoadingBar(minHeight: 2, color: wine)
+              else if (b.status == 'pending')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: onReject,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF6F6F7A),
+                            side: const BorderSide(color: Color(0xFFD6D6DF)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            bookingText(context, 'Reject', 'நிராகரி'),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: onAccept,
-                        child: Text(bookingText(context, 'Accept', 'ஏற்கவும்')),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: wine,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            bookingText(context, 'Accept', 'ஏற்கவும்'),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              )
-            else if (b.status == 'accepted')
-              Padding(
-                padding: const EdgeInsets.fromLTRB(9, 0, 9, 9),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onComplete,
-                    icon: const Icon(Icons.task_alt),
-                    label: Text(
-                      bookingText(
-                        context,
-                        'Mark as Completed',
-                        'முடிந்ததாகக் குறி',
+                    ],
+                  ),
+                )
+              else if (b.status == 'accepted')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onComplete,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: wine,
+                        side: const BorderSide(color: wine),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.task_alt, size: 18),
+                      label: Text(
+                        bookingText(
+                          context,
+                          'Mark as Completed',
+                          'முடிந்ததாகக் குறி',
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

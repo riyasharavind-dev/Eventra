@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../models/account_security_action.dart';
 
 import 'package:flutter/material.dart';
@@ -38,7 +39,14 @@ class MeScreen extends StatefulWidget {
   State<MeScreen> createState() => _MeScreenState();
 }
 
-class _MeScreenState extends State<MeScreen> {
+class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
+  @override
+  Set<String> get liveDatasets => {'own:customers', 'own:users'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   static const wine = Color(0xFF80152C);
   late final AuthRepository _repo;
   final _search = TextEditingController();

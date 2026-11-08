@@ -1,3 +1,7 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../services/app_live_data.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -24,7 +28,15 @@ class FollowUsSection extends StatefulWidget {
   State<FollowUsSection> createState() => _FollowUsSectionState();
 }
 
-class _FollowUsSectionState extends State<FollowUsSection> {
+class _FollowUsSectionState extends State<FollowUsSection>
+    with LiveDataState<FollowUsSection> {
+  @override
+  Set<String> get liveDatasets => {'public:social_links'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _refresh();
+  }
+
   List<SocialLinkModel> _links = SocialLinksRepository.cachedLinks;
   bool _opening = false;
   int _generation = 0;
@@ -112,32 +124,52 @@ class _FollowUsSectionState extends State<FollowUsSection> {
   }
 
   Widget _socialIcon(SocialLinkModel item, ColorScheme colors) {
-    return Material(
-      color: colors.surface,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        width: 58,
-        height: 58,
+    const wine = Color(0xFF80152C);
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: wine.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
         child: IconButton(
           tooltip: item.name,
           onPressed: item.destination == null || _opening
               ? null
               : () => _open(item),
           icon: item.imageUri == null
-              ? Icon(_icon(item.icon), color: colors.primary, size: 26)
+              ? Icon(_icon(item.icon), color: AppIconColors.standard, size: 24)
               : Image.network(
                   item.imageUri.toString(),
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   fit: BoxFit.contain,
                   gaplessPlayback: true,
                   frameBuilder: (_, child, frame, synchronouslyLoaded) =>
                       frame != null || synchronouslyLoaded
                       ? child
-                      : Icon(_icon(item.icon), color: colors.primary, size: 26),
-                  errorBuilder: (_, error, stack) =>
-                      Icon(_icon(item.icon), color: colors.primary, size: 26),
+                      : Icon(
+                          _icon(item.icon),
+                          color: AppIconColors.standard,
+                          size: 24,
+                        ),
+                  errorBuilder: (_, error, stack) => Icon(
+                    _icon(item.icon),
+                    color: AppIconColors.standard,
+                    size: 24,
+                  ),
                 ),
         ),
       ),

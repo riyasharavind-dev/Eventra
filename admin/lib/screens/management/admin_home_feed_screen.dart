@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -16,7 +18,22 @@ class AdminHomeFeedScreen extends StatefulWidget {
   State<AdminHomeFeedScreen> createState() => _AdminHomeFeedScreenState();
 }
 
-class _AdminHomeFeedScreenState extends State<AdminHomeFeedScreen> {
+class _AdminHomeFeedScreenState extends State<AdminHomeFeedScreen>
+    with LiveDataState<AdminHomeFeedScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:home_feed_sections',
+    'admin:home_feed_pinned_items',
+    'admin:category_nodes',
+    'admin:event_types',
+    'admin:services',
+    'admin:vendors',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   Map<String, dynamic>? workspace;
   Object? error;
   @override

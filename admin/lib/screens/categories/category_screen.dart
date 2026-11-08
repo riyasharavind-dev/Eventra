@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/category_node_model.dart';
@@ -12,7 +14,15 @@ class CategoryScreen extends StatefulWidget {
   State<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
+class _CategoryScreenState extends State<CategoryScreen>
+    with LiveDataState<CategoryScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:category_nodes'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadCategories();
+  }
+
   final CategoryRepository _repository = CategoryRepository();
 
   List<CategoryNodeModel> _categories = [];
@@ -40,7 +50,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Future<void> _loadCategories() async {
     if (mounted) {
       setState(() {
-        _isLoading = true;
+        if (!liveRefreshing) _isLoading = true;
         _errorMessage = null;
       });
     }
@@ -88,16 +98,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   List<CategoryNodeModel> get _currentItems {
     final items = _categories
-        .where(
-          (category) => category.parentId == _currentFolderId,
-        )
+        .where((category) => category.parentId == _currentFolderId)
         .toList();
 
-    items.sort(
-      (a, b) => a.name.toLowerCase().compareTo(
-            b.name.toLowerCase(),
-          ),
-    );
+    items.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return items;
   }
@@ -152,10 +156,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     setState(() {
       _currentFolderId = category.id;
 
-      _navigationHistory.removeRange(
-        index + 1,
-        _navigationHistory.length,
-      );
+      _navigationHistory.removeRange(index + 1, _navigationHistory.length);
     });
   }
 
@@ -188,9 +189,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            parentName == null
-                ? 'Create New Folder'
-                : 'Create Subfolder',
+            parentName == null ? 'Create New Folder' : 'Create Subfolder',
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,10 +198,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               if (parentName != null)
                 Row(
                   children: [
-                    const Icon(
-                      Icons.folder_outlined,
-                      size: 18,
-                    ),
+                    const Icon(Icons.folder_outlined, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -216,8 +212,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ],
                 ),
 
-              if (parentName != null)
-                const SizedBox(height: 16),
+              if (parentName != null) const SizedBox(height: 16),
 
               TextField(
                 controller: controller,
@@ -226,17 +221,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Folder name',
                   hintText: 'Example: Decoration',
-                  prefixIcon: Icon(
-                    Icons.create_new_folder_outlined,
-                  ),
+                  prefixIcon: Icon(Icons.create_new_folder_outlined),
                   border: OutlineInputBorder(),
                 ),
                 onSubmitted: (_) {
-                  _addCategory(
-                    dialogContext,
-                    controller.text,
-                    parentId,
-                  );
+                  _addCategory(dialogContext, controller.text, parentId);
                 },
               ),
             ],
@@ -244,24 +233,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
               child: const Text('Cancel'),
             ),
             FilledButton.icon(
               onPressed: () {
-                _addCategory(
-                  dialogContext,
-                  controller.text,
-                  parentId,
-                );
+                _addCategory(dialogContext, controller.text, parentId);
               },
-              icon: const Icon(
-                Icons.create_new_folder_outlined,
-              ),
+              icon: const Icon(Icons.create_new_folder_outlined),
               label: const Text('Create'),
             ),
           ],
@@ -277,11 +257,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Folder created successfully',
-          ),
-        ),
+        const SnackBar(content: Text('Folder created successfully')),
       );
     }
   }
@@ -295,11 +271,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please enter a folder name',
-          ),
-        ),
+        const SnackBar(content: Text('Please enter a folder name')),
       );
 
       return;
@@ -308,31 +280,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final slug = _createSlug(name);
 
     try {
-      await _repository.addCategory(
-        name: name,
-        slug: slug,
-        parentId: parentId,
-      );
+      await _repository.addCategory(name: name, slug: slug, parentId: parentId);
 
       if (!dialogContext.mounted) {
         return;
       }
 
-      Navigator.pop(
-        dialogContext,
-        true,
-      );
+      Navigator.pop(dialogContext, true);
     } catch (error) {
       if (!dialogContext.mounted) {
         return;
       }
 
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to create folder: $error',
-          ),
-        ),
+        SnackBar(content: Text('Failed to create folder: $error')),
       );
     }
   }
@@ -341,56 +302,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
   // RENAME
   // ============================================================
 
-  Future<void> _showEditCategoryDialog(
-    CategoryNodeModel category,
-  ) async {
-    final controller = TextEditingController(
-      text: category.name,
-    );
+  Future<void> _showEditCategoryDialog(CategoryNodeModel category) async {
+    final controller = TextEditingController(text: category.name);
 
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Rename Folder',
-          ),
+          title: const Text('Rename Folder'),
           content: TextField(
             controller: controller,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
               labelText: 'Folder name',
-              prefixIcon: Icon(
-                Icons.drive_file_rename_outline,
-              ),
+              prefixIcon: Icon(Icons.drive_file_rename_outline),
               border: OutlineInputBorder(),
             ),
             onSubmitted: (_) {
-              _updateCategory(
-                dialogContext,
-                category,
-                controller.text,
-              );
+              _updateCategory(dialogContext, category, controller.text);
             },
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
               child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                _updateCategory(
-                  dialogContext,
-                  category,
-                  controller.text,
-                );
+                _updateCategory(dialogContext, category, controller.text);
               },
               child: const Text('Save'),
             ),
@@ -407,11 +349,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Folder renamed successfully',
-          ),
-        ),
+        const SnackBar(content: Text('Folder renamed successfully')),
       );
     }
   }
@@ -425,11 +363,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please enter a folder name',
-          ),
-        ),
+        const SnackBar(content: Text('Please enter a folder name')),
       );
 
       return;
@@ -449,21 +383,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
         return;
       }
 
-      Navigator.pop(
-        dialogContext,
-        true,
-      );
+      Navigator.pop(dialogContext, true);
     } catch (error) {
       if (!dialogContext.mounted) {
         return;
       }
 
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to rename folder: $error',
-          ),
-        ),
+        SnackBar(content: Text('Failed to rename folder: $error')),
       );
     }
   }
@@ -472,9 +399,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   // DELETE
   // ============================================================
 
-  Future<void> _deleteCategory(
-    CategoryNodeModel category,
-  ) async {
+  Future<void> _deleteCategory(CategoryNodeModel category) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -498,30 +423,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
 
     try {
-      await _repository.deleteCategory(
-        category.id,
-      );
+      await _repository.deleteCategory(category.id);
 
       await _loadCategories();
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${category.name} deleted successfully',
-          ),
-        ),
+        SnackBar(content: Text('${category.name} deleted successfully')),
       );
     } catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to delete folder: $error',
-          ),
-        ),
+        SnackBar(content: Text('Failed to delete folder: $error')),
       );
     }
   }
@@ -534,18 +449,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return value
         .toLowerCase()
         .trim()
-        .replaceAll(
-          RegExp(r'[^a-z0-9\s-]'),
-          '',
-        )
-        .replaceAll(
-          RegExp(r'\s+'),
-          '-',
-        )
-        .replaceAll(
-          RegExp(r'-+'),
-          '-',
-        );
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'-+'), '-');
   }
 
   // ============================================================
@@ -576,9 +482,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -590,13 +494,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
         _buildExplorerToolbar(),
         _buildBreadcrumbs(),
 
-        const Divider(
-          height: 1,
-        ),
+        const Divider(height: 1),
 
-        Expanded(
-          child: _buildFolderView(),
-        ),
+        Expanded(child: _buildFolderView()),
       ],
     );
   }
@@ -609,30 +509,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final currentFolder = _currentFolder;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           IconButton(
             tooltip: 'Back',
-            onPressed: _navigationHistory.isNotEmpty
-                ? _goBack
-                : null,
-            icon: const Icon(
-              Icons.arrow_back,
-            ),
+            onPressed: _navigationHistory.isNotEmpty ? _goBack : null,
+            icon: const Icon(Icons.arrow_back),
           ),
 
           IconButton(
             tooltip: 'Home',
-            onPressed: _currentFolderId != null
-                ? _goHome
-                : null,
-            icon: const Icon(
-              Icons.home_outlined,
-            ),
+            onPressed: _currentFolderId != null ? _goHome : null,
+            icon: const Icon(Icons.home_outlined),
           ),
 
           const SizedBox(width: 8),
@@ -640,22 +529,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
           Container(
             width: 1,
             height: 26,
-            color: Theme.of(context)
-                .colorScheme
-                .outlineVariant,
+            color: Theme.of(context).colorScheme.outlineVariant,
           ),
 
           const SizedBox(width: 16),
 
           Expanded(
             child: Text(
-              currentFolder == null
-                  ? 'Categories'
-                  : currentFolder.name,
+              currentFolder == null ? 'Categories' : currentFolder.name,
               style: TextStyle(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -666,10 +549,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           Text(
             '${_currentItems.length} '
             '${_currentItems.length == 1 ? 'item' : 'items'}',
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.grey, fontSize: 13),
           ),
         ],
       ),
@@ -688,35 +568,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
         borderRadius: BorderRadius.circular(6),
         onTap: _goHome,
         child: const Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 6,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.home_outlined,
-                size: 18,
-              ),
+              Icon(Icons.home_outlined, size: 18),
               SizedBox(width: 6),
-              Text(
-                'Categories',
-              ),
+              Text('Categories'),
             ],
           ),
         ),
       ),
     );
 
-    final breadcrumbIds = <String>[
-      ..._navigationHistory.whereType<String>(),
-    ];
+    final breadcrumbIds = <String>[..._navigationHistory.whereType<String>()];
 
     if (_currentFolderId != null) {
-      breadcrumbIds.add(
-        _currentFolderId!,
-      );
+      breadcrumbIds.add(_currentFolderId!);
     }
 
     for (final id in breadcrumbIds) {
@@ -726,13 +594,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         continue;
       }
 
-      items.add(
-        const Icon(
-          Icons.chevron_right,
-          size: 20,
-          color: Colors.grey,
-        ),
-      );
+      items.add(const Icon(Icons.chevron_right, size: 20, color: Colors.grey));
 
       final isCurrent = id == _currentFolderId;
 
@@ -745,10 +607,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   _goToBreadcrumb(category);
                 },
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -756,9 +615,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   Icons.folder,
                   size: 18,
                   color: isCurrent
-                      ? Theme.of(context)
-                          .colorScheme
-                          .primary
+                      ? Theme.of(context).colorScheme.primary
                       : null,
                 ),
 
@@ -767,13 +624,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 Text(
                   category.name,
                   style: TextStyle(
-                    fontWeight: isCurrent
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                     color: isCurrent
-                        ? Theme.of(context)
-                            .colorScheme
-                            .primary
+                        ? Theme.of(context).colorScheme.primary
                         : null,
                   ),
                 ),
@@ -786,15 +639,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: items,
-        ),
+        child: Row(children: items),
       ),
     );
   }
@@ -813,14 +661,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return RefreshIndicator(
       onRefresh: _loadCategories,
       child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          120,
-        ),
-        gridDelegate:
-            const SliverGridDelegateWithMaxCrossAxisExtent(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 220,
           mainAxisExtent: 180,
           crossAxisSpacing: 18,
@@ -828,9 +670,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ),
         itemCount: items.length,
         itemBuilder: (context, index) {
-          return _buildFolderCard(
-            items[index],
-          );
+          return _buildFolderCard(items[index]);
         },
       ),
     );
@@ -840,19 +680,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
   // FOLDER CARD
   // ============================================================
 
-  Widget _buildFolderCard(
-    CategoryNodeModel category,
-  ) {
+  Widget _buildFolderCard(CategoryNodeModel category) {
     final childCount = _categories
-        .where(
-          (item) => item.parentId == category.id,
-        )
+        .where((item) => item.parentId == category.id)
         .length;
 
     return Material(
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerLow,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -862,8 +696,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -872,9 +705,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       child: Icon(
                         Icons.folder,
                         size: 76,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -891,15 +722,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           break;
 
                         case 'rename':
-                          _showEditCategoryDialog(
-                            category,
-                          );
+                          _showEditCategoryDialog(category);
                           break;
 
                         case 'delete':
-                          _deleteCategory(
-                            category,
-                          );
+                          _deleteCategory(category);
                           break;
                       }
                     },
@@ -908,14 +735,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         value: 'add',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons
-                                  .create_new_folder_outlined,
-                            ),
+                            Icon(Icons.create_new_folder_outlined),
                             SizedBox(width: 10),
-                            Text(
-                              'New Subfolder',
-                            ),
+                            Text('New Subfolder'),
                           ],
                         ),
                       ),
@@ -924,14 +746,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         value: 'rename',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons
-                                  .drive_file_rename_outline,
-                            ),
+                            Icon(Icons.drive_file_rename_outline),
                             SizedBox(width: 10),
-                            Text(
-                              'Rename',
-                            ),
+                            Text('Rename'),
                           ],
                         ),
                       ),
@@ -940,14 +757,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.delete_outline,
-                              color: Colors.red,
-                            ),
+                            Icon(Icons.delete_outline, color: Colors.red),
                             SizedBox(width: 10),
-                            Text(
-                              'Delete',
-                            ),
+                            Text('Delete'),
                           ],
                         ),
                       ),
@@ -973,10 +785,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               Text(
                 '$childCount '
                 '${childCount == 1 ? 'item' : 'items'}',
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
 
               const SizedBox(height: 3),
@@ -985,10 +794,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 category.slug,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.grey, fontSize: 11),
               ),
             ],
           ),
@@ -1007,8 +813,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return RefreshIndicator(
       onRefresh: _loadCategories,
       child: ListView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 130),
 
@@ -1024,13 +829,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
           Center(
             child: Text(
-              folder == null
-                  ? 'No categories yet'
-                  : 'This folder is empty',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+              folder == null ? 'No categories yet' : 'This folder is empty',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
 
@@ -1038,18 +838,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 30,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Text(
                 folder == null
                     ? 'Create your first folder to get started.'
                     : 'Create a subfolder inside '
-                        '"${folder.name}".',
+                          '"${folder.name}".',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(color: Colors.grey),
               ),
             ),
           ),
@@ -1071,38 +867,25 @@ class _CategoryScreenState extends State<CategoryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 60,
-            ),
+            const Icon(Icons.error_outline, size: 60),
 
             const SizedBox(height: 16),
 
             const Text(
               'Unable to load categories',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 8),
 
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-            ),
+            Text(_errorMessage!, textAlign: TextAlign.center),
 
             const SizedBox(height: 20),
 
             FilledButton.icon(
               onPressed: _loadCategories,
-              icon: const Icon(
-                Icons.refresh,
-              ),
-              label: const Text(
-                'Retry',
-              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
             ),
           ],
         ),

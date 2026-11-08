@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import 'common/app_shimmer.dart';
 
 import 'dart:math' as math;
@@ -31,7 +33,7 @@ class ImageViewer extends StatelessWidget {
           children: [
             const Icon(
               Icons.person_outline,
-              color: Color(0xFF80152C),
+              color: AppIconColors.standard,
               size: 72,
             ),
             const SizedBox(height: 12),

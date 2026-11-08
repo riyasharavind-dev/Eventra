@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../widgets/dashboard/minimal_booking_calendar.dart';
@@ -28,7 +29,19 @@ class EventorCalendar extends StatefulWidget {
   State<EventorCalendar> createState() => _EventorCalendarState();
 }
 
-class _EventorCalendarState extends State<EventorCalendar> {
+class _EventorCalendarState extends State<EventorCalendar>
+    with LiveDataState<EventorCalendar> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:bookings',
+    'own:businesses',
+    'own:services',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   late final DashboardRepository repo;
   CalendarData? data;
   late DateTime selected, month;
@@ -58,7 +71,7 @@ class _EventorCalendarState extends State<EventorCalendar> {
   Future<void> load() async {
     final request = ++generation;
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
     });
     try {
@@ -117,22 +130,34 @@ class _EventorCalendarState extends State<EventorCalendar> {
     );
     final selectedRows = bookingsOnDay(scoped, selected);
     return VendorPageScaffold(
-      backgroundColor: const Color(0xFFFCF8FA),
+      backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFCF8FA),
+        title: Text(
+          t('Calendar', 'நாட்காட்டி'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F8FA),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 40,
       ),
       body: AppShimmerRefreshIndicator(
+        color: const Color(0xFF80152C),
         onRefresh: load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             if (loading) const ShimmerLoadingBar(),
             if (error != null)
               Card(
+                color: const Color(0xFFFFEBEE),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -151,56 +176,96 @@ class _EventorCalendarState extends State<EventorCalendar> {
                       ),
                       TextButton(
                         onPressed: load,
-                        child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                        child: Text(
+                          t('Retry', 'மீண்டும் முயற்சி'),
+                          style: const TextStyle(
+                            color: Color(0xFF80152C),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
             if (data != null) ...[
-              BookingMonthCalendar(
-                compact: true,
-                bookings: scoped,
-                focusedMonth: month,
-                selectedDay: selected,
-                onMonthChanged: (d) {
-                  if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
-                    setState(() => month = d);
-                  }
-                },
-                onDaySelected: (d) {
-                  if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
-                    setState(() => selected = d);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFEDE8EC)),
               Container(
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFDFE),
-                  borderRadius: BorderRadius.circular(22),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF0EDF0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF80152C).withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: BookingMonthCalendar(
+                  compact: true,
+                  bookings: scoped,
+                  focusedMonth: month,
+                  selectedDay: selected,
+                  onMonthChanged: (d) {
+                    if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
+                      setState(() => month = d);
+                    }
+                  },
+                  onDaySelected: (d) {
+                    if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
+                      setState(() => selected = d);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF0EDF0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF80152C).withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      spacing: 16,
-                      runSpacing: 8,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           bookingDate(context, selected),
                           style: const TextStyle(
-                            color: Color(0xFF850E2B),
-                            fontSize: 20,
+                            color: Color(0xFF80152C),
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        Text(
-                          '${selectedRows.length} ${t('bookings', 'முன்பதிவுகள்')}',
-                          style: const TextStyle(fontSize: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5E8EC),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${selectedRows.length} ${t('bookings', 'முன்பதிவுகள்')}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF80152C),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -210,9 +275,12 @@ class _EventorCalendarState extends State<EventorCalendar> {
                         padding: const EdgeInsets.symmetric(vertical: 30),
                         child: Center(
                           child: Text(
-                            t('History', 'வரலாறு'),
+                            t(
+                              'No bookings on this day',
+                              'இந்த நாளில் முன்பதிவுகள் இல்லை',
+                            ),
                             style: const TextStyle(
-                              color: Color(0xFF8D90A1),
+                              color: Color(0xFF73737D),
                               fontSize: 14,
                             ),
                           ),

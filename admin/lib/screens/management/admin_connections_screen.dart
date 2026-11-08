@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -26,7 +28,20 @@ class AdminConnectionsScreen extends StatefulWidget {
   State<AdminConnectionsScreen> createState() => _AdminConnectionsScreenState();
 }
 
-class _AdminConnectionsScreenState extends State<AdminConnectionsScreen> {
+class _AdminConnectionsScreenState extends State<AdminConnectionsScreen>
+    with LiveDataState<AdminConnectionsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:storage',
+    'admin:modules',
+    'admin:admins',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    refresh();
+    await loading;
+  }
+
   late Future<AdminConnections> loading;
   String query = '';
   @override
@@ -283,7 +298,15 @@ class AdminConnectionRecordsScreen extends StatefulWidget {
 }
 
 class _AdminConnectionRecordsScreenState
-    extends State<AdminConnectionRecordsScreen> {
+    extends State<AdminConnectionRecordsScreen>
+    with LiveDataState<AdminConnectionRecordsScreen> {
+  @override
+  Set<String> get liveDatasets => {'*'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   AdminPage? page;
   Object? error;
   bool loading = true;
@@ -305,7 +328,7 @@ class _AdminConnectionRecordsScreenState
   Future<void> load() async {
     final g = ++generation;
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
     });
     try {

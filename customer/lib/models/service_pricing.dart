@@ -1,4 +1,4 @@
-enum ServicePricingType {
+﻿enum ServicePricingType {
   fixed('fixed', 'Fixed price', 'நிலையான விலை'),
   startingFrom('starting_from', 'Starting from', 'ஆரம்ப விலை'),
   perUnit('per_unit', 'Per unit', 'அலகு விலை'),

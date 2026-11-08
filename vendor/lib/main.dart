@@ -1,3 +1,6 @@
+import 'screens/onboarding/onboarding_screen.dart';
+import 'core/theme/app_icon_colors.dart';
+import 'services/app_live_data.dart';
 import 'repositories/auth_repository.dart';
 import 'services/vendor_navigation_controller.dart';
 import 'widgets/vendor_navigation_host.dart';
@@ -43,22 +46,103 @@ class EventorVendorApp extends StatelessWidget {
         title: 'Eventor Vendor',
         navigatorKey: VendorNavigationController.instance.navigatorKey,
         navigatorObservers: [VendorNavigationController.instance.observer],
-        builder: (context, child) => VendorNavigationHost(
-          controller: VendorNavigationController.instance,
-          child: child ?? const SizedBox.shrink(),
+        builder: (context, child) => AppLiveDataHost(
+          client: Supabase.instance.client,
+          child: VendorNavigationHost(
+            controller: VendorNavigationController.instance,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
         locale: Locale(settings.value.languageCode),
         supportedLocales: const [Locale('en'), Locale('ta')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: ThemeData(
           useMaterial3: true,
+          iconTheme: const IconThemeData(color: AppIconColors.standard),
+          iconButtonTheme: IconButtonThemeData(
+            style: IconButton.styleFrom(
+              foregroundColor: AppIconColors.standard,
+            ),
+          ),
+          listTileTheme: const ListTileThemeData(
+            iconColor: AppIconColors.standard,
+          ),
+          popupMenuTheme: const PopupMenuThemeData(
+            iconColor: AppIconColors.standard,
+          ),
+          expansionTileTheme: const ExpansionTileThemeData(
+            iconColor: AppIconColors.standard,
+            collapsedIconColor: AppIconColors.standard,
+          ),
+          inputDecorationTheme: const InputDecorationTheme(
+            prefixIconColor: AppIconColors.standard,
+            suffixIconColor: AppIconColors.standard,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFF8F8FA),
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF9F0101),
+            seedColor: const Color(0xFF80152C),
+            primary: const Color(0xFF80152C),
+            secondary: const Color(0xFFFFCB48),
+            surface: Colors.white,
             brightness: Brightness.light,
+          ),
+          appBarTheme: const AppBarTheme(
+            iconTheme: IconThemeData(color: AppIconColors.standard),
+            actionsIconTheme: IconThemeData(color: AppIconColors.standard),
+            backgroundColor: Color(0xFFF8F8FA),
+            foregroundColor: Color(0xFF17171B),
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              color: Color(0xFF17171B),
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          cardTheme: CardThemeData(
+            color: Colors.white,
+            elevation: 0,
+            shadowColor: const Color(0xFF80152C).withValues(alpha: 0.06),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Color(0xFFF0EDF0)),
+            ),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF80152C),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF80152C),
+              side: const BorderSide(color: Color(0xFF80152C)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
           ),
         ),
         themeMode: ThemeMode.light,
-        home: const EventorSplashScreen(nextScreen: VendorEntryScreen()),
+        home: const EventorSplashScreen(
+          nextScreen: VendorOnboardingGate(child: VendorEntryScreen()),
+        ),
       ),
     ),
   );
@@ -111,7 +195,10 @@ class _VendorEntryScreenState extends State<VendorEntryScreen> {
               if (mounted) _initializeNotifications();
             });
           }
-          return const AccountRoleGate(child: VendorMainScreen());
+          return AccountRoleGate(
+            key: ValueKey(Supabase.instance.client.auth.currentUser?.id),
+            child: const VendorMainScreen(),
+          );
         }
         _notificationInitialized = false;
         return const LoginScreen();

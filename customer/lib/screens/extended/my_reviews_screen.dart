@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../widgets/reviews/review_editor_dialog.dart';
 
 import 'package:flutter/material.dart';
@@ -12,7 +13,15 @@ class MyReviewsScreen extends StatefulWidget {
   State<MyReviewsScreen> createState() => _MyReviewsScreenState();
 }
 
-class _MyReviewsScreenState extends State<MyReviewsScreen> {
+class _MyReviewsScreenState extends State<MyReviewsScreen>
+    with LiveDataState<MyReviewsScreen> {
+  @override
+  Set<String> get liveDatasets => {'own:service_reviews', 'own:bookings'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   late final ReviewRepository _repo;
   late Future<List<BookingReviewContext>> _future;
   @override

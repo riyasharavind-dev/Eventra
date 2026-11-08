@@ -61,25 +61,22 @@ class BookingStatusChip extends StatelessWidget {
   const BookingStatusChip({super.key, required this.status});
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final color = switch (status) {
-      'accepted' => Colors.green,
-      'completed' => Colors.blue,
-      'rejected' || 'cancelled' => colors.error,
-      _ => Colors.orange,
+      'accepted' => const Color(0xFF008953),
+      'completed' => const Color(0xFF1976D2),
+      'rejected' || 'cancelled' => const Color(0xFFC62828),
+      _ => const Color(0xFFD97706),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(9),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         bookingStatus(context, status),
         style: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? colors.onSurface
-              : color,
+          color: color,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
@@ -162,28 +159,32 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
   Widget build(BuildContext context) {
     final needsReason = ['rejected', 'cancelled'].contains(widget.status);
     return AlertDialog(
-      title: Text(switch (widget.status) {
-        'accepted' => bookingText(
-          context,
-          'Accept booking?',
-          'முன்பதிவை ஏற்கவா?',
-        ),
-        'rejected' => bookingText(
-          context,
-          'Reject booking?',
-          'முன்பதிவை நிராகரிக்கவா?',
-        ),
-        'completed' => bookingText(
-          context,
-          'Mark as completed?',
-          'முடிந்ததாகக் குறிக்கவா?',
-        ),
-        _ => bookingText(
-          context,
-          'Cancel booking?',
-          'முன்பதிவை ரத்து செய்யவா?',
-        ),
-      }),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        switch (widget.status) {
+          'accepted' => bookingText(
+            context,
+            'Accept booking?',
+            'முன்பதிவை ஏற்கவா?',
+          ),
+          'rejected' => bookingText(
+            context,
+            'Reject booking?',
+            'முன்பதிவை நிராகரிக்கவா?',
+          ),
+          'completed' => bookingText(
+            context,
+            'Mark as completed?',
+            'முடிந்ததாகக் குறிக்கவா?',
+          ),
+          _ => bookingText(
+            context,
+            'Cancel booking?',
+            'முன்பதிவை ரத்து செய்யவா?',
+          ),
+        },
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: form,
@@ -263,10 +264,18 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(foregroundColor: const Color(0xFF73737D)),
           onPressed: () => Navigator.pop(context),
           child: Text(bookingText(context, 'Back', 'பின்செல்')),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF80152C),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: () {
             if (form.currentState!.validate()) {
               Navigator.pop(context, reason.trim());

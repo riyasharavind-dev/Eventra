@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -20,8 +23,16 @@ class PrivacyPolicyScreen extends StatefulWidget {
   State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
 }
 
-class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
-  static const _red = Color(0xFF9F0101);
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
+    with LiveDataState<PrivacyPolicyScreen> {
+  @override
+  Set<String> get liveDatasets => {'public:legal_documents'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
+  static const _red = Color(0xFF80152C);
   late final LegalDocumentRepository _repository;
   LegalDocumentModel? _document;
   bool _loading = true;
@@ -37,7 +48,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   Future<void> _load() async {
     if (!mounted) return;
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {
@@ -89,7 +100,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
           children: [
             Icon(
               error ? Icons.cloud_off_outlined : Icons.description_outlined,
-              color: _red,
+              color: AppIconColors.standard,
               size: 48,
             ),
             const SizedBox(height: 16),
@@ -125,9 +136,12 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        title: const Text(
+          'Privacy Policy',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        backgroundColor: const Color(0xFFF8F8FA),
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             tooltip: 'Refresh privacy policy',
@@ -186,13 +200,21 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                           ),
                           const SizedBox(height: 24),
                           Container(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(22),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFECECEC),
+                                color: const Color(0xFFF0EDF0),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF80152C)
+                                      .withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: _LegalContent(
                               text: document.contentMarkdown,

@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 class VendorFilterButton extends StatelessWidget {
@@ -13,12 +14,12 @@ class VendorFilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Badge(
     isLabelVisible: active,
-    child: IconButton.outlined(
+    child: IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        foregroundColor: const Color(0xFF80152C),
-        side: const BorderSide(color: Color(0xFFD58C9E)),
+        foregroundColor: AppIconColors.standard,
+        side: BorderSide.none,
         padding: const EdgeInsets.all(13),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),

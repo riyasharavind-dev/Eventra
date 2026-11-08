@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -22,8 +25,16 @@ class AboutEventorScreen extends StatefulWidget {
   State<AboutEventorScreen> createState() => _AboutEventorScreenState();
 }
 
-class _AboutEventorScreenState extends State<AboutEventorScreen> {
-  static const _red = Color(0xFF9F0101);
+class _AboutEventorScreenState extends State<AboutEventorScreen>
+    with LiveDataState<AboutEventorScreen> {
+  @override
+  Set<String> get liveDatasets => {'public:about_eventra_content'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
+  static const _red = Color(0xFF80152C);
   // Match the installed app's pubspec.yaml, not editable marketing content.
   static const _version = '1.0.0';
   static const _build = '1';
@@ -41,7 +52,7 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {
@@ -110,7 +121,11 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.info_outline, color: _red, size: 44),
+            const Icon(
+              Icons.info_outline,
+              color: AppIconColors.standard,
+              size: 44,
+            ),
             const SizedBox(height: 16),
             Text(
               _failed
@@ -143,9 +158,12 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text('About Eventor'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        title: const Text(
+          'About Eventor',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        backgroundColor: const Color(0xFFF8F8FA),
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             tooltip: 'Refresh About Eventor',
@@ -181,16 +199,19 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
                                 width: 96,
                                 height: 96,
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, error, stack) =>
-                                    const SizedBox(
-                                      width: 96,
-                                      height: 96,
-                                      child: Icon(
-                                        Icons.celebration_outlined,
-                                        color: _red,
-                                        size: 48,
-                                      ),
-                                    ),
+                                errorBuilder: (_, error, stack) => Container(
+                                  width: 96,
+                                  height: 96,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5E8EC),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Icon(
+                                    Icons.celebration_outlined,
+                                    color: AppIconColors.standard,
+                                    size: 48,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -201,6 +222,7 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
+                              color: Color(0xFF17171B),
                             ),
                           ),
                           if (about.tagline.isNotEmpty) ...[
@@ -228,10 +250,18 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFECECEC),
+                                color: const Color(0xFFF0EDF0),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF80152C)
+                                      .withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,20 +285,34 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
                             'Policies',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF17171B),
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Material(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFF0EDF0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF80152C)
+                                      .withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
                             clipBehavior: Clip.antiAlias,
                             child: Column(
                               children: [
                                 ListTile(
                                   leading: const Icon(
                                     Icons.description_outlined,
-                                    color: _red,
+                                    color: AppIconColors.standard,
                                   ),
                                   title: const Text('Terms & Conditions'),
                                   trailing: const Icon(
@@ -277,11 +321,14 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
                                   onTap: () =>
                                       _open(const TermsAndConditionsScreen()),
                                 ),
-                                const Divider(height: 1),
+                                const Divider(
+                                  height: 1,
+                                  color: Color(0xFFF0EDF0),
+                                ),
                                 ListTile(
                                   leading: const Icon(
                                     Icons.privacy_tip_outlined,
-                                    color: _red,
+                                    color: AppIconColors.standard,
                                   ),
                                   title: const Text('Privacy Policy'),
                                   trailing: const Icon(

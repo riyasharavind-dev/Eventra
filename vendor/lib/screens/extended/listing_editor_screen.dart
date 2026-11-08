@@ -417,7 +417,20 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
       keyboardType: keyboard,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+        ),
       ),
       validator: (v) {
         if (required && (v?.trim().isEmpty ?? true)) {
@@ -433,11 +446,13 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
     return PopScope(
       canPop: !saving && !picking,
       child: VendorPageScaffold(
+        backgroundColor: const Color(0xFFF8F8FA),
         appBar: AppBar(
           title: Text(
             widget.service == null
                 ? t('Add Service', 'சேவை சேர்')
                 : t('Edit Service', 'சேவையைத் திருத்து'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
         body: AbsorbPointer(
@@ -450,18 +465,30 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                 Text(
                   t('Photos & cover', 'புகைப்படங்கள் மற்றும் அட்டைப்படம்'),
                   key: galleryKey,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF17171B),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   t(
                     'First photo is the cover. Changes apply when you save.',
                     'முதல் படம் அட்டைப்படம். சேமிக்கும்போது மாற்றங்கள் செயல்படும்.',
                   ),
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF73737D)),
                 ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: pickPhotos,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF80152C),
+                    side: const BorderSide(color: Color(0xFF80152C)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
                   icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: Text(
                     picking
@@ -585,7 +612,20 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: t('Business', 'வணிகம்'),
-                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    ),
                   ),
                   items: businesses
                       .map(
@@ -628,7 +668,20 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: t('Category', 'வகை'),
-                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE8E5EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    ),
                   ),
                   items: categories
                       .map(
@@ -685,21 +738,35 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-                FilledButton.icon(
-                  onPressed:
-                      loading ||
-                          loadingCategories ||
-                          businessError != null ||
-                          categoryError != null ||
-                          saving ||
-                          picking
-                      ? null
-                      : save,
-                  icon: const Icon(Icons.check),
-                  label: Text(
-                    saving
-                        ? t('Saving…', 'சேமிக்கிறது…')
-                        : t('Save service', 'சேவையைச் சேமி'),
+                SizedBox(
+                  height: 52,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF80152C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed:
+                        loading ||
+                            loadingCategories ||
+                            businessError != null ||
+                            categoryError != null ||
+                            saving ||
+                            picking
+                        ? null
+                        : save,
+                    icon: const Icon(Icons.check),
+                    label: Text(
+                      saving
+                          ? t('Saving…', 'சேமிக்கிறது…')
+                          : t('Save service', 'சேவையைச் சேமி'),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

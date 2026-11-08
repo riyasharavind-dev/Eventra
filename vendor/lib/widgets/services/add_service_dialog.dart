@@ -568,6 +568,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF73737D),
+                        side: const BorderSide(color: Color(0xFFE8E5E8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _isCreating
                           ? null
                           : () {
@@ -581,6 +588,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
                   Expanded(
                     child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF80152C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _isCreating ? null : _createService,
                       icon: _isCreating
                           ? const SizedBox(

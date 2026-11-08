@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -17,8 +19,56 @@ class AdminSessionGate extends StatefulWidget {
   State<AdminSessionGate> createState() => _AdminSessionGateState();
 }
 
-class _AdminSessionGateState extends State<AdminSessionGate> {
+class _AdminSessionGateState extends State<AdminSessionGate>
+    with LiveDataState<AdminSessionGate> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:access',
+    'own:admins',
+    'own:team_permissions',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    if (action != null || checkingLink) return;
+    try {
+      Map<String, dynamic>? prior = _observedContext;
+      try {
+        prior ??= await identity;
+      } catch (_) {
+        /* Retry an initial offline check. */
+      }
+      final raw = await db.rpc('admin_context');
+      final next = raw == null ? null : Map<String, dynamic>.from(raw as Map);
+      if (!mounted) return;
+      _observedContext = next;
+      if (changed.contains('own:team_permissions')) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      if (next == null ||
+          prior?['access_level'] != next['access_level'] ||
+          prior?['mfa_required'] != next['mfa_required']) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        setState(() {
+          identity = Future.value(next);
+        });
+      }
+    } catch (error, stack) {
+      if (error is! PostgrestException ||
+          !const ['42501', 'PGRST301', '28000'].contains(error.code)) {
+        rethrow;
+      }
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      setState(() {
+        identity = Future<Map<String, dynamic>?>.error(error, stack)..ignore();
+      });
+    }
+  }
+
+  Map<String, dynamic>? _observedContext;
   final db = Supabase.instance.client;
+  @override
+  bool get liveAlwaysActive => true;
   StreamSubscription<AuthState>? subscription;
   Future<Map<String, dynamic>?>? identity;
   String? action, linkError;
@@ -98,6 +148,7 @@ class _AdminSessionGateState extends State<AdminSessionGate> {
   }
 
   void refresh() {
+    _observedContext = null;
     identity = db.auth.currentSession == null
         ? null
         : db

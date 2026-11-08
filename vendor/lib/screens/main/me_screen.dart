@@ -1,8 +1,11 @@
+import '../trial/vendor_trial_screen.dart';
+
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
-
-import '../../widgets/vendor_bottom_nav_bar.dart';
 
 import '../../widgets/common/global_search_bar.dart';
 import '../../models/settings_search_item.dart';
@@ -11,7 +14,7 @@ import '../../models/profile_statistics.dart';
 import '../../repositories/profile_statistics_repository.dart';
 import '../../widgets/vendor_profile_overview.dart';
 import '../../widgets/common/profile_section_title.dart';
-import '../extended/service_reviews_screen.dart';
+import '../extended/customer_reviews_screen.dart';
 import 'bookings_screen.dart';
 import '../../models/business_model.dart';
 import '../../models/social_link_model.dart';
@@ -56,7 +59,21 @@ class MeScreen extends StatefulWidget {
   State<MeScreen> createState() => _MeScreenState();
 }
 
-class _MeScreenState extends State<MeScreen> {
+class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:vendors',
+    'own:businesses',
+    'own:bookings',
+    'own:service_reviews',
+    'own:service_metrics',
+    'own:users',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadData();
+  }
+
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -84,15 +101,6 @@ class _MeScreenState extends State<MeScreen> {
   void initState() {
     super.initState();
     _loadData();
-  }
-
-  @override
-  void didUpdateWidget(covariant MeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.isActive && !oldWidget.isActive) {
-      _loadData();
-    }
   }
 
   @override
@@ -146,10 +154,14 @@ class _MeScreenState extends State<MeScreen> {
     final generation = ++_loadGeneration;
 
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = _vendor == null;
     });
 
     try {
+      final businessesFuture =
+          (widget.loadBusinesses?.call() ??
+                  BusinessRepository().getCurrentVendorBusinesses())
+              .then<Object>((v) => v, onError: (Object e) => e);
       final vendor =
           await (widget.loadVendor?.call() ?? VendorRepository().getMyVendor());
 
@@ -162,9 +174,9 @@ class _MeScreenState extends State<MeScreen> {
 
       final statisticsRefresh = _loadStatistics();
 
-      final businesses =
-          await (widget.loadBusinesses?.call() ??
-              BusinessRepository().getCurrentVendorBusinesses());
+      final result = await businessesFuture;
+      if (result is! List<BusinessModel>) throw result;
+      final businesses = result;
 
       if (!mounted || generation != _loadGeneration) return;
 
@@ -356,11 +368,7 @@ class _MeScreenState extends State<MeScreen> {
             SizedBox(
               width: 38,
               height: 38,
-              child: Icon(
-                icon,
-                size: 20,
-                color: VendorBottomNavBar.inactiveIconColor,
-              ),
+              child: Icon(icon, size: 20, color: AppIconColors.standard),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -391,7 +399,7 @@ class _MeScreenState extends State<MeScreen> {
             Icon(
               Icons.chevron_right_rounded,
               size: 22,
-              color: colors.onSurfaceVariant,
+              color: AppIconColors.standard,
             ),
           ],
         ),
@@ -415,7 +423,7 @@ class _MeScreenState extends State<MeScreen> {
           padding: const EdgeInsets.all(32),
           child: Column(
             children: [
-              Icon(icon, size: 42, color: VendorBottomNavBar.inactiveIconColor),
+              Icon(icon, size: 42, color: AppIconColors.standard),
               const SizedBox(height: 14),
               Text(
                 message,
@@ -467,8 +475,7 @@ class _MeScreenState extends State<MeScreen> {
         onBusiness: _openBusinessDetails,
         onAbout: _showAboutMe,
         onEvents: _openBookings,
-        onReviews: () =>
-            _open(const ServiceReviewsScreen(vendorMode: true), reload: true),
+        onReviews: () => _open(const CustomerReviewsScreen(), reload: true),
         onRetry: _loadStatistics,
       ),
     );
@@ -613,6 +620,18 @@ class _MeScreenState extends State<MeScreen> {
           'shop address location map logo banner business வணிகம் கடை முகவரி',
         ],
       ),
+      _setting(
+        'customer-reviews',
+        Icons.rate_review_outlined,
+        'Customer Reviews',
+        'வாடிக்கையாளர் விமர்சனங்கள்',
+        'Read and reply to reviews across your businesses',
+        'உங்கள் வணிகங்களின் விமர்சனங்களைப் பார்த்து பதிலளிக்கவும்',
+        () => _open(const CustomerReviewsScreen(), reload: true),
+        keywords: [
+          'customer reviews ratings feedback replies விமர்சனங்கள் மதிப்பீடு',
+        ],
+      ),
     ];
 
     final appSettings = [
@@ -682,6 +701,18 @@ class _MeScreenState extends State<MeScreen> {
     ];
 
     final help = [
+      _setting(
+        'app-guide',
+        Icons.school_outlined,
+        'App Guide / Restart Tour',
+        'செயலி வழிகாட்டி / மீண்டும் பயிற்சி',
+        'Learn the app and practice a sample booking',
+        'செயலியை அறிந்து மாதிரி முன்பதிவில் பயிற்சி செய்யுங்கள்',
+        () => VendorTrialScreen.open(context, restart: true),
+        keywords: [
+          'tutorial onboarding trial tour practice guide help வழிகாட்டி பயிற்சி',
+        ],
+      ),
       _setting(
         'support',
         Icons.help_outline_rounded,

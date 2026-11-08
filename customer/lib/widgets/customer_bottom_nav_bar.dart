@@ -10,8 +10,8 @@ class CustomerBottomNavBar extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _wine = Color(0xFF920D29);
-  static const _wineDark = Color(0xFF68051A);
+  static const _wine = Color(0xFF80152C);
+  static const _wineDark = Color(0xFF650C20);
   static const inactiveIconColor = Color(0xFF73737D);
 
   static const _labels = ['Home', 'Explore', 'Bookings', 'Me'];

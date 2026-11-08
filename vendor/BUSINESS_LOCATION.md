@@ -1,0 +1,11 @@
+# Business category and shop location
+
+Database: admin/sql/24_business_category_boundary.sql. Boundary provenance/archive: admin/data/shop_boundaries/README.md. Rollback-only DB tests: admin/sql/tests/business_category_boundary_test.sql.
+
+Business Add/Edit uses one dropdown containing root categories only. It submits one category, also used as primary_category_id. The secured save RPC checks exactly one root, a unique business_id index prevents multiple category links, and triggers reject child categories. Existing links/primary values are normalized without moving/deleting services. Existing service-category compatibility and ownership checks remain enforced; a business with services outside a newly chosen category cannot switch until the services are moved through a valid workflow.
+
+State/District/Sub-district cards have stable keys and a permanently reserved loading-indicator slot. A network-loading indicator cannot insert/remove height above tap targets. Each region-picker result is checked against the requested level/parent; changing a parent clears dependent selections and the pin. Location-picker list rows have their own Material surface so ripple feedback paints on the tapped row. Network loading ends before opening the next route, preserving back/tab navigation.
+
+Shop on map fetches only the selected sub-district polygon from the vendor-only RPC. The map fits and constrains its center to the area's bounds, draws the real Polygon/MultiPolygon outline (including holes), and validates the selected center against the polygon. Taps, dragging and GPS cannot confirm an outside point or exclusion hole. The save RPC separately uses PostGIS ST_Covers to reject new/moved pins outside the stored border. Existing pins remain unchanged during unrelated business edits, including legacy areas without mapped borders.
+
+Boundary data is a historical approximate source, not a cadastral/current legal boundary. The source year is shown on the picker. Only unambiguous normalized-name/parent-geometry matches were imported; unsupported regions show an explicit unavailable message instead of a guessed rectangle/different place. See the archive README for coverage, licenses and update/import procedures. Full-country geometry is never bundled as Flutter assets, and no new mobile dependency was added.

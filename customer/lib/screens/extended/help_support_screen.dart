@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import 'contact_support_screen.dart';
@@ -19,7 +21,19 @@ class HelpSupportScreen extends StatefulWidget {
   State<HelpSupportScreen> createState() => _HelpSupportScreenState();
 }
 
-class _HelpSupportScreenState extends State<HelpSupportScreen> {
+class _HelpSupportScreenState extends State<HelpSupportScreen>
+    with LiveDataState<HelpSupportScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'public:support_faqs',
+    'public:support_settings',
+    'own:support_tickets',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   late final SupportRepository _repository;
   List<SupportFaq> _faqs = [];
   List<SupportTicket> _tickets = [];
@@ -38,7 +52,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

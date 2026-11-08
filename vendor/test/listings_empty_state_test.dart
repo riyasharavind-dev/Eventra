@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_live_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -44,6 +45,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+    'Business changes update the open listings screen without manual reload',
+    (tester) async {
+      var businesses = <Map<String, dynamic>>[];
+      await page(tester, () async => businesses);
+      expect(find.text('Add a business to get started'), findsOneWidget);
+      businesses = [
+        {'id': 'b', 'name': 'Live business', 'is_active': true},
+      ];
+      AppLiveData.instance.invalidate({'own:businesses'});
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      expect(find.text('No services yet'), findsOneWidget);
+      expect(find.text('Add a business to get started'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('new vendor sees add business', (tester) async {
     await page(tester, () async => []);
     expect(find.text('Add a business to get started'), findsOneWidget);

@@ -1,4 +1,4 @@
-class AboutEventorFeature {
+﻿class AboutEventorFeature {
   const AboutEventorFeature({required this.title, required this.description});
 
   final String title;

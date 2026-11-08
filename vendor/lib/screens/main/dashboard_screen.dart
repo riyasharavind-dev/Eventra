@@ -1,3 +1,8 @@
+import '../../widgets/trial/vendor_setup_checklist.dart';
+
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_filter_button.dart';
 import '../../widgets/listings/listing_filter_sheet.dart';
 import '../../widgets/common/app_shimmer.dart';
@@ -10,8 +15,6 @@ import '../../repositories/vendor_notifications_repository.dart';
 import '../extended/notifications_screen.dart';
 
 import 'package:flutter/material.dart';
-
-import '../../widgets/vendor_bottom_nav_bar.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -50,10 +53,49 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, LiveDataState<DashboardScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:vendors',
+    'own:businesses',
+    'own:services',
+    'own:bookings',
+    'own:service_reviews',
+    'own:service_metrics',
+    'own:vendor_notifications',
+    'own:vendor_announcements',
+    'public:vendor_announcements',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    if (changed.any(
+      (d) =>
+          d.contains('vendor_notifications') ||
+          d.contains('vendor_announcements'),
+    )) {
+      await _refreshInbox();
+    }
+    if (changed.any(
+      (d) =>
+          !d.contains('vendor_notifications') &&
+          !d.contains('vendor_announcements'),
+    )) {
+      if (changed.contains('own:businesses') &&
+          _selectedBusiness != 'all' &&
+          _selectedBusiness != 'unassigned') {
+        final businesses = await _repository.businesses();
+        if (!mounted) return;
+        if (!businesses.any((b) => b.id == _selectedBusiness)) {
+          setState(() => _selectedBusiness = 'all');
+        }
+      }
+      await _loadDashboard();
+    }
+  }
+
   late final VendorNotificationsRepository _inbox;
   RealtimeChannel? _inboxChannel;
-  Timer? _inboxDebounce, _inboxTimer;
+  Timer? _inboxTimer;
   int _unreadNotifications = 0;
   bool _loadingInbox = false;
   // ============================================================
@@ -61,10 +103,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ============================================================
 
   static const Color primaryRed = Color(0xFF80152C);
+  static const Color wineDark = Color(0xFF650C20);
   static const Color darkText = Color(0xFF17171B);
-  static const Color greyText = Color(0xFF6F6F7A);
+  static const Color greyText = Color(0xFF73737D);
   static const Color background = Color(0xFFF8F8FA);
-  static const Color lightRed = Color(0xFFF4E7EB);
+  static const Color lightRed = Color(0xFFF5E8EC);
+  static const Color gold = Color(0xFFFFCB48);
 
   // ============================================================
   // REPOSITORIES
@@ -79,15 +123,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<BusinessModel> _allBusinesses = [];
   List<BookingModel> _allBookings = [];
   String _text(String en, String ta) => bookingText(context, en, ta);
-
-  @override
-  void didUpdateWidget(covariant DashboardScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
-      _loadDashboard();
-      _refreshInbox();
-    }
-  }
 
   String _vendorName = 'Vendor';
   String? _profileImageUrl;
@@ -119,14 +154,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     _inboxChannel = _inbox.watch(_scheduleInbox);
     _inboxTimer = Timer.periodic(
       const Duration(seconds: 45),
-      (_) => _refreshInbox(),
+      (_) => _scheduleInbox(),
     );
     _refreshInbox();
   }
 
   void _scheduleInbox() {
-    _inboxDebounce?.cancel();
-    _inboxDebounce = Timer(const Duration(milliseconds: 350), _refreshInbox);
+    AppLiveData.instance.invalidate({'own:vendor_notifications'});
   }
 
   Future<void> _refreshInbox() async {
@@ -145,13 +179,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _refreshInbox();
+    if (state == AppLifecycleState.resumed) _scheduleInbox();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _inboxDebounce?.cancel();
     _inboxTimer?.cancel();
     if (_inboxChannel != null) unawaited(_inbox.stopWatching(_inboxChannel!));
     super.dispose();
@@ -309,6 +342,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ],
           _buildHeader(),
           const SizedBox(height: 24),
+          const VendorSetupChecklistCard(),
           _buildStats(),
           const SizedBox(height: 18),
           _buildBookingOverview(),
@@ -399,7 +433,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             isLabelVisible: _unreadNotifications > 0,
             child: const Icon(
               Icons.notifications_outlined,
-              color: VendorBottomNavBar.inactiveIconColor,
+              color: AppIconColors.standard,
             ),
           ),
         ),
@@ -423,21 +457,16 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       width: 52,
       height: 52,
-      decoration: const BoxDecoration(shape: BoxShape.circle, color: lightRed),
+      padding: const EdgeInsets.all(2.5),
+      decoration: const BoxDecoration(color: gold, shape: BoxShape.circle),
       child: ClipOval(
         child: hasImage
             ? Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
-                errorBuilder:
-                    (
-                      BuildContext context,
-                      Object error,
-                      StackTrace? stackTrace,
-                    ) {
-                      return _buildInitialAvatar(initial);
-                    },
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildInitialAvatar(initial),
               )
             : _buildInitialAvatar(initial),
       ),
@@ -445,13 +474,16 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildInitialAvatar(String initial) {
-    return Center(
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          color: primaryRed,
+    return ColoredBox(
+      color: lightRed,
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: primaryRed,
+          ),
         ),
       ),
     );
@@ -492,19 +524,22 @@ class _DashboardScreenState extends State<DashboardScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: primaryRed.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         children: [
           SizedBox(
             width: 44,
             height: 44,
-            child: Icon(
-              icon,
-              color: VendorBottomNavBar.inactiveIconColor,
-              size: 23,
-            ),
+            child: Icon(icon, color: AppIconColors.standard, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -524,7 +559,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: greyText),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: greyText,
+                  ),
                 ),
               ],
             ),
@@ -541,17 +580,28 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildBookingOverview() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: primaryRed,
-        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryRed, wineDark],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: primaryRed.withValues(alpha: 0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 9),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Text(
                   'Booking Overview',
                   style: TextStyle(
@@ -561,15 +611,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_bookings.length} total',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            '${_bookings.length} total booking'
-            '${_bookings.length == 1 ? '' : 's'}',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
@@ -598,33 +660,66 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
+          Divider(color: Colors.white.withValues(alpha: 0.16), height: 1),
+          const SizedBox(height: 14),
           Wrap(
-            spacing: 14,
+            spacing: 12,
             runSpacing: 8,
             children: [
-              Text(
-                '${_overview?.upcoming ?? 0} ${_text('upcoming events', 'upcoming events')}',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_overview?.upcoming ?? 0} ${_text('upcoming events', 'upcoming events')}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              Text(
-                '${_overview?.rejected ?? 0} ${_text('rejected', 'rejected')}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
+              if ((_overview?.rejected ?? 0) > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${_overview?.rejected ?? 0} ${_text('rejected', 'rejected')}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ),
               InkWell(
                 onTap: _openReviews,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: gold.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Text(
                     _overview?.rating.count == 0
                         ? _text('No reviews yet', 'No reviews yet')
                         : '★ ${_overview?.rating.average?.toStringAsFixed(1)} · ${_overview?.rating.count} ${_text('reviews', 'reviews')}',
                     style: const TextStyle(
-                      color: Color(0xFFFFDC79),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      color: gold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -746,28 +841,33 @@ class _DashboardScreenState extends State<DashboardScreen>
   }) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
+      elevation: 0,
+      shadowColor: primaryRed.withValues(alpha: 0.06),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Container(
           constraints: const BoxConstraints(minHeight: 104),
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: [
+              BoxShadow(
+                color: primaryRed.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 40,
-                height: 40,
-                child: Icon(
-                  icon,
-                  color: VendorBottomNavBar.inactiveIconColor,
-                  size: 20,
-                ),
+                width: 42,
+                height: 42,
+                child: Icon(icon, color: AppIconColors.standard, size: 20),
               ),
               const SizedBox(height: 8),
               Text(
@@ -776,8 +876,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                   color: darkText,
                 ),
               ),
@@ -820,18 +920,27 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0,
+      shadowColor: primaryRed.withValues(alpha: 0.06),
       child: InkWell(
         onTap: () {
           _openBusiness(business);
         },
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: [
+              BoxShadow(
+                color: primaryRed.withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -839,37 +948,35 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: 62,
                 height: 62,
                 decoration: BoxDecoration(
-                  color: lightRed,
-                  borderRadius: BorderRadius.circular(14),
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  border: hasImage
+                      ? Border.all(color: const Color(0xFFF0EDF0))
+                      : null,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(15),
                   child: hasImage
                       ? Image.network(
                           logoUrl,
                           fit: BoxFit.cover,
                           gaplessPlayback: true,
-                          errorBuilder:
-                              (
-                                BuildContext context,
-                                Object error,
-                                StackTrace? stackTrace,
-                              ) {
-                                return const Icon(
-                                  Icons.storefront_outlined,
-                                  color: VendorBottomNavBar.inactiveIconColor,
-                                  size: 28,
-                                );
-                              },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.storefront_outlined,
+                              color: AppIconColors.standard,
+                              size: 28,
+                            );
+                          },
                         )
                       : const Icon(
                           Icons.storefront_outlined,
-                          color: VendorBottomNavBar.inactiveIconColor,
+                          color: AppIconColors.standard,
                           size: 28,
                         ),
                 ),
               ),
-              const SizedBox(width: 13),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -880,18 +987,33 @@ class _DashboardScreenState extends State<DashboardScreen>
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         color: darkText,
                       ),
                     ),
                     const SizedBox(height: 5),
                     if (business.address != null &&
                         business.address!.trim().isNotEmpty)
-                      Text(
-                        business.address!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: greyText),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: AppIconColors.standard,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              business.address!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: greyText,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     else
                       const Text(
@@ -903,7 +1025,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: VendorBottomNavBar.inactiveIconColor,
+                color: AppIconColors.standard,
               ),
             ],
           ),
@@ -946,18 +1068,27 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildBookingCard(BookingModel booking) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0,
+      shadowColor: primaryRed.withValues(alpha: 0.06),
       child: InkWell(
         onTap: _busyIds.contains(booking.id)
             ? null
             : () => _showBooking(booking),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: [
+              BoxShadow(
+                color: primaryRed.withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -974,7 +1105,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: darkText,
                           ),
                         ),
@@ -983,7 +1114,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                           booking.customerName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: greyText),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: greyText,
+                          ),
                         ),
                       ],
                     ),
@@ -997,19 +1132,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                 children: [
                   const Icon(
                     Icons.calendar_today_outlined,
-                    size: 15,
-                    color: VendorBottomNavBar.inactiveIconColor,
+                    size: 14,
+                    color: AppIconColors.standard,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _formatDate(booking.eventDate),
-                    style: const TextStyle(fontSize: 11, color: greyText),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: darkText,
+                    ),
                   ),
                   const SizedBox(width: 15),
                   const Icon(
                     Icons.location_on_outlined,
-                    size: 15,
-                    color: VendorBottomNavBar.inactiveIconColor,
+                    size: 14,
+                    color: AppIconColors.standard,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -1022,23 +1161,37 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 13),
-              Row(
-                children: [
-                  const Text(
-                    'Booking Price',
-                    style: TextStyle(fontSize: 11, color: greyText),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '₹${booking.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: darkText,
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8FA),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Booking Price',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: greyText,
+                      ),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    Text(
+                      '₹${booking.price.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: primaryRed,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (booking.businessName != null) ...[
                 const SizedBox(height: 8),
@@ -1071,30 +1224,50 @@ class _DashboardScreenState extends State<DashboardScreen>
                     icon: const Icon(
                       Icons.map_outlined,
                       size: 17,
-                      color: VendorBottomNavBar.inactiveIconColor,
+                      color: AppIconColors.standard,
                     ),
-                    label: Text(_text('Open Maps', 'Open Maps')),
+                    label: Text(
+                      _text('Open Maps', 'Open Maps'),
+                      style: const TextStyle(
+                        color: primaryRed,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               if (_busyIds.contains(booking.id)) ...[
                 const SizedBox(height: 10),
                 const ShimmerLoadingBar(),
               ] else if (booking.status == 'pending') ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
+                const SizedBox(height: 14),
+                Row(
                   children: [
-                    FilledButton(
-                      onPressed: () => _changeBooking(booking, 'accepted'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: primaryRed,
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => _changeBooking(booking, 'accepted'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: primaryRed,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(_text('Accept', 'Accept')),
                       ),
-                      child: Text(_text('Accept', 'Accept')),
                     ),
-                    OutlinedButton(
-                      onPressed: () => _changeBooking(booking, 'rejected'),
-                      child: Text(_text('Reject', 'Reject')),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _changeBooking(booking, 'rejected'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF6F6F7A),
+                          side: const BorderSide(color: Color(0xFFD6D6DF)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(_text('Reject', 'Reject')),
+                      ),
                     ),
                   ],
                 ),
@@ -1117,25 +1290,25 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     switch (normalized) {
       case 'accepted':
-        color = Colors.green;
+        color = const Color(0xFF00A86B);
         break;
       case 'rejected':
-        color = Colors.red;
+        color = const Color(0xFFD92D20);
         break;
       case 'completed':
-        color = Colors.blue;
+        color = const Color(0xFF1570EF);
         break;
       case 'cancelled':
-        color = Colors.grey;
+        color = const Color(0xFF6F6F7A);
         break;
       default:
-        color = Colors.orange;
+        color = const Color(0xFFF79009);
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -1144,6 +1317,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           color: color,
           fontSize: 9,
           fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -1162,37 +1336,51 @@ class _DashboardScreenState extends State<DashboardScreen>
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: primaryRed.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: VendorBottomNavBar.inactiveIconColor),
-          const SizedBox(height: 10),
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: Icon(icon, size: 30, color: AppIconColors.standard),
+          ),
+          const SizedBox(height: 14),
           Text(
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
               color: darkText,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: greyText),
+            style: const TextStyle(fontSize: 12, color: greyText),
           ),
-          const SizedBox(height: 14),
-          OutlinedButton(
+          const SizedBox(height: 18),
+          FilledButton(
             onPressed: onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: primaryRed,
-              side: const BorderSide(color: primaryRed),
+            style: FilledButton.styleFrom(
+              backgroundColor: primaryRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: Text(buttonText),
           ),
@@ -1215,7 +1403,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const Icon(
               Icons.error_outline_rounded,
               size: 60,
-              color: VendorBottomNavBar.inactiveIconColor,
+              color: AppIconColors.standard,
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1238,7 +1426,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               onPressed: _loadDashboard,
               icon: const Icon(
                 Icons.refresh_rounded,
-                color: VendorBottomNavBar.inactiveIconColor,
+                color: AppIconColors.standard,
               ),
               label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
@@ -1575,37 +1763,97 @@ class _DashboardScreenState extends State<DashboardScreen>
       ...(_overview?.recentReviews ?? []).map(
         (r) => Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: [
+              BoxShadow(
+                color: primaryRed.withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '${r.customerName} · ${r.rating}/5 ★',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: darkText,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      r.customerName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: darkText,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: gold.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Color(0xFFB58000),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${r.rating}/5',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            color: Color(0xFF8A6200),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 5),
               Text(
                 r.serviceName,
-                style: const TextStyle(color: greyText, fontSize: 12),
+                style: const TextStyle(
+                  color: greyText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               if (r.text.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                Text(r.text, maxLines: 3, overflow: TextOverflow.ellipsis),
+                Text(
+                  r.text,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: darkText, height: 1.4),
+                ),
               ],
-              TextButton(
-                onPressed: () => _openReviews(serviceId: r.serviceId),
-                child: Text(
-                  r.vendorReply == null
-                      ? _text('Reply', 'Reply')
-                      : _text('View reply', 'View reply'),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => _openReviews(serviceId: r.serviceId),
+                  style: TextButton.styleFrom(
+                    foregroundColor: primaryRed,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  child: Text(
+                    r.vendorReply == null
+                        ? _text('Reply', 'Reply')
+                        : _text('View reply', 'View reply'),
+                  ),
                 ),
               ),
             ],

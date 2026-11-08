@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../widgets/legal/legal_document_content.dart';
 
 import 'package:flutter/material.dart';
@@ -19,7 +20,15 @@ class PrivacyPolicyScreen extends StatefulWidget {
   State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
 }
 
-class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
+    with LiveDataState<PrivacyPolicyScreen> {
+  @override
+  Set<String> get liveDatasets => {'public:legal_documents'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   static const _red = Color(0xFF80152C);
   late final LegalDocumentRepository _repository;
   LegalDocumentModel? _document;
@@ -36,7 +45,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   Future<void> _load() async {
     if (!mounted) return;
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

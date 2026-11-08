@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -5,25 +7,26 @@ import '../../models/banner_model.dart';
 import '../../repositories/banner_repository.dart';
 
 class BannersScreen extends StatefulWidget {
-  const BannersScreen({
-    super.key,
-  });
+  const BannersScreen({super.key});
 
   @override
-  State<BannersScreen> createState() =>
-      _BannersScreenState();
+  State<BannersScreen> createState() => _BannersScreenState();
 }
 
-class _BannersScreenState
-    extends State<BannersScreen> {
-  final BannerRepository _repository =
-      BannerRepository();
+class _BannersScreenState extends State<BannersScreen>
+    with LiveDataState<BannersScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:banners'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadBanners();
+  }
 
-  final ImagePicker _imagePicker =
-      ImagePicker();
+  final BannerRepository _repository = BannerRepository();
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
+
+  final TextEditingController _searchController = TextEditingController();
 
   List<BannerModel> _banners = [];
 
@@ -40,9 +43,7 @@ class _BannersScreenState
   void initState() {
     super.initState();
 
-    _searchController.addListener(
-      _onSearchChanged,
-    );
+    _searchController.addListener(_onSearchChanged);
 
     _loadBanners();
   }
@@ -53,9 +54,7 @@ class _BannersScreenState
 
   @override
   void dispose() {
-    _searchController.removeListener(
-      _onSearchChanged,
-    );
+    _searchController.removeListener(_onSearchChanged);
 
     _searchController.dispose();
 
@@ -72,9 +71,7 @@ class _BannersScreenState
     }
 
     setState(() {
-      _searchQuery = _searchController.text
-          .trim()
-          .toLowerCase();
+      _searchQuery = _searchController.text.trim().toLowerCase();
     });
   }
 
@@ -88,12 +85,11 @@ class _BannersScreenState
     }
 
     setState(() {
-      _isLoading = true;
+      if (!liveRefreshing) _isLoading = true;
     });
 
     try {
-      final banners =
-          await _repository.getBanners();
+      final banners = await _repository.getBanners();
 
       if (!mounted) {
         return;
@@ -112,10 +108,7 @@ class _BannersScreenState
         _isLoading = false;
       });
 
-      _showMessage(
-        _cleanError(e),
-        isError: true,
-      );
+      _showMessage(_cleanError(e), isError: true);
     }
   }
 
@@ -133,15 +126,9 @@ class _BannersScreenState
         return true;
       }
 
-      return banner.title
-              .toLowerCase()
-              .contains(_searchQuery) ||
-          (banner.subtitle ?? '')
-              .toLowerCase()
-              .contains(_searchQuery) ||
-          banner.actionType
-              .toLowerCase()
-              .contains(_searchQuery);
+      return banner.title.toLowerCase().contains(_searchQuery) ||
+          (banner.subtitle ?? '').toLowerCase().contains(_searchQuery) ||
+          banner.actionType.toLowerCase().contains(_searchQuery);
     }).toList();
   }
 
@@ -150,8 +137,7 @@ class _BannersScreenState
   // ============================================================
 
   Future<void> _openAddBanner() async {
-    final bool? created =
-        await showDialog<bool>(
+    final bool? created = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) {
@@ -171,11 +157,8 @@ class _BannersScreenState
   // EDIT
   // ============================================================
 
-  Future<void> _openEditBanner(
-    BannerModel banner,
-  ) async {
-    final bool? updated =
-        await showDialog<bool>(
+  Future<void> _openEditBanner(BannerModel banner) async {
+    final bool? updated = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) {
@@ -196,26 +179,17 @@ class _BannersScreenState
   // TOGGLE
   // ============================================================
 
-  Future<void> _toggleBanner(
-    BannerModel banner,
-  ) async {
+  Future<void> _toggleBanner(BannerModel banner) async {
     try {
-      await _repository.toggleBannerStatus(
-        banner,
-      );
+      await _repository.toggleBannerStatus(banner);
 
       await _loadBanners();
 
       _showMessage(
-        banner.isActive
-            ? 'Banner deactivated.'
-            : 'Banner activated.',
+        banner.isActive ? 'Banner deactivated.' : 'Banner activated.',
       );
     } catch (e) {
-      _showMessage(
-        _cleanError(e),
-        isError: true,
-      );
+      _showMessage(_cleanError(e), isError: true);
     }
   }
 
@@ -223,17 +197,12 @@ class _BannersScreenState
   // DELETE
   // ============================================================
 
-  Future<void> _deleteBanner(
-    BannerModel banner,
-  ) async {
-    final bool? confirmed =
-        await showDialog<bool>(
+  Future<void> _deleteBanner(BannerModel banner) async {
+    final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'Delete Banner?',
-          ),
+          title: const Text('Delete Banner?'),
           content: Text(
             'Are you sure you want to delete '
             '"${banner.title}"?',
@@ -241,22 +210,14 @@ class _BannersScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
               child: const Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
+                Navigator.pop(dialogContext, true);
               },
               child: const Text('Delete'),
             ),
@@ -270,20 +231,13 @@ class _BannersScreenState
     }
 
     try {
-      await _repository.deleteBanner(
-        banner,
-      );
+      await _repository.deleteBanner(banner);
 
       await _loadBanners();
 
-      _showMessage(
-        'Banner deleted successfully.',
-      );
+      _showMessage('Banner deleted successfully.');
     } catch (e) {
-      _showMessage(
-        _cleanError(e),
-        isError: true,
-      );
+      _showMessage(_cleanError(e), isError: true);
     }
   }
 
@@ -291,10 +245,7 @@ class _BannersScreenState
   // SNACKBAR
   // ============================================================
 
-  void _showMessage(
-    String message, {
-    bool isError = false,
-  }) {
+  void _showMessage(String message, {bool isError = false}) {
     if (!mounted) {
       return;
     }
@@ -304,19 +255,13 @@ class _BannersScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor:
-              isError ? Colors.red : null,
+          backgroundColor: isError ? Colors.red : null,
         ),
       );
   }
 
   String _cleanError(Object error) {
-    return error
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
+    return error.toString().replaceFirst('Exception: ', '');
   }
 
   // ============================================================
@@ -325,29 +270,21 @@ class _BannersScreenState
 
   @override
   Widget build(BuildContext context) {
-    final filtered =
-        _filteredBanners;
+    final filtered = _filteredBanners;
 
-    final activeCount = _banners
-        .where((banner) => banner.isActive)
-        .length;
+    final activeCount = _banners.where((banner) => banner.isActive).length;
 
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF7F7F7),
 
-      floatingActionButton:
-          FloatingActionButton.extended(
-        backgroundColor:
-            const Color(0xFF9F0101),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF9F0101),
         foregroundColor: Colors.white,
         onPressed: _openAddBanner,
         icon: const Icon(Icons.add),
         label: const Text(
           'Add Banner',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
 
@@ -359,13 +296,7 @@ class _BannersScreenState
             // ==================================================
 
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                20,
-                14,
-                20,
-                10,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
               child: Row(
                 children: [
                   const Expanded(
@@ -373,17 +304,14 @@ class _BannersScreenState
                       'Banners',
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight:
-                            FontWeight.w800,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                   IconButton(
                     tooltip: 'Refresh',
                     onPressed: _loadBanners,
-                    icon: const Icon(
-                      Icons.refresh,
-                    ),
+                    icon: const Icon(Icons.refresh),
                   ),
                 ],
               ),
@@ -392,13 +320,9 @@ class _BannersScreenState
             // ==================================================
             // CONTENT
             // ==================================================
-
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
                     // ------------------------------------------
@@ -407,75 +331,44 @@ class _BannersScreenState
 
                     Container(
                       width: double.infinity,
-                      padding:
-                          const EdgeInsets.all(
-                        20,
-                      ),
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            const Color(0xFF9F0101),
-                        borderRadius:
-                            BorderRadius.circular(
-                          20,
-                        ),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9F0101),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         children: [
                           Container(
                             height: 54,
                             width: 54,
-                            decoration:
-                                BoxDecoration(
-                              color: Colors.white
-                                  .withValues(
-                                alpha: 0.14,
-                              ),
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                15,
-                              ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(15),
                             ),
-                            child:
-                                const Icon(
-                              Icons
-                                  .view_carousel_outlined,
-                              color:
-                                  Colors.white,
+                            child: const Icon(
+                              Icons.view_carousel_outlined,
+                              color: Colors.white,
                               size: 28,
                             ),
                           ),
-                          const SizedBox(
-                            width: 16,
-                          ),
+                          const SizedBox(width: 16),
                           Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 'Home Banners',
                                 style: TextStyle(
-                                  color:
-                                      Colors.white,
+                                  color: Colors.white,
                                   fontSize: 18,
-                                  fontWeight:
-                                      FontWeight.w800,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(
-                                height: 4,
-                              ),
+                              const SizedBox(height: 4),
                               Text(
                                 '${_banners.length} total • '
                                 '$activeCount active',
-                                style:
-                                    TextStyle(
-                                  color: Colors.white
-                                      .withValues(
-                                    alpha: 0.75,
-                                  ),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.75),
                                 ),
                               ),
                             ],
@@ -489,44 +382,24 @@ class _BannersScreenState
                     // ------------------------------------------
                     // SEARCH
                     // ------------------------------------------
-
                     TextField(
-                      controller:
-                          _searchController,
-                      decoration:
-                          InputDecoration(
-                        hintText:
-                            'Search banners...',
-                        prefixIcon:
-                            const Icon(
-                          Icons.search,
-                        ),
-                        suffixIcon:
-                            _searchController
-                                    .text
-                                    .isNotEmpty
-                                ? IconButton(
-                                    onPressed: () {
-                                      _searchController
-                                          .clear();
-                                    },
-                                    icon:
-                                        const Icon(
-                                      Icons.clear,
-                                    ),
-                                  )
-                                : null,
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search banners...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                                icon: const Icon(Icons.clear),
+                              )
+                            : null,
                         filled: true,
-                        fillColor:
-                            Colors.white,
-                        border:
-                            OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            14,
-                          ),
-                          borderSide:
-                              BorderSide.none,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
@@ -536,32 +409,23 @@ class _BannersScreenState
                     // ------------------------------------------
                     // FILTER
                     // ------------------------------------------
-
                     Row(
                       children: [
                         FilterChip(
-                          label:
-                              const Text(
-                            'Active only',
-                          ),
-                          selected:
-                              _activeOnly,
-                          onSelected:
-                              (value) {
+                          label: const Text('Active only'),
+                          selected: _activeOnly,
+                          onSelected: (value) {
                             setState(() {
-                              _activeOnly =
-                                  value;
+                              _activeOnly = value;
                             });
                           },
                         ),
                         const Spacer(),
                         Text(
                           '${filtered.length} banners',
-                          style:
-                              const TextStyle(
+                          style: const TextStyle(
                             color: Colors.grey,
-                            fontWeight:
-                                FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -572,12 +436,7 @@ class _BannersScreenState
                     // ------------------------------------------
                     // LIST
                     // ------------------------------------------
-
-                    Expanded(
-                      child: _buildList(
-                        filtered,
-                      ),
-                    ),
+                    Expanded(child: _buildList(filtered)),
                   ],
                 ),
               ),
@@ -592,13 +451,9 @@ class _BannersScreenState
   // LIST
   // ============================================================
 
-  Widget _buildList(
-    List<BannerModel> banners,
-  ) {
+  Widget _buildList(List<BannerModel> banners) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (banners.isEmpty) {
@@ -615,19 +470,14 @@ class _BannersScreenState
               const SizedBox(height: 16),
               const Text(
                 'No banners yet',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Create your first banner to display '
                 'it on the customer app.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 22),
               FilledButton.icon(
@@ -657,41 +507,27 @@ class _BannersScreenState
           final int crossAxisCount = width >= 1050
               ? 3
               : width >= 650
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
 
           final double spacing = 14;
           final double cardWidth =
-              (width - ((crossAxisCount - 1) * spacing)) /
-                  crossAxisCount;
+              (width - ((crossAxisCount - 1) * spacing)) / crossAxisCount;
 
-          final double imageHeight =
-              (cardWidth * 0.56).clamp(130.0, 210.0);
+          final double imageHeight = (cardWidth * 0.56).clamp(130.0, 210.0);
 
           return GridView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              0,
-              4,
-              0,
-              100,
-            ),
-            gridDelegate:
-                SliverGridDelegateWithFixedCrossAxisCount(
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 100),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
-              mainAxisExtent: _gridCardHeight(
-                imageHeight,
-                crossAxisCount,
-              ),
+              mainAxisExtent: _gridCardHeight(imageHeight, crossAxisCount),
             ),
             itemCount: banners.length,
             itemBuilder: (context, index) {
-              return _buildBannerCard(
-                banners[index],
-                imageHeight: imageHeight,
-              );
+              return _buildBannerCard(banners[index], imageHeight: imageHeight);
             },
           );
         },
@@ -699,10 +535,7 @@ class _BannersScreenState
     );
   }
 
-  double _gridCardHeight(
-    double imageHeight,
-    int crossAxisCount,
-  ) {
+  double _gridCardHeight(double imageHeight, int crossAxisCount) {
     // Compact height for grid cards while keeping enough
     // space for title, action and controls.
     if (crossAxisCount == 1) {
@@ -716,17 +549,12 @@ class _BannersScreenState
   // GRID CARD
   // ============================================================
 
-  Widget _buildBannerCard(
-    BannerModel banner, {
-    required double imageHeight,
-  }) {
+  Widget _buildBannerCard(BannerModel banner, {required double imageHeight}) {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       elevation: 1.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -743,11 +571,7 @@ class _BannersScreenState
                 Image.network(
                   banner.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (
-                    context,
-                    error,
-                    stackTrace,
-                  ) {
+                  errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: Colors.grey.shade200,
                       child: const Center(
@@ -759,11 +583,7 @@ class _BannersScreenState
                       ),
                     );
                   },
-                  loadingBuilder: (
-                    context,
-                    child,
-                    loadingProgress,
-                  ) {
+                  loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) {
                       return child;
                     }
@@ -800,9 +620,7 @@ class _BannersScreenState
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: _statusBadge(
-                    banner.isActive,
-                  ),
+                  child: _statusBadge(banner.isActive),
                 ),
               ],
             ),
@@ -811,15 +629,9 @@ class _BannersScreenState
           // ========================================================
           // DETAILS
           // ========================================================
-
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                12,
-                11,
-                12,
-                10,
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -840,17 +652,13 @@ class _BannersScreenState
                   // ------------------------------------------------
                   // SUBTITLE
                   // ------------------------------------------------
-
                   if ((banner.subtitle ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       banner.subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
 
@@ -859,7 +667,6 @@ class _BannersScreenState
                   // ------------------------------------------------
                   // ACTION
                   // ------------------------------------------------
-
                   Row(
                     children: [
                       const Icon(
@@ -888,15 +695,13 @@ class _BannersScreenState
                   // ------------------------------------------------
                   // CONTROLS
                   // ------------------------------------------------
-
                   Row(
                     children: [
                       Expanded(
                         child: SizedBox(
                           height: 34,
                           child: OutlinedButton(
-                            onPressed: () =>
-                                _toggleBanner(banner),
+                            onPressed: () => _toggleBanner(banner),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -907,13 +712,11 @@ class _BannersScreenState
                                     : const Color(0xFF9F0101),
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(9),
+                                borderRadius: BorderRadius.circular(9),
                               ),
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   banner.isActive
@@ -924,11 +727,8 @@ class _BannersScreenState
                                 const SizedBox(width: 5),
                                 Flexible(
                                   child: Text(
-                                    banner.isActive
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                    overflow:
-                                        TextOverflow.ellipsis,
+                                    banner.isActive ? 'Deactivate' : 'Activate',
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -946,8 +746,7 @@ class _BannersScreenState
                       _cardActionButton(
                         icon: Icons.edit_outlined,
                         tooltip: 'Edit',
-                        onPressed: () =>
-                            _openEditBanner(banner),
+                        onPressed: () => _openEditBanner(banner),
                       ),
 
                       const SizedBox(width: 4),
@@ -956,8 +755,7 @@ class _BannersScreenState
                         icon: Icons.delete_outline,
                         tooltip: 'Delete',
                         iconColor: Colors.red,
-                        onPressed: () =>
-                            _deleteBanner(banner),
+                        onPressed: () => _deleteBanner(banner),
                       ),
                     ],
                   ),
@@ -971,11 +769,9 @@ class _BannersScreenState
   }
 
   String _actionLabel(BannerModel banner) {
-    final String type =
-        banner.actionType.trim().toLowerCase();
+    final String type = banner.actionType.trim().toLowerCase();
 
-    final String value =
-        banner.actionValue?.trim() ?? '';
+    final String value = banner.actionValue?.trim() ?? '';
 
     if (type == 'none') {
       return 'No action';
@@ -1002,11 +798,7 @@ class _BannersScreenState
         child: IconButton(
           padding: EdgeInsets.zero,
           onPressed: onPressed,
-          icon: Icon(
-            icon,
-            size: 18,
-            color: iconColor,
-          ),
+          icon: Icon(icon, size: 18, color: iconColor),
           style: IconButton.styleFrom(
             backgroundColor: Colors.grey.shade100,
             shape: RoundedRectangleBorder(
@@ -1018,57 +810,32 @@ class _BannersScreenState
     );
   }
 
-  Widget _statusBadge(
-    bool active,
-  ) {
+  Widget _statusBadge(bool active) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration:
-          BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
         color: active
-            ? Colors.green
-                .withValues(
-                alpha: 0.12,
-              )
-            : Colors.grey
-                .withValues(
-                alpha: 0.12,
-              ),
-        borderRadius:
-            BorderRadius.circular(
-          20,
-        ),
+            ? Colors.green.withValues(alpha: 0.12)
+            : Colors.grey.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        active
-            ? 'Active'
-            : 'Inactive',
+        active ? 'Active' : 'Inactive',
         style: TextStyle(
           fontSize: 12,
-          fontWeight:
-              FontWeight.w700,
-          color: active
-              ? Colors.green
-                  .shade700
-              : Colors.grey
-                  .shade700,
+          fontWeight: FontWeight.w700,
+          color: active ? Colors.green.shade700 : Colors.grey.shade700,
         ),
       ),
     );
   }
 }
 
-
 // ============================================================
 // BANNER FORM DIALOG
 // ============================================================
 
-class _BannerFormDialog
-    extends StatefulWidget {
+class _BannerFormDialog extends StatefulWidget {
   final ImagePicker imagePicker;
   final BannerRepository repository;
   final BannerModel? banner;
@@ -1080,26 +847,19 @@ class _BannerFormDialog
   });
 
   @override
-  State<_BannerFormDialog> createState() =>
-      _BannerFormDialogState();
+  State<_BannerFormDialog> createState() => _BannerFormDialogState();
 }
 
-class _BannerFormDialogState
-    extends State<_BannerFormDialog> {
-  final GlobalKey<FormState> _formKey =
-      GlobalKey<FormState>();
+class _BannerFormDialogState extends State<_BannerFormDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController
-      _titleController;
+  late final TextEditingController _titleController;
 
-  late final TextEditingController
-      _subtitleController;
+  late final TextEditingController _subtitleController;
 
-  late final TextEditingController
-      _actionValueController;
+  late final TextEditingController _actionValueController;
 
-  late final TextEditingController
-      _sortOrderController;
+  late final TextEditingController _sortOrderController;
 
   XFile? _selectedImage;
 
@@ -1115,34 +875,21 @@ class _BannerFormDialogState
 
     final banner = widget.banner;
 
-    _titleController =
-        TextEditingController(
-      text: banner?.title ?? '',
-    );
+    _titleController = TextEditingController(text: banner?.title ?? '');
 
-    _subtitleController =
-        TextEditingController(
-      text: banner?.subtitle ?? '',
-    );
+    _subtitleController = TextEditingController(text: banner?.subtitle ?? '');
 
-    _actionValueController =
-        TextEditingController(
+    _actionValueController = TextEditingController(
       text: banner?.actionValue ?? '',
     );
 
-    _sortOrderController =
-        TextEditingController(
-      text:
-          banner?.sortOrder
-              .toString() ??
-          '0',
+    _sortOrderController = TextEditingController(
+      text: banner?.sortOrder.toString() ?? '0',
     );
 
-    _actionType =
-        banner?.actionType ?? 'none';
+    _actionType = banner?.actionType ?? 'none';
 
-    _isActive =
-        banner?.isActive ?? true;
+    _isActive = banner?.isActive ?? true;
   }
 
   @override
@@ -1161,8 +908,7 @@ class _BannerFormDialogState
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image =
-          await widget.imagePicker.pickImage(
+      final XFile? image = await widget.imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 90,
       );
@@ -1179,10 +925,7 @@ class _BannerFormDialogState
         _selectedImage = image;
       });
     } catch (e) {
-      _showMessage(
-        'Could not select image: $e',
-        isError: true,
-      );
+      _showMessage('Could not select image: $e', isError: true);
     }
   }
 
@@ -1191,17 +934,12 @@ class _BannerFormDialogState
   // ============================================================
 
   Future<void> _save() async {
-    if (!_formKey.currentState!
-        .validate()) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (widget.banner == null &&
-        _selectedImage == null) {
-      _showMessage(
-        'Please select a banner image.',
-        isError: true,
-      );
+    if (widget.banner == null && _selectedImage == null) {
+      _showMessage('Please select a banner image.', isError: true);
       return;
     }
 
@@ -1210,103 +948,62 @@ class _BannerFormDialogState
     });
 
     try {
-      String imageUrl =
-          widget.banner?.imageUrl ?? '';
+      String imageUrl = widget.banner?.imageUrl ?? '';
 
-      String imagePath =
-          widget.banner?.imagePath ?? '';
+      String imagePath = widget.banner?.imagePath ?? '';
 
       // ------------------------------------------
       // IMAGE UPLOAD
       // ------------------------------------------
 
       if (_selectedImage != null) {
-        final image =
-            _selectedImage!;
+        final image = _selectedImage!;
 
-        final bytes =
-            await image.readAsBytes();
+        final bytes = await image.readAsBytes();
 
-        final extension =
-            _getExtension(
-          image.name,
-        );
+        final extension = _getExtension(image.name);
 
-        final contentType =
-            _getContentType(
-          extension,
-        );
+        final contentType = _getContentType(extension);
 
         final fileName =
             'banner_${DateTime.now().millisecondsSinceEpoch}.$extension';
 
-        imagePath =
-            'home/$fileName';
+        imagePath = 'home/$fileName';
 
-        imageUrl =
-            await widget.repository
-                .uploadBannerImage(
+        imageUrl = await widget.repository.uploadBannerImage(
           path: imagePath,
           bytes: bytes,
-          contentType:
-              contentType,
+          contentType: contentType,
         );
 
         // Delete old image after
         // successful new upload.
         if (widget.banner != null &&
-            widget.banner!
-                .imagePath
-                .isNotEmpty &&
-            widget.banner!.imagePath !=
-                imagePath) {
+            widget.banner!.imagePath.isNotEmpty &&
+            widget.banner!.imagePath != imagePath) {
           try {
-            await widget.repository
-                .deleteImage(
-              widget.banner!
-                  .imagePath,
-            );
+            await widget.repository.deleteImage(widget.banner!.imagePath);
           } catch (_) {}
         }
       }
 
-      final int sortOrder =
-          int.tryParse(
-                _sortOrderController
-                    .text
-                    .trim(),
-              ) ??
-              0;
+      final int sortOrder = int.tryParse(_sortOrderController.text.trim()) ?? 0;
 
-      final String? actionValue =
-          _actionValueController
-                  .text
-                  .trim()
-                  .isEmpty
-              ? null
-              : _actionValueController
-                  .text
-                  .trim();
+      final String? actionValue = _actionValueController.text.trim().isEmpty
+          ? null
+          : _actionValueController.text.trim();
 
       // ------------------------------------------
       // UPDATE
       // ------------------------------------------
 
       if (widget.banner != null) {
-        await widget.repository
-            .updateBanner(
+        await widget.repository.updateBanner(
           id: widget.banner!.id,
-          title:
-              _titleController.text
-                  .trim(),
-          subtitle:
-              _subtitleController.text
-                  .trim()
-                  .isEmpty
-                  ? null
-                  : _subtitleController
-                      .text
-                      .trim(),
+          title: _titleController.text.trim(),
+          subtitle: _subtitleController.text.trim().isEmpty
+              ? null
+              : _subtitleController.text.trim(),
           imageUrl: imageUrl,
           imagePath: imagePath,
           actionType: _actionType,
@@ -1315,25 +1012,15 @@ class _BannerFormDialogState
           sortOrder: sortOrder,
         );
       }
-
       // ------------------------------------------
       // CREATE
       // ------------------------------------------
-
       else {
-        await widget.repository
-            .createBanner(
-          title:
-              _titleController.text
-                  .trim(),
-          subtitle:
-              _subtitleController.text
-                  .trim()
-                  .isEmpty
-                  ? null
-                  : _subtitleController
-                      .text
-                      .trim(),
+        await widget.repository.createBanner(
+          title: _titleController.text.trim(),
+          subtitle: _subtitleController.text.trim().isEmpty
+              ? null
+              : _subtitleController.text.trim(),
           imageUrl: imageUrl,
           imagePath: imagePath,
           actionType: _actionType,
@@ -1347,19 +1034,13 @@ class _BannerFormDialogState
         return;
       }
 
-      Navigator.pop(
-        context,
-        true,
-      );
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      _showMessage(
-        _cleanError(e),
-        isError: true,
-      );
+      _showMessage(_cleanError(e), isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -1373,11 +1054,8 @@ class _BannerFormDialogState
   // HELPERS
   // ============================================================
 
-  String _getExtension(
-    String fileName,
-  ) {
-    final lower =
-        fileName.toLowerCase();
+  String _getExtension(String fileName) {
+    final lower = fileName.toLowerCase();
 
     if (lower.endsWith('.png')) {
       return 'png';
@@ -1390,9 +1068,7 @@ class _BannerFormDialogState
     return 'jpg';
   }
 
-  String _getContentType(
-    String extension,
-  ) {
+  String _getContentType(String extension) {
     switch (extension) {
       case 'png':
         return 'image/png';
@@ -1405,32 +1081,19 @@ class _BannerFormDialogState
     }
   }
 
-  void _showMessage(
-    String message, {
-    bool isError = false,
-  }) {
+  void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor:
-              isError
-                  ? Colors.red
-                  : null,
+          backgroundColor: isError ? Colors.red : null,
         ),
       );
   }
 
-  String _cleanError(
-    Object error,
-  ) {
-    return error
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
+  String _cleanError(Object error) {
+    return error.toString().replaceFirst('Exception: ', '');
   }
 
   // ============================================================
@@ -1438,136 +1101,71 @@ class _BannerFormDialogState
   // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final isEdit =
-        widget.banner != null;
+  Widget build(BuildContext context) {
+    final isEdit = widget.banner != null;
 
     return AlertDialog(
       title: Text(
-        isEdit
-            ? 'Edit Banner'
-            : 'Add Banner',
-        style:
-            const TextStyle(
-          fontWeight:
-              FontWeight.w800,
-        ),
+        isEdit ? 'Edit Banner' : 'Add Banner',
+        style: const TextStyle(fontWeight: FontWeight.w800),
       ),
 
       content: SizedBox(
         width: 560,
         child: Form(
           key: _formKey,
-          child:
-              SingleChildScrollView(
+          child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ==============================================
                 // IMAGE
                 // ==============================================
 
                 GestureDetector(
-                  onTap:
-                      _isSaving
-                          ? null
-                          : _pickImage,
-                  child:
-                      Container(
+                  onTap: _isSaving ? null : _pickImage,
+                  child: Container(
                     height: 210,
-                    width:
-                        double.infinity,
-                    decoration:
-                        BoxDecoration(
-                      color: Colors
-                          .grey
-                          .shade100,
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        14,
-                      ),
-                      border:
-                          Border.all(
-                        color: Colors
-                            .grey
-                            .shade300,
-                      ),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    clipBehavior:
-                        Clip.antiAlias,
-                    child:
-                        _buildImagePreview(),
+                    clipBehavior: Clip.antiAlias,
+                    child: _buildImagePreview(),
                   ),
                 ),
 
-                const SizedBox(
-                  height: 8,
-                ),
+                const SizedBox(height: 8),
 
                 SizedBox(
-                  width:
-                      double.infinity,
-                  child:
-                      OutlinedButton
-                          .icon(
-                    onPressed:
-                        _isSaving
-                            ? null
-                            : _pickImage,
-                    icon:
-                        const Icon(
-                      Icons
-                          .upload_outlined,
-                    ),
-                    label:
-                        Text(
-                      isEdit
-                          ? 'Change Banner Image'
-                          : 'Choose Banner Image',
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isSaving ? null : _pickImage,
+                    icon: const Icon(Icons.upload_outlined),
+                    label: Text(
+                      isEdit ? 'Change Banner Image' : 'Choose Banner Image',
                     ),
                   ),
                 ),
 
-                const SizedBox(
-                  height: 18,
-                ),
+                const SizedBox(height: 18),
 
                 // ==============================================
                 // TITLE
                 // ==============================================
-
                 TextFormField(
-                  controller:
-                      _titleController,
-                  textCapitalization:
-                      TextCapitalization
-                          .sentences,
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Banner Title',
-                    hintText:
-                        'Example: Wedding Season Offers',
-                    border:
-                        OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(
-                      Icons
-                          .title_outlined,
-                    ),
+                  controller: _titleController,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Banner Title',
+                    hintText: 'Example: Wedding Season Offers',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.title_outlined),
                   ),
-                  validator:
-                      (value) {
-                    if (value ==
-                            null ||
-                        value
-                            .trim()
-                            .isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Enter banner title';
                     }
 
@@ -1575,149 +1173,78 @@ class _BannerFormDialogState
                   },
                 ),
 
-                const SizedBox(
-                  height: 14,
-                ),
+                const SizedBox(height: 14),
 
                 // ==============================================
                 // SUBTITLE
                 // ==============================================
-
                 TextFormField(
-                  controller:
-                      _subtitleController,
+                  controller: _subtitleController,
                   maxLines: 2,
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Subtitle',
-                    hintText:
-                        'Optional banner description',
-                    border:
-                        OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(
-                      Icons
-                          .subtitles_outlined,
-                    ),
+                  decoration: const InputDecoration(
+                    labelText: 'Subtitle',
+                    hintText: 'Optional banner description',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.subtitles_outlined),
                   ),
                 ),
 
-                const SizedBox(
-                  height: 14,
-                ),
+                const SizedBox(height: 14),
 
                 // ==============================================
                 // ACTION TYPE
                 // ==============================================
-
-                DropdownButtonFormField<
-                    String>(
-                  initialValue:
-                      _actionType,
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Click Action',
-                    border:
-                        OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(
-                      Icons
-                          .touch_app_outlined,
-                    ),
+                DropdownButtonFormField<String>(
+                  initialValue: _actionType,
+                  decoration: const InputDecoration(
+                    labelText: 'Click Action',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.touch_app_outlined),
                   ),
                   items: const [
+                    DropdownMenuItem(value: 'none', child: Text('No Action')),
                     DropdownMenuItem(
-                      value:
-                          'none',
-                      child:
-                          Text(
-                        'No Action',
-                      ),
+                      value: 'screen',
+                      child: Text('Open App Screen'),
                     ),
-                    DropdownMenuItem(
-                      value:
-                          'screen',
-                      child:
-                          Text(
-                        'Open App Screen',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value:
-                          'url',
-                      child:
-                          Text(
-                        'Open URL',
-                      ),
-                    ),
+                    DropdownMenuItem(value: 'url', child: Text('Open URL')),
                   ],
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) {
-                              if (value ==
-                                  null) {
-                                return;
-                              }
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
 
-                              setState(() {
-                                _actionType =
-                                    value;
-                              });
-                            },
+                          setState(() {
+                            _actionType = value;
+                          });
+                        },
                 ),
 
-                const SizedBox(
-                  height: 14,
-                ),
+                const SizedBox(height: 14),
 
                 // ==============================================
                 // ACTION VALUE
                 // ==============================================
-
                 TextFormField(
-                  controller:
-                      _actionValueController,
-                  enabled:
-                      !_isSaving &&
-                      _actionType !=
-                          'none',
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        _actionType ==
-                                'url'
-                            ? 'URL'
-                            : 'Screen / Route',
-                    hintText:
-                        _actionType ==
-                                'url'
-                            ? 'https://example.com'
-                            : '/discover',
-                    border:
-                        const OutlineInputBorder(),
-                    prefixIcon:
-                        const Icon(
-                      Icons
-                          .link_outlined,
-                    ),
+                  controller: _actionValueController,
+                  enabled: !_isSaving && _actionType != 'none',
+                  decoration: InputDecoration(
+                    labelText: _actionType == 'url' ? 'URL' : 'Screen / Route',
+                    hintText: _actionType == 'url'
+                        ? 'https://example.com'
+                        : '/discover',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.link_outlined),
                   ),
-                  validator:
-                      (value) {
-                    if (_actionType ==
-                        'none') {
+                  validator: (value) {
+                    if (_actionType == 'none') {
                       return null;
                     }
 
-                    if (value ==
-                            null ||
-                        value
-                            .trim()
-                            .isEmpty) {
-                      return _actionType ==
-                              'url'
+                    if (value == null || value.trim().isEmpty) {
+                      return _actionType == 'url'
                           ? 'Enter URL'
                           : 'Enter screen route';
                     }
@@ -1726,71 +1253,42 @@ class _BannerFormDialogState
                   },
                 ),
 
-                const SizedBox(
-                  height: 14,
-                ),
+                const SizedBox(height: 14),
 
                 // ==============================================
                 // SORT ORDER
                 // ==============================================
-
                 TextFormField(
-                  controller:
-                      _sortOrderController,
-                  keyboardType:
-                      TextInputType
-                          .number,
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Sort Order',
+                  controller: _sortOrderController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Sort Order',
                     hintText: '0',
-                    border:
-                        OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(
-                      Icons
-                          .sort_outlined,
-                    ),
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.sort_outlined),
                   ),
                 ),
 
-                const SizedBox(
-                  height: 4,
-                ),
+                const SizedBox(height: 4),
 
                 // ==============================================
                 // ACTIVE
                 // ==============================================
-
                 SwitchListTile(
-                  contentPadding:
-                      EdgeInsets.zero,
-                  title:
-                      const Text(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
                     'Active Banner',
-                    style:
-                        TextStyle(
-                      fontWeight:
-                          FontWeight
-                              .w700,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  subtitle:
-                      const Text(
-                    'Show this banner in the customer app',
-                  ),
-                  value:
-                      _isActive,
-                  onChanged:
-                      _isSaving
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _isActive =
-                                    value;
-                              });
-                            },
+                  subtitle: const Text('Show this banner in the customer app'),
+                  value: _isActive,
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _isActive = value;
+                          });
+                        },
                 ),
               ],
             ),
@@ -1800,139 +1298,75 @@ class _BannerFormDialogState
 
       actions: [
         TextButton(
-          onPressed:
-              _isSaving
-                  ? null
-                  : () {
-                      Navigator.pop(
-                        context,
-                        false,
-                      );
-                    },
-          child:
-              const Text(
-            'Cancel',
-          ),
+          onPressed: _isSaving
+              ? null
+              : () {
+                  Navigator.pop(context, false);
+                },
+          child: const Text('Cancel'),
         ),
         FilledButton.icon(
-          style:
-              FilledButton.styleFrom(
-            backgroundColor:
-                const Color(
-              0xFF9F0101,
-            ),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF9F0101),
           ),
-          onPressed:
-              _isSaving
-                  ? null
-                  : _save,
-          icon:
-              _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child:
-                          CircularProgressIndicator(
-                        strokeWidth:
-                            2,
-                        color:
-                            Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons
-                          .cloud_upload_outlined,
-                    ),
-          label:
-              Text(
-            _isSaving
-                ? 'Saving...'
-                : 'Save Banner',
-          ),
+          onPressed: _isSaving ? null : _save,
+          icon: _isSaving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.cloud_upload_outlined),
+          label: Text(_isSaving ? 'Saving...' : 'Save Banner'),
         ),
       ],
     );
   }
 
   Widget _buildImagePreview() {
-    if (_selectedImage !=
-        null) {
-      return FutureBuilder<
-          List<int>>(
-        future:
-            _selectedImage!
-                .readAsBytes(),
-        builder:
-            (
-          context,
-          snapshot,
-        ) {
+    if (_selectedImage != null) {
+      return FutureBuilder<List<int>>(
+        future: _selectedImage!.readAsBytes(),
+        builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           return Image.memory(
-            snapshot.data!
-                as dynamic,
+            snapshot.data! as dynamic,
             fit: BoxFit.cover,
-            width:
-                double.infinity,
-            height:
-                double.infinity,
+            width: double.infinity,
+            height: double.infinity,
           );
         },
       );
     }
 
-    if (widget.banner !=
-            null &&
-        widget.banner!
-            .imageUrl
-            .isNotEmpty) {
+    if (widget.banner != null && widget.banner!.imageUrl.isNotEmpty) {
       return Image.network(
         widget.banner!.imageUrl,
         fit: BoxFit.cover,
-        width:
-            double.infinity,
-        height:
-            double.infinity,
+        width: double.infinity,
+        height: double.infinity,
       );
     }
 
     return const Column(
-      mainAxisAlignment:
-          MainAxisAlignment
-              .center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons
-              .cloud_upload_outlined,
-          size: 52,
-          color: Colors.grey,
-        ),
-        SizedBox(
-          height: 10,
-        ),
+        Icon(Icons.cloud_upload_outlined, size: 52, color: Colors.grey),
+        SizedBox(height: 10),
         Text(
           'Click to choose banner image',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight:
-                FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
         ),
-        SizedBox(
-          height: 4,
-        ),
+        SizedBox(height: 4),
         Text(
           'JPG, PNG or WEBP • Max 5 MB',
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ],
     );

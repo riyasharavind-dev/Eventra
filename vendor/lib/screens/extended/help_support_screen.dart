@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -8,7 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/support_model.dart';
 import '../../repositories/support_repository.dart';
 
-const _supportRed = Color(0xFF9F0101);
+const _supportRed = Color(0xFF80152C);
 const _supportBackground = Color(0xFFF8F8FA);
 
 String _supportDate(DateTime value) {
@@ -27,11 +30,18 @@ void _supportError(BuildContext context, Object error) {
   );
 }
 
-Widget _supportPanel(Widget child) => Material(
-  color: Colors.white,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(16),
-    side: const BorderSide(color: Color(0xFFECECEF)),
+Widget _supportPanel(Widget child) => Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(color: const Color(0xFFF0EDF0)),
+    boxShadow: [
+      BoxShadow(
+        color: const Color(0xFF80152C).withValues(alpha: 0.04),
+        blurRadius: 14,
+        offset: const Offset(0, 4),
+      ),
+    ],
   ),
   clipBehavior: Clip.antiAlias,
   child: child,
@@ -44,7 +54,19 @@ class HelpSupportScreen extends StatefulWidget {
   State<HelpSupportScreen> createState() => _HelpSupportScreenState();
 }
 
-class _HelpSupportScreenState extends State<HelpSupportScreen> {
+class _HelpSupportScreenState extends State<HelpSupportScreen>
+    with LiveDataState<HelpSupportScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'public:support_faqs',
+    'public:support_settings',
+    'own:support_tickets',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   late final SupportRepository _repository;
   List<SupportFaq> _faqs = [];
   List<SupportTicket> _tickets = [];
@@ -63,7 +85,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {
@@ -157,7 +179,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               children: [
                 Icon(
                   email ? Icons.mail_outline : Icons.chat_bubble_outline,
-                  color: _supportRed,
+                  color: AppIconColors.standard,
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -279,7 +301,26 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           (category) => ChoiceChip(
                             label: Text(category),
                             selected: _category == category,
-                            selectedColor: const Color(0xFFFBEAEA),
+                            showCheckmark: false,
+                            selectedColor: _supportRed,
+                            labelStyle: TextStyle(
+                              color: _category == category
+                                  ? Colors.white
+                                  : const Color(0xFF615962),
+                              fontWeight: _category == category
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                            side: BorderSide(
+                              color: _category == category
+                                  ? _supportRed
+                                  : const Color(0xFFE8E5E8),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            backgroundColor: Colors.white,
                             onSelected: (_) =>
                                 setState(() => _category = category),
                           ),
@@ -346,12 +387,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ),
                   const SizedBox(height: 12),
                   Material(
-                    color: const Color(0xFFFBEAEA),
+                    color: const Color(0xFFF5E8EC),
                     borderRadius: BorderRadius.circular(16),
                     child: ListTile(
                       leading: const Icon(
                         Icons.help_outline,
-                        color: _supportRed,
+                        color: AppIconColors.standard,
                       ),
                       title: const Text(
                         'Report an issue',
@@ -649,7 +690,18 @@ class SupportRequestsScreen extends StatefulWidget {
   State<SupportRequestsScreen> createState() => _SupportRequestsScreenState();
 }
 
-class _SupportRequestsScreenState extends State<SupportRequestsScreen> {
+class _SupportRequestsScreenState extends State<SupportRequestsScreen>
+    with LiveDataState<SupportRequestsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:support_tickets',
+    'own:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _reload();
+  }
+
   late Future<List<SupportTicket>> _future;
   @override
   void initState() {
@@ -752,8 +804,20 @@ class SupportRequestDetailScreen extends StatefulWidget {
       _SupportRequestDetailScreenState();
 }
 
-class _SupportRequestDetailScreenState
-    extends State<SupportRequestDetailScreen> {
+class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
+    with LiveDataState<SupportRequestDetailScreen> {
+  @override
+  bool get liveCanRefresh => !_sending && !_loading;
+  @override
+  Set<String> get liveDatasets => {
+    'own:support_tickets',
+    'own:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   final _reply = TextEditingController();
   late SupportTicket _ticket;
   List<SupportMessage> _messages = [];
@@ -775,7 +839,7 @@ class _SupportRequestDetailScreenState
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

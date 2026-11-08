@@ -1,4 +1,4 @@
-class CategoryNodeModel {
+﻿class CategoryNodeModel {
   final String id;
   final String name;
   final String slug;

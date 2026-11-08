@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -6,26 +8,27 @@ import '../../repositories/booking_repository.dart';
 
 import '../../widgets/bookings/booking_details_dialog.dart';
 
-class BookingsScreen
-    extends StatefulWidget {
-  const BookingsScreen({
-    super.key,
-  });
+class BookingsScreen extends StatefulWidget {
+  const BookingsScreen({super.key});
 
   @override
-  State<BookingsScreen> createState() =>
-      _BookingsScreenState();
+  State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState
-    extends State<BookingsScreen> {
+class _BookingsScreenState extends State<BookingsScreen>
+    with LiveDataState<BookingsScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:bookings'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadBookings();
+  }
+
   // ============================================================
   // REPOSITORY
   // ============================================================
 
-  final BookingRepository
-      _repository =
-      BookingRepository();
+  final BookingRepository _repository = BookingRepository();
 
   // ============================================================
   // STATE
@@ -62,15 +65,12 @@ class _BookingsScreenState
     }
 
     setState(() {
-      _isLoading = true;
+      if (!liveRefreshing) _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final List<BookingModel>
-          bookings =
-          await _repository
-              .getBookings();
+      final List<BookingModel> bookings = await _repository.getBookings();
 
       if (!mounted) {
         return;
@@ -91,8 +91,7 @@ class _BookingsScreenState
       setState(() {
         _isLoading = false;
 
-        _errorMessage =
-            _cleanError(e);
+        _errorMessage = _cleanError(e);
       });
     }
   }
@@ -101,104 +100,55 @@ class _BookingsScreenState
   // ERROR CLEANER
   // ============================================================
 
-  String _cleanError(
-    Object error,
-  ) {
-    if (error
-        is PostgrestException) {
+  String _cleanError(Object error) {
+    if (error is PostgrestException) {
       return error.message;
     }
 
-    return error
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
+    return error.toString().replaceFirst('Exception: ', '');
   }
 
   // ============================================================
   // FILTER
   // ============================================================
 
-  List<BookingModel>
-      get _filteredBookings {
-    List<BookingModel>
-        result;
+  List<BookingModel> get _filteredBookings {
+    List<BookingModel> result;
 
-    if (_selectedFilter ==
-        'all') {
-      result = List<
-          BookingModel>.from(
-        _bookings,
-      );
+    if (_selectedFilter == 'all') {
+      result = List<BookingModel>.from(_bookings);
     } else {
       result = _bookings
           .where(
             (BookingModel booking) =>
-                booking.status
-                    .toLowerCase() ==
-                _selectedFilter,
+                booking.status.toLowerCase() == _selectedFilter,
           )
           .toList();
     }
 
-    if (_searchQuery
-        .trim()
-        .isEmpty) {
+    if (_searchQuery.trim().isEmpty) {
       return result;
     }
 
-    final String query =
-        _searchQuery
-            .trim()
-            .toLowerCase();
+    final String query = _searchQuery.trim().toLowerCase();
 
-    return result
-        .where(
-          (BookingModel booking) {
-            return booking
-                    .customerName
-                    .toLowerCase()
-                    .contains(query) ||
-                booking
-                    .customerEmail
-                    .toLowerCase()
-                    .contains(query) ||
-                booking
-                    .vendorName
-                    .toLowerCase()
-                    .contains(query) ||
-                booking
-                    .vendorEmail
-                    .toLowerCase()
-                    .contains(query) ||
-                booking
-                    .serviceName
-                    .toLowerCase()
-                    .contains(query) ||
-                booking.id
-                    .toLowerCase()
-                    .contains(query);
-          },
-        )
-        .toList();
+    return result.where((BookingModel booking) {
+      return booking.customerName.toLowerCase().contains(query) ||
+          booking.customerEmail.toLowerCase().contains(query) ||
+          booking.vendorName.toLowerCase().contains(query) ||
+          booking.vendorEmail.toLowerCase().contains(query) ||
+          booking.serviceName.toLowerCase().contains(query) ||
+          booking.id.toLowerCase().contains(query);
+    }).toList();
   }
 
   // ============================================================
   // COUNTS
   // ============================================================
 
-  int _countStatus(
-    String status,
-  ) {
+  int _countStatus(String status) {
     return _bookings
-        .where(
-          (BookingModel booking) =>
-              booking.status
-                  .toLowerCase() ==
-              status,
-        )
+        .where((BookingModel booking) => booking.status.toLowerCase() == status)
         .length;
   }
 
@@ -206,11 +156,8 @@ class _BookingsScreenState
   // SET FILTER
   // ============================================================
 
-  void _setFilter(
-    String filter,
-  ) {
-    if (_selectedFilter ==
-        filter) {
+  void _setFilter(String filter) {
+    if (_selectedFilter == filter) {
       return;
     }
 
@@ -223,9 +170,7 @@ class _BookingsScreenState
   // STATUS COLOR
   // ============================================================
 
-  Color _statusColor(
-    String status,
-  ) {
+  Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
         return Colors.orange;
@@ -251,9 +196,7 @@ class _BookingsScreenState
   // STATUS ICON
   // ============================================================
 
-  IconData _statusIcon(
-    String status,
-  ) {
+  IconData _statusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
         return Icons.schedule;
@@ -279,9 +222,7 @@ class _BookingsScreenState
   // FORMAT DATE
   // ============================================================
 
-  String _formatDate(
-    DateTime? date,
-  ) {
+  String _formatDate(DateTime? date) {
     if (date == null) {
       return 'Not available';
     }
@@ -295,9 +236,7 @@ class _BookingsScreenState
   // PRICE
   // ============================================================
 
-  String _formatPrice(
-    double price,
-  ) {
+  String _formatPrice(double price) {
     return '₹${price.toStringAsFixed(0)}';
   }
 
@@ -305,17 +244,11 @@ class _BookingsScreenState
   // SHOW DETAILS
   // ============================================================
 
-  void _showBookingDetails(
-    BookingModel booking,
-  ) {
+  void _showBookingDetails(BookingModel booking) {
     showDialog(
       context: context,
 
-      builder:
-          (_) =>
-              BookingDetailsDialog(
-        booking: booking,
-      ),
+      builder: (_) => BookingDetailsDialog(booking: booking),
     );
   }
 
@@ -323,16 +256,9 @@ class _BookingsScreenState
   // UPDATE STATUS
   // ============================================================
 
-  Future<void> _updateStatus(
-    BookingModel booking,
-    String status,
-  ) async {
+  Future<void> _updateStatus(BookingModel booking, String status) async {
     try {
-      await _repository
-          .updateStatus(
-        bookingId: booking.id,
-        status: status,
-      );
+      await _repository.updateStatus(bookingId: booking.id, status: status);
 
       await _loadBookings();
 
@@ -340,29 +266,16 @@ class _BookingsScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            'Booking status updated to $status.',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking status updated to $status.')),
       );
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            _cleanError(e),
-          ),
-
-          backgroundColor:
-              Colors.red,
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e)), backgroundColor: Colors.red),
       );
     }
   }
@@ -371,54 +284,31 @@ class _BookingsScreenState
   // DELETE
   // ============================================================
 
-  Future<void> _deleteBooking(
-    BookingModel booking,
-  ) async {
-    final bool?
-        confirmed =
-        await showDialog<bool>(
+  Future<void> _deleteBooking(BookingModel booking) async {
+    final bool? confirmed = await showDialog<bool>(
       context: context,
 
-      builder:
-          (BuildContext context) {
+      builder: (BuildContext context) {
         return AlertDialog(
-          title:
-              const Text(
-            'Delete Booking?',
-          ),
+          title: const Text('Delete Booking?'),
 
-          content:
-              const Text(
-            'This booking will be permanently deleted.',
-          ),
+          content: const Text('This booking will be permanently deleted.'),
 
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  false,
-                );
+                Navigator.pop(context, false);
               },
 
-              child:
-                  const Text(
-                'Cancel',
-              ),
+              child: const Text('Cancel'),
             ),
 
             FilledButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  true,
-                );
+                Navigator.pop(context, true);
               },
 
-              child:
-                  const Text(
-                'Delete',
-              ),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -430,10 +320,7 @@ class _BookingsScreenState
     }
 
     try {
-      await _repository
-          .deleteBooking(
-        booking.id,
-      );
+      await _repository.deleteBooking(booking.id);
 
       await _loadBookings();
 
@@ -442,29 +329,14 @@ class _BookingsScreenState
       }
 
       ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content:
-              Text(
-            'Booking deleted.',
-          ),
-        ),
-      );
+          .showSnackBar(const SnackBar(content: Text('Booking deleted.')));
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            _cleanError(e),
-          ),
-
-          backgroundColor:
-              Colors.red,
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e)), backgroundColor: Colors.red),
       );
     }
   }
@@ -474,12 +346,9 @@ class _BookingsScreenState
   // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF6F7F9),
+      backgroundColor: const Color(0xFFF6F7F9),
 
       body: SafeArea(
         child: Column(
@@ -489,71 +358,40 @@ class _BookingsScreenState
             // ==================================================
 
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
 
               child: TextField(
-                onChanged:
-                    (String value) {
+                onChanged: (String value) {
                   setState(() {
-                    _searchQuery =
-                        value;
+                    _searchQuery = value;
                   });
                 },
 
-                decoration:
-                    InputDecoration(
-                  hintText:
-                      'Search bookings...',
+                decoration: InputDecoration(
+                  hintText: 'Search bookings...',
 
-                  prefixIcon:
-                      const Icon(
-                    Icons.search,
-                  ),
+                  prefixIcon: const Icon(Icons.search),
 
-                  suffixIcon:
-                      _searchQuery
-                              .isEmpty
-                          ? null
-                          : IconButton(
-                              onPressed:
-                                  () {
-                                setState(
-                                  () {
-                                    _searchQuery =
-                                        '';
-                                  },
-                                );
-                              },
+                  suffixIcon: _searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
 
-                              icon:
-                                  const Icon(
-                                Icons.clear,
-                              ),
-                            ),
+                          icon: const Icon(Icons.clear),
+                        ),
 
-                  filled:
-                      true,
+                  filled: true,
 
-                  fillColor:
-                      Colors.white,
+                  fillColor: Colors.white,
 
-                  border:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      14,
-                    ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
 
-                    borderSide:
-                        BorderSide
-                            .none,
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -562,118 +400,72 @@ class _BookingsScreenState
             // ==================================================
             // FILTER CHIPS
             // ==================================================
-
             SizedBox(
               height: 55,
 
-              child:
-                  ListView(
-                scrollDirection:
-                    Axis.horizontal,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
 
-                padding:
-                    const EdgeInsets
-                        .symmetric(
-                  horizontal: 20,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
 
                 children: [
                   _FilterChip(
-                    label:
-                        'All',
+                    label: 'All',
 
-                    count:
-                        _bookings.length,
+                    count: _bookings.length,
 
-                    selected:
-                        _selectedFilter ==
-                            'all',
+                    selected: _selectedFilter == 'all',
 
                     onTap: () {
-                      _setFilter(
-                        'all',
-                      );
+                      _setFilter('all');
                     },
                   ),
 
-                  const SizedBox(
-                    width: 10,
-                  ),
+                  const SizedBox(width: 10),
 
                   _FilterChip(
-                    label:
-                        'Pending',
+                    label: 'Pending',
 
-                    count:
-                        _countStatus(
-                      'pending',
-                    ),
+                    count: _countStatus('pending'),
 
-                    selected:
-                        _selectedFilter ==
-                            'pending',
+                    selected: _selectedFilter == 'pending',
 
-                    color:
-                        Colors.orange,
+                    color: Colors.orange,
 
                     onTap: () {
-                      _setFilter(
-                        'pending',
-                      );
+                      _setFilter('pending');
                     },
                   ),
 
-                  const SizedBox(
-                    width: 10,
-                  ),
+                  const SizedBox(width: 10),
 
                   _FilterChip(
-                    label:
-                        'Completed',
+                    label: 'Completed',
 
-                    count:
-                        _countStatus(
-                      'completed',
-                    ),
+                    count: _countStatus('completed'),
 
-                    selected:
-                        _selectedFilter ==
-                            'completed',
+                    selected: _selectedFilter == 'completed',
 
-                    color:
-                        Colors.blue,
+                    color: Colors.blue,
 
                     onTap: () {
-                      _setFilter(
-                        'completed',
-                      );
+                      _setFilter('completed');
                     },
                   ),
 
-                  const SizedBox(
-                    width: 10,
-                  ),
+                  const SizedBox(width: 10),
 
                   _FilterChip(
-                    label:
-                        'Rejected',
+                    label: 'Rejected',
 
-                    count:
-                        _countStatus(
-                      'rejected',
-                    ),
+                    count: _countStatus('rejected'),
 
-                    selected:
-                        _selectedFilter ==
-                            'rejected',
+                    selected: _selectedFilter == 'rejected',
 
-                    color:
-                        Colors.red,
+                    color: Colors.red,
 
                     onTap: () {
-                      _setFilter(
-                        'rejected',
-                      );
+                      _setFilter('rejected');
                     },
                   ),
                 ],
@@ -683,11 +475,7 @@ class _BookingsScreenState
             // ==================================================
             // CONTENT
             // ==================================================
-
-            Expanded(
-              child:
-                  _buildContent(),
-            ),
+            Expanded(child: _buildContent()),
           ],
         ),
       ),
@@ -700,83 +488,49 @@ class _BookingsScreenState
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage !=
-        null) {
+    if (_errorMessage != null) {
       return _buildError();
     }
 
-    final List<BookingModel>
-        bookings =
-        _filteredBookings;
+    final List<BookingModel> bookings = _filteredBookings;
 
     if (bookings.isEmpty) {
       return _buildEmpty();
     }
 
     return RefreshIndicator(
-      onRefresh:
-          _loadBookings,
+      onRefresh: _loadBookings,
 
-      child:
-          ListView.builder(
-        padding:
-            const EdgeInsets.fromLTRB(
-          20,
-          10,
-          20,
-          30,
-        ),
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
 
-        itemCount:
-            bookings.length,
+        itemCount: bookings.length,
 
-        itemBuilder:
-            (
-          BuildContext context,
-          int index,
-        ) {
+        itemBuilder: (BuildContext context, int index) {
           return _BookingCard(
-            booking:
-                bookings[index],
+            booking: bookings[index],
 
-            formatDate:
-                _formatDate,
+            formatDate: _formatDate,
 
-            formatPrice:
-                _formatPrice,
+            formatPrice: _formatPrice,
 
-            statusColor:
-                _statusColor,
+            statusColor: _statusColor,
 
-            statusIcon:
-                _statusIcon,
+            statusIcon: _statusIcon,
 
-            onView:
-                () {
-              _showBookingDetails(
-                bookings[index],
-              );
+            onView: () {
+              _showBookingDetails(bookings[index]);
             },
 
-            onStatusChanged:
-                (String status) {
-              _updateStatus(
-                bookings[index],
-                status,
-              );
+            onStatusChanged: (String status) {
+              _updateStatus(bookings[index], status);
             },
 
-            onDelete:
-                () {
-              _deleteBooking(
-                bookings[index],
-              );
+            onDelete: () {
+              _deleteBooking(bookings[index]);
             },
           );
         },
@@ -791,51 +545,33 @@ class _BookingsScreenState
   Widget _buildEmpty() {
     return Center(
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
 
         children: [
           Icon(
-            Icons
-                .calendar_month_outlined,
+            Icons.calendar_month_outlined,
 
             size: 70,
 
-            color:
-                Colors.grey.shade400,
+            color: Colors.grey.shade400,
           ),
 
-          const SizedBox(
-            height: 18,
-          ),
+          const SizedBox(height: 18),
 
           Text(
-            _selectedFilter ==
-                    'all'
+            _selectedFilter == 'all'
                 ? 'No bookings yet'
                 : 'No $_selectedFilter bookings',
 
-            style:
-                const TextStyle(
-              fontSize: 20,
-
-              fontWeight:
-                  FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
 
-          const SizedBox(
-            height: 8,
-          ),
+          const SizedBox(height: 8),
 
           const Text(
             'Bookings will appear here.',
 
-            style:
-                TextStyle(
-              color:
-                  Colors.grey,
-            ),
+            style: TextStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -849,76 +585,40 @@ class _BookingsScreenState
   Widget _buildError() {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          30,
-        ),
+        padding: const EdgeInsets.all(30),
 
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
-            const Icon(
-              Icons.error_outline,
+            const Icon(Icons.error_outline, size: 60, color: Colors.red),
 
-              size: 60,
-
-              color:
-                  Colors.red,
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             const Text(
               'Unable to load bookings',
 
-              style:
-                  TextStyle(
-                fontSize: 19,
-
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
             ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             Text(
-              _errorMessage ??
-                  'Something went wrong.',
+              _errorMessage ?? 'Something went wrong.',
 
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
 
-              style:
-                  const TextStyle(
-                color:
-                    Colors.grey,
-              ),
+              style: const TextStyle(color: Colors.grey),
             ),
 
-            const SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
 
             FilledButton.icon(
-              onPressed:
-                  _loadBookings,
+              onPressed: _loadBookings,
 
-              icon:
-                  const Icon(
-                Icons.refresh,
-              ),
+              icon: const Icon(Icons.refresh),
 
-              label:
-                  const Text(
-                'Try Again',
-              ),
+              label: const Text('Try Again'),
             ),
           ],
         ),
@@ -931,8 +631,7 @@ class _BookingsScreenState
 // FILTER CHIP
 // =================================================================
 
-class _FilterChip
-    extends StatelessWidget {
+class _FilterChip extends StatelessWidget {
   final String label;
 
   final int count;
@@ -952,110 +651,63 @@ class _FilterChip
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final Color chipColor =
-        color ??
-            Theme.of(context)
-                .colorScheme
-                .primary;
+  Widget build(BuildContext context) {
+    final Color chipColor = color ?? Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: onTap,
 
       child: AnimatedContainer(
-        duration:
-            const Duration(
-          milliseconds: 180,
-        ),
+        duration: const Duration(milliseconds: 180),
 
-        padding:
-            const EdgeInsets
-                .symmetric(
-          horizontal: 15,
-          vertical: 9,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
 
-        decoration:
-            BoxDecoration(
-          color: selected
-              ? chipColor
-              : Colors.white,
+        decoration: BoxDecoration(
+          color: selected ? chipColor : Colors.white,
 
-          borderRadius:
-              BorderRadius.circular(
-            25,
-          ),
+          borderRadius: BorderRadius.circular(25),
 
           border: Border.all(
-            color: selected
-                ? chipColor
-                : Colors.grey
-                    .shade300,
+            color: selected ? chipColor : Colors.grey.shade300,
           ),
         ),
 
         child: Row(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
 
           children: [
             Text(
               label,
 
               style: TextStyle(
-                color: selected
-                    ? Colors.white
-                    : Colors.black87,
+                color: selected ? Colors.white : Colors.black87,
 
-                fontWeight:
-                    FontWeight.w700,
+                fontWeight: FontWeight.w700,
               ),
             ),
 
-            const SizedBox(
-              width: 7,
-            ),
+            const SizedBox(width: 7),
 
             Container(
-              padding:
-                  const EdgeInsets
-                      .symmetric(
-                horizontal: 7,
-                vertical: 2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
 
-              decoration:
-                  BoxDecoration(
+              decoration: BoxDecoration(
                 color: selected
-                    ? Colors.white
-                        .withValues(
-                    alpha: 0.20,
-                  )
-                    : chipColor
-                        .withValues(
-                    alpha: 0.10,
-                  ),
+                    ? Colors.white.withValues(alpha: 0.20)
+                    : chipColor.withValues(alpha: 0.10),
 
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
+                borderRadius: BorderRadius.circular(12),
               ),
 
               child: Text(
                 count.toString(),
 
                 style: TextStyle(
-                  color: selected
-                      ? Colors.white
-                      : chipColor,
+                  color: selected ? Colors.white : chipColor,
 
                   fontSize: 12,
 
-                  fontWeight:
-                      FontWeight.w800,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -1070,30 +722,20 @@ class _FilterChip
 // BOOKING CARD
 // =================================================================
 
-class _BookingCard
-    extends StatelessWidget {
+class _BookingCard extends StatelessWidget {
   final BookingModel booking;
 
-  final String Function(
-    DateTime?,
-  ) formatDate;
+  final String Function(DateTime?) formatDate;
 
-  final String Function(
-    double,
-  ) formatPrice;
+  final String Function(double) formatPrice;
 
-  final Color Function(
-    String,
-  ) statusColor;
+  final Color Function(String) statusColor;
 
-  final IconData Function(
-    String,
-  ) statusIcon;
+  final IconData Function(String) statusIcon;
 
   final VoidCallback onView;
 
-  final ValueChanged<String>
-      onStatusChanged;
+  final ValueChanged<String> onStatusChanged;
 
   final VoidCallback onDelete;
 
@@ -1109,39 +751,21 @@ class _BookingCard
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final Color color =
-        statusColor(
-      booking.status,
-    );
+  Widget build(BuildContext context) {
+    final Color color = statusColor(booking.status);
 
     return Card(
-      margin:
-          const EdgeInsets.only(
-        bottom: 14,
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
 
       elevation: 0,
 
-      shape:
-          RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(
-          16,
-        ),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
+        padding: const EdgeInsets.all(16),
 
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             // ==================================================
@@ -1149,45 +773,27 @@ class _BookingCard
             // ==================================================
 
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
                 Container(
                   width: 48,
                   height: 48,
 
-                  decoration:
-                      BoxDecoration(
-                    color:
-                        color.withValues(
-                      alpha: 0.10,
-                    ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
 
-                    borderRadius:
-                        BorderRadius.circular(
-                      13,
-                    ),
+                    borderRadius: BorderRadius.circular(13),
                   ),
 
-                  child: Icon(
-                    Icons
-                        .calendar_month_outlined,
-
-                    color:
-                        color,
-                  ),
+                  child: Icon(Icons.calendar_month_outlined, color: color),
                 ),
 
-                const SizedBox(
-                  width: 12,
-                ),
+                const SizedBox(width: 12),
 
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
 
                     children: [
                       Text(
@@ -1195,30 +801,22 @@ class _BookingCard
 
                         maxLines: 1,
 
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
+                        overflow: TextOverflow.ellipsis,
 
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
 
-                          fontWeight:
-                              FontWeight.w800,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 4,
-                      ),
+                      const SizedBox(height: 4),
 
                       Text(
                         'Booking #${booking.id.substring(0, booking.id.length > 8 ? 8 : booking.id.length)}',
 
-                        style:
-                            const TextStyle(
-                          color:
-                              Colors.grey,
+                        style: const TextStyle(
+                          color: Colors.grey,
 
                           fontSize: 12,
                         ),
@@ -1228,58 +826,34 @@ class _BookingCard
                 ),
 
                 Container(
-                  padding:
-                      const EdgeInsets
-                          .symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 7,
                   ),
 
-                  decoration:
-                      BoxDecoration(
-                    color:
-                        color.withValues(
-                      alpha: 0.10,
-                    ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
 
-                    borderRadius:
-                        BorderRadius.circular(
-                      20,
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
 
                   child: Row(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
 
                     children: [
-                      Icon(
-                        statusIcon(
-                          booking.status,
-                        ),
+                      Icon(statusIcon(booking.status), size: 14, color: color),
 
-                        size: 14,
-
-                        color:
-                            color,
-                      ),
-
-                      const SizedBox(
-                        width: 5,
-                      ),
+                      const SizedBox(width: 5),
 
                       Text(
                         booking.status,
 
-                        style:
-                            TextStyle(
-                          color:
-                              color,
+                        style: TextStyle(
+                          color: color,
 
                           fontSize: 12,
 
-                          fontWeight:
-                              FontWeight.w800,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -1288,230 +862,137 @@ class _BookingCard
               ],
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
-            const Divider(
-              height: 1,
-            ),
+            const Divider(height: 1),
 
-            const SizedBox(
-              height: 14,
-            ),
+            const SizedBox(height: 14),
 
             // ==================================================
             // CUSTOMER
             // ==================================================
-
             _InfoRow(
-              icon:
-                  Icons.person_outline,
+              icon: Icons.person_outline,
 
-              label:
-                  'Customer',
+              label: 'Customer',
 
-              value:
-                  booking.customerName,
+              value: booking.customerName,
             ),
 
-            const SizedBox(
-              height: 9,
-            ),
+            const SizedBox(height: 9),
 
             // ==================================================
             // VENDOR
             // ==================================================
-
             _InfoRow(
-              icon:
-                  Icons.storefront_outlined,
+              icon: Icons.storefront_outlined,
 
-              label:
-                  'Vendor',
+              label: 'Vendor',
 
-              value:
-                  booking.vendorName,
+              value: booking.vendorName,
             ),
 
-            const SizedBox(
-              height: 9,
-            ),
+            const SizedBox(height: 9),
 
             // ==================================================
             // EVENT DATE
             // ==================================================
-
             _InfoRow(
-              icon:
-                  Icons
-                      .calendar_today_outlined,
+              icon: Icons.calendar_today_outlined,
 
-              label:
-                  'Event Date',
+              label: 'Event Date',
 
-              value:
-                  formatDate(
-                booking.eventDate,
-              ),
+              value: formatDate(booking.eventDate),
             ),
 
-            const SizedBox(
-              height: 9,
-            ),
+            const SizedBox(height: 9),
 
             // ==================================================
             // LOCATION
             // ==================================================
-
             _InfoRow(
-              icon:
-                  Icons.location_on_outlined,
+              icon: Icons.location_on_outlined,
 
-              label:
-                  'Location',
+              label: 'Location',
 
-              value:
-                  booking.location,
+              value: booking.location,
             ),
 
-            const SizedBox(
-              height: 14,
-            ),
+            const SizedBox(height: 14),
 
             // ==================================================
             // PRICE
             // ==================================================
-
             Row(
               children: [
                 const Expanded(
                   child: Text(
                     'Booking Price',
 
-                    style:
-                        TextStyle(
-                      color:
-                          Colors.grey,
+                    style: TextStyle(
+                      color: Colors.grey,
 
-                      fontWeight:
-                          FontWeight.w600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
 
                 Text(
-                  formatPrice(
-                    booking.price,
-                  ),
+                  formatPrice(booking.price),
 
-                  style:
-                      const TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
 
-                    fontWeight:
-                        FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(
-              height: 14,
-            ),
+            const SizedBox(height: 14),
 
             // ==================================================
             // ACTIONS
             // ==================================================
-
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed:
-                      onView,
+                  onPressed: onView,
 
-                  icon:
-                      const Icon(
-                    Icons.visibility_outlined,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
 
-                  label:
-                      const Text(
-                    'View',
-                  ),
+                  label: const Text('View'),
                 ),
 
-                const SizedBox(
-                  width: 8,
-                ),
+                const SizedBox(width: 8),
 
-                if (booking.status
-                        .toLowerCase() ==
-                    'pending')
+                if (booking.status.toLowerCase() == 'pending')
                   PopupMenuButton<String>(
-                    onSelected:
-                        onStatusChanged,
+                    onSelected: onStatusChanged,
 
-                    itemBuilder:
-                        (
-                      BuildContext context,
-                    ) {
+                    itemBuilder: (BuildContext context) {
                       return const [
-                        PopupMenuItem(
-                          value:
-                              'accepted',
+                        PopupMenuItem(value: 'accepted', child: Text('Accept')),
 
-                          child:
-                              Text(
-                            'Accept',
-                          ),
-                        ),
-
-                        PopupMenuItem(
-                          value:
-                              'rejected',
-
-                          child:
-                              Text(
-                            'Reject',
-                          ),
-                        ),
+                        PopupMenuItem(value: 'rejected', child: Text('Reject')),
                       ];
                     },
 
-                    child:
-                        const Chip(
-                      avatar:
-                          Icon(
-                        Icons.edit_outlined,
-                        size: 17,
-                      ),
+                    child: const Chip(
+                      avatar: Icon(Icons.edit_outlined, size: 17),
 
-                      label:
-                          Text(
-                        'Status',
-                      ),
+                      label: Text('Status'),
                     ),
                   ),
 
                 const Spacer(),
 
                 IconButton(
-                  tooltip:
-                      'Delete',
+                  tooltip: 'Delete',
 
-                  onPressed:
-                      onDelete,
+                  onPressed: onDelete,
 
-                  icon:
-                      const Icon(
-                    Icons
-                        .delete_outline,
-
-                    color:
-                        Colors.red,
-                  ),
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
                 ),
               ],
             ),
@@ -1526,8 +1007,7 @@ class _BookingCard
 // INFO ROW
 // =================================================================
 
-class _InfoRow
-    extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
   final IconData icon;
 
   final String label;
@@ -1541,26 +1021,14 @@ class _InfoRow
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
-        Icon(
-          icon,
+        Icon(icon, size: 18, color: Colors.grey),
 
-          size: 18,
-
-          color:
-              Colors.grey,
-        ),
-
-        const SizedBox(
-          width: 8,
-        ),
+        const SizedBox(width: 8),
 
         SizedBox(
           width: 75,
@@ -1568,15 +1036,12 @@ class _InfoRow
           child: Text(
             label,
 
-            style:
-                const TextStyle(
-              color:
-                  Colors.grey,
+            style: const TextStyle(
+              color: Colors.grey,
 
               fontSize: 13,
 
-              fontWeight:
-                  FontWeight.w600,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -1587,16 +1052,9 @@ class _InfoRow
 
             maxLines: 2,
 
-            overflow:
-                TextOverflow.ellipsis,
+            overflow: TextOverflow.ellipsis,
 
-            style:
-                const TextStyle(
-              fontSize: 13,
-
-              fontWeight:
-                  FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ),
       ],

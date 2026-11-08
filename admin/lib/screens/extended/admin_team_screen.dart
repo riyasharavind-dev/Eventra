@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../repositories/team_access_repository.dart';
@@ -9,7 +11,22 @@ class AdminTeamScreen extends StatefulWidget {
   State<AdminTeamScreen> createState() => _AdminTeamScreenState();
 }
 
-class _AdminTeamScreenState extends State<AdminTeamScreen> {
+class _AdminTeamScreenState extends State<AdminTeamScreen>
+    with LiveDataState<AdminTeamScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:admins',
+    'admin:team_permissions',
+    'own:team_permissions',
+    'admin:module_permissions',
+    'admin:team_invitations',
+    'admin:company_email_settings',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   late final repo = widget.repository ?? TeamAccessRepository();
   Map<String, dynamic>? data;
   String? error, message;

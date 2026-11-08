@@ -1,4 +1,4 @@
-class HomeFeedItem {
+﻿class HomeFeedItem {
   final Map<String, dynamic> data;
   const HomeFeedItem(this.data);
   String get id => data['id'].toString();

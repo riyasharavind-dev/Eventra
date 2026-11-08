@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/support_model.dart';
@@ -17,8 +19,20 @@ class SupportRequestDetailScreen extends StatefulWidget {
       _SupportRequestDetailScreenState();
 }
 
-class _SupportRequestDetailScreenState
-    extends State<SupportRequestDetailScreen> {
+class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
+    with LiveDataState<SupportRequestDetailScreen> {
+  @override
+  bool get liveCanRefresh => !_sending && !_loading;
+  @override
+  Set<String> get liveDatasets => {
+    'own:support_tickets',
+    'own:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   final _reply = TextEditingController();
   late SupportTicket _ticket;
   List<SupportMessage> _messages = [];
@@ -40,7 +54,7 @@ class _SupportRequestDetailScreenState
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

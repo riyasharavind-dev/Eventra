@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+import '../../repositories/service_repository.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 
 import 'package:flutter/material.dart';
@@ -7,7 +9,7 @@ import '../../widgets/reviews/service_review_summary.dart';
 import '../../models/service_model.dart';
 import '../../widgets/listings/listing_ui.dart';
 
-class ListingDetailScreen extends StatelessWidget {
+class ListingDetailScreen extends StatefulWidget {
   final ServiceModel service;
   final VoidCallback? onEdit,
       onToggleStatus,
@@ -26,36 +28,94 @@ class ListingDetailScreen extends StatelessWidget {
     this.onManageImages,
   });
   @override
+  State<ListingDetailScreen> createState() => _ListingDetailScreenState();
+}
+
+class _ListingDetailScreenState extends State<ListingDetailScreen>
+    with LiveDataState<ListingDetailScreen> {
+  late ServiceModel service;
+  bool available = true;
+  @override
+  Set<String> get liveDatasets => {'own:services', 'public:category_nodes'};
+  @override
+  void initState() {
+    super.initState();
+    service = widget.service;
+  }
+
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    final fresh = await ServiceRepository().getServiceById(service.id);
+    if (!mounted) return;
+    setState(() {
+      available = fresh != null;
+      if (fresh != null) service = fresh;
+    });
+  }
+
+  VoidCallback? get onEdit => widget.onEdit;
+  VoidCallback? get onToggleStatus => widget.onToggleStatus;
+  VoidCallback? get onDelete => widget.onDelete;
+  VoidCallback? get onPromote => widget.onPromote;
+  VoidCallback? get onDuplicate => widget.onDuplicate;
+  VoidCallback? get onManageImages => widget.onManageImages;
+  @override
   Widget build(BuildContext context) {
     String t(String en, String ta) => listingText(context, en, ta);
     final colors = Theme.of(context).colorScheme;
-    Widget section(String title, Widget content) => Card(
+    const wine = Color(0xFF80152C);
+
+    Widget section(String title, Widget content) => Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: wine.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF17171B),
             ),
-            const SizedBox(height: 10),
-            content,
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          content,
+        ],
       ),
     );
+    if (!available) {
+      return VendorPageScaffold(
+        appBar: AppBar(title: Text(t('Service Details', 'Service Details'))),
+        body: const Center(child: Text('This service is no longer available.')),
+      );
+    }
     return VendorPageScaffold(
-      backgroundColor: colors.surfaceContainerLowest,
-      appBar: AppBar(title: Text(t('Service Details', 'சேவை விவரங்கள்'))),
+      backgroundColor: const Color(0xFFF8F8FA),
+      appBar: AppBar(
+        title: Text(
+          t('Service Details', 'சேவை விவரங்கள்'),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           if (service.gallery.isEmpty)
             ClipRRect(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               child: listingPhoto(null, width: double.infinity, height: 230),
             )
           else
@@ -66,7 +126,7 @@ class ListingDetailScreen extends StatelessWidget {
                 itemBuilder: (c, i) => Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -80,12 +140,16 @@ class ListingDetailScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black54,
+                              color: Colors.black.withValues(alpha: 0.65),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               '${i + 1} / ${service.gallery.length}',
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ),
@@ -99,39 +163,59 @@ class ListingDetailScreen extends StatelessWidget {
           ServiceReviewSummary(serviceId: service.id, vendorMode: true),
           Text(
             service.name,
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF17171B),
+            ),
           ),
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,
             child: ListingStatusBadge(active: service.isActive),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             service.priceLabel,
-            style: Theme.of(context).textTheme.headlineMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: wine,
+            ),
           ),
           Text(
             t(service.pricing.type.label, service.pricing.type.tamilLabel),
-            style: TextStyle(color: colors.onSurfaceVariant),
+            style: const TextStyle(color: Color(0xFF73737D), fontSize: 13),
           ),
           const SizedBox(height: 20),
           Wrap(
-            spacing: 10,
+            spacing: 12,
             runSpacing: 8,
             children: [
               if (onEdit != null)
                 FilledButton.icon(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: wine,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
                   label: Text(t('Edit service', 'சேவையைத் திருத்து')),
                 ),
               if (onManageImages != null)
                 OutlinedButton.icon(
                   onPressed: onManageImages,
-                  icon: const Icon(Icons.photo_library_outlined),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: wine,
+                    side: const BorderSide(color: wine),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
                   label: Text(t('Manage photos', 'படங்களை நிர்வகி')),
                 ),
             ],

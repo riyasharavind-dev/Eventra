@@ -69,12 +69,7 @@ class _MainScreenBackGuardState extends State<MainScreenBackGuard> {
     _message = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          108 + MediaQuery.paddingOf(context).bottom,
-        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         content: Text(
           tamil
               ? 'வெளியேற மீண்டும் பின் அழுத்தவும்'

@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
@@ -637,6 +639,13 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF73737D),
+                        side: const BorderSide(color: Color(0xFFE8E5E8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _isSaving
                           ? null
                           : () {
@@ -650,6 +659,13 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
 
                   Expanded(
                     child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF80152C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: _isSaving ? null : _save,
                       icon: _isSaving
                           ? const SizedBox(
@@ -746,7 +762,7 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
             Icon(
               Icons.photo_library_outlined,
               size: 36,
-              color: Colors.grey.shade500,
+              color: AppIconColors.standard,
             ),
             const SizedBox(height: 8),
             Text(

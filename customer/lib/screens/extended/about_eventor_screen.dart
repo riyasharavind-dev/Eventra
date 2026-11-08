@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/about_eventor_model.dart';
@@ -19,7 +21,15 @@ class AboutEventorScreen extends StatefulWidget {
   State<AboutEventorScreen> createState() => _AboutEventorScreenState();
 }
 
-class _AboutEventorScreenState extends State<AboutEventorScreen> {
+class _AboutEventorScreenState extends State<AboutEventorScreen>
+    with LiveDataState<AboutEventorScreen> {
+  @override
+  Set<String> get liveDatasets => {'public:about_eventra_content'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   static const _red = Color(0xFF80152C);
   // Match the installed app's pubspec.yaml, not editable marketing content.
   static const _version = '1.0.0';
@@ -38,7 +48,7 @@ class _AboutEventorScreenState extends State<AboutEventorScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

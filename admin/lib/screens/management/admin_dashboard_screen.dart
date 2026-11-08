@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/admin_module.dart';
@@ -17,7 +19,23 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+    with LiveDataState<AdminDashboardScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:bookings',
+    'admin:users',
+    'admin:vendors',
+    'admin:customers',
+    'admin:services',
+    'admin:businesses',
+    'admin:service_reviews',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await refresh();
+  }
+
   late Future<Map<String, dynamic>> loading;
   @override
   void initState() {

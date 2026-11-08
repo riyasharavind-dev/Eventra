@@ -1,6 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
-
-import 'vendor_bottom_nav_bar.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
@@ -45,13 +44,32 @@ class _AppSettingsSectionState extends State<AppSettingsSection>
     try {
       final message = await settings.setNotifications(enabled);
       if (message != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.removeCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
             content: Text(message),
             action: SnackBarAction(
               label: settings.text('Phone Settings', 'தொலைபேசி அமைப்புகள்'),
               onPressed: () async {
-                await openAppSettings();
+                try {
+                  final opened = await openAppSettings();
+                  if (!opened) throw StateError('Settings unavailable');
+                } catch (_) {
+                  if (!mounted) return;
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.removeCurrentSnackBar();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        settings.text(
+                          'Unable to open Phone Settings. Open them manually.',
+                          'தொலைபேசி அமைப்புகளைத் திறக்க முடியவில்லை. நேரடியாகத் திறக்கவும்.',
+                        ),
+                      ),
+                    ),
+                  );
+                }
               },
             ),
           ),
@@ -59,7 +77,9 @@ class _AppSettingsSectionState extends State<AppSettingsSection>
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.removeCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
             content: Text(
               settings.text(
@@ -75,68 +95,109 @@ class _AppSettingsSectionState extends State<AppSettingsSection>
 
   @override
   Widget build(BuildContext context) {
-    final settings = AppSettingsScope.of(context),
-        colors = Theme.of(context).colorScheme;
+    final settings = AppSettingsScope.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProfileSectionTitle(settings.text('App Settings', 'செயலி அமைப்புகள்')),
-        Material(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(20),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              SwitchListTile(
-                key: const ValueKey('notifications-toggle'),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                secondary: Icon(
-                  Icons.notifications_outlined,
-                  color: VendorBottomNavBar.inactiveIconColor,
-                ),
-                title: Text(settings.text('Notifications', 'அறிவிப்புகள்')),
-                subtitle: Text(
-                  settings.text(
-                    'Booking and account push notifications',
-                    'முன்பதிவு மற்றும் கணக்கு அறிவிப்புகள்',
-                  ),
-                  style: const TextStyle(fontSize: 11),
-                ),
-                value: settings.value.notificationsEnabled,
-                onChanged: settings.busy ? null : toggle,
-              ),
-              const Divider(height: 1, indent: 60, endIndent: 16),
-              ListTile(
-                key: const ValueKey('open-language-screen'),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                leading: Icon(
-                  Icons.language,
-                  color: VendorBottomNavBar.inactiveIconColor,
-                ),
-                title: Text(settings.text('Language', 'மொழி')),
-                subtitle: Text(
-                  settings.value.languageCode == 'ta' ? 'தமிழ்' : 'English',
-                ),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: VendorBottomNavBar.inactiveIconColor,
-                ),
-                onTap: settings.busy
-                    ? null
-                    : () => Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => const LanguageScreen(),
-                        ),
-                      ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF80152C).withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
               ),
             ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              children: [
+                SwitchListTile(
+                  key: const ValueKey('notifications-toggle'),
+                  activeTrackColor: const Color(0xFF80152C),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  secondary: SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: AppIconColors.standard,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    settings.text('Notifications', 'அறிவிப்புகள்'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    settings.text(
+                      'Booking and account push notifications',
+                      'முன்பதிவு மற்றும் கணக்கு அறிவிப்புகள்',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF73737D),
+                    ),
+                  ),
+                  value: settings.value.notificationsEnabled,
+                  onChanged: settings.busy ? null : toggle,
+                ),
+                const Divider(
+                  height: 1,
+                  indent: 68,
+                  endIndent: 16,
+                  color: Color(0xFFF0EDF0),
+                ),
+                ListTile(
+                  key: const ValueKey('open-language-screen'),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  leading: SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: const Icon(
+                      Icons.language,
+                      color: AppIconColors.standard,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    settings.text('Language', 'மொழி'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    settings.value.languageCode == 'ta' ? 'தமிழ்' : 'English',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF73737D),
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppIconColors.standard,
+                  ),
+                  onTap: settings.busy
+                      ? null
+                      : () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const LanguageScreen(),
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

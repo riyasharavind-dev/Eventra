@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -27,7 +29,22 @@ class AdminModuleScreen extends StatefulWidget {
   State<AdminModuleScreen> createState() => _AdminModuleScreenState();
 }
 
-class _AdminModuleScreenState extends State<AdminModuleScreen> {
+class _AdminModuleScreenState extends State<AdminModuleScreen>
+    with LiveDataState<AdminModuleScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:${widget.module.name}',
+    for (final f in widget.module.fields)
+      if (f.referenceTable != null) 'admin:${f.referenceTable}',
+    'admin:service_reviews',
+    'admin:booking_status_history',
+    'admin:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   final query = TextEditingController();
   Timer? debounce;
   AdminPage? page;
@@ -52,7 +69,7 @@ class _AdminModuleScreenState extends State<AdminModuleScreen> {
   Future<void> load() async {
     final g = ++generation;
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
     });
     try {

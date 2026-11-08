@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 class VendorBottomNavBar extends StatelessWidget {
@@ -10,9 +11,9 @@ class VendorBottomNavBar extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _wine = Color(0xFF920D29);
-  static const _wineDark = Color(0xFF68051A);
-  static const inactiveIconColor = Color(0xFF73737D);
+  static const _wine = Color(0xFF80152C);
+  static const _wineDark = Color(0xFF650C20);
+  static const inactiveIconColor = AppIconColors.standard;
 
   static const _labels = ['Dashboard', 'Listings', 'Bookings', 'Me'];
 

@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -20,7 +23,20 @@ class ServiceReviewSummary extends StatefulWidget {
   State<ServiceReviewSummary> createState() => _ServiceReviewSummaryState();
 }
 
-class _ServiceReviewSummaryState extends State<ServiceReviewSummary> {
+class _ServiceReviewSummaryState extends State<ServiceReviewSummary>
+    with LiveDataState<ServiceReviewSummary> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:service_reviews',
+    'own:service_metrics',
+    'public:service_reviews',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    refresh();
+    await loading;
+  }
+
   late final ReviewRepository repo;
   late Future<ReviewSummary> loading;
   @override
@@ -65,34 +81,71 @@ class _ServiceReviewSummaryState extends State<ServiceReviewSummary> {
     final tamil = Localizations.localeOf(context).languageCode == 'ta';
     return FutureBuilder<ReviewSummary>(
       future: loading,
-      builder: (context, snapshot) => Card(
-        child: ListTile(
-          leading: Icon(
-            Icons.star_outline,
-            color: Theme.of(context).colorScheme.primary,
+      builder: (context, snapshot) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFF0EDF0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF80152C).withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5E8EC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.star_rounded,
+                color: Color(0xFFFFCB48),
+                size: 24,
+              ),
+            ),
+            title: Text(
+              tamil ? 'மதிப்பீடு மற்றும் விமர்சனங்கள்' : 'Ratings & reviews',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
+            subtitle: Text(
+              snapshot.hasError
+                  ? (tamil
+                        ? 'ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
+                        : 'Unable to load. Tap to retry.')
+                  : !snapshot.hasData
+                  ? (tamil ? 'ஏற்றுகிறது…' : 'Loading…')
+                  : snapshot.data!.count == 0
+                  ? (tamil ? 'இன்னும் விமர்சனங்கள் இல்லை' : 'No reviews yet')
+                  : '${snapshot.data!.average!.toStringAsFixed(1)} / 5 · ${snapshot.data!.count} ${tamil ? 'விமர்சனங்கள்' : 'reviews'}',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF73737D)),
+            ),
+            trailing: snapshot.connectionState == ConnectionState.waiting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: AppShimmerIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF80152C),
+                    ),
+                  )
+                : const Icon(
+                    Icons.chevron_right,
+                    color: AppIconColors.standard,
+                  ),
+            onTap: snapshot.hasError ? refresh : open,
           ),
-          title: Text(
-            tamil ? 'மதிப்பீடு மற்றும் விமர்சனங்கள்' : 'Ratings & reviews',
-          ),
-          subtitle: Text(
-            snapshot.hasError
-                ? (tamil
-                      ? 'ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
-                      : 'Unable to load. Tap to retry.')
-                : !snapshot.hasData
-                ? (tamil ? 'ஏற்றுகிறது…' : 'Loading…')
-                : snapshot.data!.count == 0
-                ? (tamil ? 'இன்னும் விமர்சனங்கள் இல்லை' : 'No reviews yet')
-                : '${snapshot.data!.average!.toStringAsFixed(1)} / 5 · ${snapshot.data!.count} ${tamil ? 'விமர்சனங்கள்' : 'reviews'}',
-          ),
-          trailing: snapshot.connectionState == ConnectionState.waiting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: AppShimmerIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.chevron_right),
-          onTap: snapshot.hasError ? refresh : open,
         ),
       ),
     );

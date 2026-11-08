@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import '../../widgets/common/app_shimmer.dart';
 
 import 'package:flutter/services.dart';
@@ -59,7 +61,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: _hintColor, fontSize: 14),
-      prefixIcon: Icon(icon, size: 21, color: _hintColor),
+      prefixIcon: Icon(icon, size: 21, color: AppIconColors.standard),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white,
@@ -177,9 +179,47 @@ class _SignupScreenState extends State<SignupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // ==================================
-                      // TITLE — NO LOGO
+                      // BRAND BADGE
                       // ==================================
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5E8EC),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.storefront_rounded,
+                                size: 16,
+                                color: AppIconColors.standard,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'EVENTOR VENDOR',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: _wine,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
 
+                      const SizedBox(height: 18),
+
+                      // ==================================
+                      // TITLE
+                      // ==================================
                       const Text(
                         'Create account',
                         style: TextStyle(
@@ -191,7 +231,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 9),
+                      const SizedBox(height: 8),
 
                       const Text(
                         'Join Eventor and start managing your business.',
@@ -274,7 +314,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     Icon(
                                       Icons.phone_outlined,
                                       size: 21,
-                                      color: _hintColor,
+                                      color: AppIconColors.standard,
                                     ),
                                     SizedBox(width: 10),
                                     Text(
@@ -375,7 +415,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: _hintColor,
+                              color: AppIconColors.standard,
                             ),
                           ),
                         ),
@@ -431,7 +471,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: _hintColor,
+                              color: AppIconColors.standard,
                             ),
                           ),
                         ),
@@ -453,8 +493,18 @@ class _SignupScreenState extends State<SignupScreen> {
                       // ==================================
                       // CREATE ACCOUNT BUTTON
                       // ==================================
-                      SizedBox(
+                      Container(
                         height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _wine.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _signUp,
                           style: ElevatedButton.styleFrom(

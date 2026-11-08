@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AppEmptyState extends StatelessWidget {
   final IconData icon;

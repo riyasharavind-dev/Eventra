@@ -1,4 +1,4 @@
-class LegalDocumentModel {
+﻿class LegalDocumentModel {
   const LegalDocumentModel({
     required this.id,
     required this.documentType,

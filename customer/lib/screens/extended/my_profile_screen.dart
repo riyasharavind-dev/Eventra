@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -15,7 +17,15 @@ class MyProfileScreen extends StatefulWidget {
   State<MyProfileScreen> createState() => _MyProfileScreenState();
 }
 
-class _MyProfileScreenState extends State<MyProfileScreen> {
+class _MyProfileScreenState extends State<MyProfileScreen>
+    with LiveDataState<MyProfileScreen> {
+  @override
+  Set<String> get liveDatasets => {'own:customers', 'own:users'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadProfile();
+  }
+
   // =========================================================
   // REPOSITORY
   // =========================================================

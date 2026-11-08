@@ -1,3 +1,4 @@
+import '../../services/app_live_data.dart';
 import '../../widgets/legal/legal_document_content.dart';
 
 import 'package:flutter/material.dart';
@@ -20,7 +21,15 @@ class TermsAndConditionsScreen extends StatefulWidget {
       _TermsAndConditionsScreenState();
 }
 
-class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
+class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen>
+    with LiveDataState<TermsAndConditionsScreen> {
+  @override
+  Set<String> get liveDatasets => {'public:legal_documents'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _load();
+  }
+
   static const _red = Color(0xFF80152C);
   late final LegalDocumentRepository _repository;
   LegalDocumentModel? _document;
@@ -37,7 +46,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
   Future<void> _load() async {
     if (!mounted) return;
     setState(() {
-      _loading = true;
+      if (!liveRefreshing) _loading = true;
       _failed = false;
     });
     try {

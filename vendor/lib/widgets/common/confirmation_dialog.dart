@@ -17,17 +17,28 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title),
-      content: Text(message),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+      ),
+      content: Text(
+        message,
+        style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF73737D)),
+      ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(foregroundColor: const Color(0xFF73737D)),
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(cancelLabel),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF9F0101),
+            backgroundColor: const Color(0xFF80152C),
             foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(confirmLabel),

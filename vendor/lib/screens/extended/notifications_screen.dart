@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -20,10 +23,21 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, LiveDataState<NotificationsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:vendor_notifications',
+    'own:vendor_announcements',
+    'public:vendor_announcements',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load(silent: true);
+  }
+
   late final VendorNotificationsRepository repo;
   RealtimeChannel? channel;
-  Timer? debounce, reconcile;
+  Timer? reconcile;
   final rows = <VendorNotification>[];
   final opening = <String>{};
   String filter = 'all';
@@ -55,21 +69,17 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   void _scheduleRefresh() {
-    debounce?.cancel();
-    debounce = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) load(silent: true);
-    });
+    AppLiveData.instance.invalidate({'own:vendor_notifications'});
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) load(silent: true);
+    if (state == AppLifecycleState.resumed) _scheduleRefresh();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    debounce?.cancel();
     reconcile?.cancel();
     if (channel != null) unawaited(repo.stopWatching(channel!));
     super.dispose();
@@ -81,7 +91,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     final keepCount = silent ? rows.length : 0;
     if (!silent) {
       setState(() {
-        loading = true;
+        if (!liveRefreshing) loading = true;
         error = null;
       });
     }
@@ -204,12 +214,16 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircleAvatar(
-            radius: 36,
-            backgroundColor: Color(0xFFF4E6EB),
-            child: Icon(
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5E8EC),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Icon(
               Icons.notifications_none_rounded,
-              color: wine,
+              color: AppIconColors.standard,
               size: 34,
             ),
           ),
@@ -221,13 +235,17 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 ? 'No notifications yet'
                 : 'No ${filters[filter]!.toLowerCase()} yet',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF17171B),
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'Your activity and updates will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF77717A)),
+            style: TextStyle(color: Color(0xFF73737D), fontSize: 14),
           ),
         ],
       ),
@@ -237,21 +255,32 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return VendorPageScaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xFFF8F8FA),
+        surfaceTintColor: Colors.transparent,
         title: const Text(
           'Notifications',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: Color(0xFF17171B),
+          ),
         ),
         actions: [
           if (unread > 0)
-            TextButton(
-              onPressed: marking || loading ? null : markAll,
-              child: Text(
-                marking ? 'Saving…' : 'Mark all read',
-                style: const TextStyle(color: wine, fontSize: 12),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: TextButton(
+                onPressed: marking || loading ? null : markAll,
+                child: Text(
+                  marking ? 'Saving…' : 'Mark all read',
+                  style: const TextStyle(
+                    color: wine,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
         ],
@@ -259,9 +288,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       body: Column(
         children: [
           SizedBox(
-            height: 56,
+            height: 52,
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               scrollDirection: Axis.horizontal,
               children: [
                 for (final f in filters.entries)
@@ -273,12 +302,21 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       showCheckmark: false,
                       selectedColor: wine,
                       labelStyle: TextStyle(
+                        fontSize: 13,
+                        fontWeight: filter == f.key
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: filter == f.key
                             ? Colors.white
                             : const Color(0xFF615962),
                       ),
-                      side: BorderSide.none,
-                      backgroundColor: const Color(0xFFF4F2F4),
+                      side: BorderSide(
+                        color: filter == f.key ? wine : const Color(0xFFE8E5E8),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      backgroundColor: Colors.white,
                       onSelected: (_) {
                         if (filter != f.key) {
                           setState(() {
@@ -294,6 +332,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               ],
             ),
           ),
+          const SizedBox(height: 6),
           if (error != null && rows.isNotEmpty)
             TextButton.icon(
               onPressed: () => load(),

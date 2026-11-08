@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/booking_model.dart';
@@ -22,9 +23,9 @@ class MinimalBookingCalendar extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF222436),
-        muted = Color(0xFF8D90A1),
-        wine = Color(0xFF900C30);
+    const ink = Color(0xFF17171B),
+        muted = Color(0xFF73737D),
+        wine = Color(0xFF80152C);
     final locale = MaterialLocalizations.of(context);
     final first = DateTime(focusedMonth.year, focusedMonth.month);
     final last = DateTime(first.year, first.month + 1, 0);
@@ -40,7 +41,11 @@ class MinimalBookingCalendar extends StatelessWidget {
               onPressed: first.year == 2026 && first.month == 1
                   ? null
                   : () => onMonthChanged(DateTime(first.year, first.month - 1)),
-              icon: const Icon(Icons.chevron_left, size: 20, color: muted),
+              icon: const Icon(
+                Icons.chevron_left,
+                size: 20,
+                color: AppIconColors.standard,
+              ),
             ),
             Expanded(
               child: Text(
@@ -58,7 +63,11 @@ class MinimalBookingCalendar extends StatelessWidget {
               onPressed: first.year >= maxYear && first.month == 12
                   ? null
                   : () => onMonthChanged(DateTime(first.year, first.month + 1)),
-              icon: const Icon(Icons.chevron_right, size: 20, color: muted),
+              icon: const Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: AppIconColors.standard,
+              ),
             ),
           ],
         ),

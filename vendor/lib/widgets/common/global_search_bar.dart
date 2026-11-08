@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Reusable search input with a clean, compact UI.
@@ -29,10 +30,7 @@ class GlobalSearchBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: _borderColor,
-              width: 1,
-            ),
+            border: Border.all(color: _borderColor, width: 1),
           ),
           child: Center(
             child: TextField(
@@ -55,7 +53,7 @@ class GlobalSearchBar extends StatelessWidget {
                 ),
                 prefixIcon: const Icon(
                   Icons.search_rounded,
-                  color: _hintColor,
+                  color: AppIconColors.standard,
                   size: 23,
                 ),
                 prefixIconConstraints: const BoxConstraints(
@@ -68,7 +66,7 @@ class GlobalSearchBar extends StatelessWidget {
                         tooltip: clearLabel,
                         icon: const Icon(
                           Icons.close_rounded,
-                          color: _hintColor,
+                          color: AppIconColors.standard,
                           size: 19,
                         ),
                         onPressed: () {
@@ -97,10 +95,7 @@ class GlobalSearchBar extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(
-                    color: _wine,
-                    width: 1.2,
-                  ),
+                  borderSide: const BorderSide(color: _wine, width: 1.2),
                 ),
               ),
             ),

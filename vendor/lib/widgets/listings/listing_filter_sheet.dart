@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 import 'listing_ui.dart';
@@ -65,7 +66,7 @@ class ListingFilterSheet extends StatefulWidget {
 }
 
 class _ListingFilterSheetState extends State<ListingFilterSheet> {
-  static const wine = Color(0xFF850E2B);
+  static const wine = Color(0xFF80152C);
   late String chosenBusiness, chosenCategory, chosenSort, chosenStatus;
   String t(String english, String tamil) =>
       listingText(context, english, tamil);
@@ -108,10 +109,10 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
             width: 46,
             height: 46,
             decoration: const BoxDecoration(
-              color: Color(0xFFFCEEF2),
+              color: Color(0xFFF5E8EC),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: wine, size: 23),
+            child: Icon(icon, color: AppIconColors.standard, size: 23),
           ),
           const SizedBox(width: 14),
           Expanded(

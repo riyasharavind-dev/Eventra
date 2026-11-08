@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/support_model.dart';
@@ -13,7 +15,18 @@ class SupportRequestsScreen extends StatefulWidget {
   State<SupportRequestsScreen> createState() => _SupportRequestsScreenState();
 }
 
-class _SupportRequestsScreenState extends State<SupportRequestsScreen> {
+class _SupportRequestsScreenState extends State<SupportRequestsScreen>
+    with LiveDataState<SupportRequestsScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'own:support_tickets',
+    'own:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _reload();
+  }
+
   late Future<List<SupportTicket>> _future;
   @override
   void initState() {

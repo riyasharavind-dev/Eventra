@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/admin_module.dart';
@@ -17,7 +19,15 @@ class AdminCustomerAppScreen extends StatefulWidget {
   State<AdminCustomerAppScreen> createState() => _AdminCustomerAppScreenState();
 }
 
-class _AdminCustomerAppScreenState extends State<AdminCustomerAppScreen> {
+class _AdminCustomerAppScreenState extends State<AdminCustomerAppScreen>
+    with LiveDataState<AdminCustomerAppScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:support_settings'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _refresh();
+  }
+
   late Future<AdminPage> _contacts;
   @override
   void initState() {

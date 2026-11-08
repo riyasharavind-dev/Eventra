@@ -1,3 +1,8 @@
+import '../services/app_live_data.dart';
+import 'dart:async';
+
+import 'recommendation_repository.dart';
+
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +49,18 @@ class SavedServicesRepository {
       entries.map((entry) => jsonEncode(entry.toMap())).toList(),
     )) {
       throw StateError('Unable to save this service. Please retry.');
+    }
+    AppLiveData.instance.invalidate({'local_saved_services'});
+    // Local persistence remains the source of truth; discovery sync is best effort.
+    try {
+      final recommendations = RecommendationRepository();
+      if (recommendations.db.auth.currentUser?.id == _userId) {
+        unawaited(
+          recommendations.signal(service.id, saved ? 'save' : 'unsave'),
+        );
+      }
+    } catch (_) {
+      /* Supabase may be unavailable during offline-only usage. */
     }
   }
 }

@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,7 +12,15 @@ class CustomersScreen extends StatefulWidget {
   State<CustomersScreen> createState() => _CustomersScreenState();
 }
 
-class _CustomersScreenState extends State<CustomersScreen> {
+class _CustomersScreenState extends State<CustomersScreen>
+    with LiveDataState<CustomersScreen> {
+  @override
+  Set<String> get liveDatasets => {'admin:customers'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _loadCustomers();
+  }
+
   final SupabaseClient _supabase = Supabase.instance.client;
 
   final TextEditingController _searchController = TextEditingController();
@@ -44,15 +54,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
+      if (!liveRefreshing) _isLoading = true;
       _errorMessage = null;
     });
 
     try {
       final response = await _supabase
           .from('customers')
-          .select(
-            '''
+          .select('''
             id,
             name,
             email,
@@ -63,15 +72,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
             address,
             latitude,
             longitude
-            ''',
-          )
+            ''')
           .order('created_at', ascending: false);
 
       final List<dynamic> rows = response as List<dynamic>;
 
       final List<AuthModel> customers = rows.map((row) {
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(row as Map);
+        final Map<String, dynamic> data = Map<String, dynamic>.from(row as Map);
 
         // customers table doesn't need a role column.
         // Admin screen knows these records are customers.
@@ -140,9 +147,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Customer'),
-          content: Text(
-            'Are you sure you want to delete ${customer.name}?',
-          ),
+          content: Text('Are you sure you want to delete ${customer.name}?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -151,9 +156,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
                 Navigator.pop(context, true);
               },
@@ -167,17 +170,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (confirmed != true) return;
 
     try {
-      await _supabase
-          .from('customers')
-          .delete()
-          .eq('id', customer.id);
+      await _supabase.from('customers').delete().eq('id', customer.id);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${customer.name} deleted successfully'),
-        ),
+        SnackBar(content: Text('${customer.name} deleted successfully')),
       );
 
       await _loadCustomers();
@@ -257,29 +255,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 17,
-            color: Colors.grey.shade600,
-          ),
+          Icon(icon, size: 17, color: Colors.grey.shade600),
           const SizedBox(width: 8),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: TextStyle(
-                  color: Colors.grey.shade800,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 13),
                 children: [
                   TextSpan(
                     text: '$label: ',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  TextSpan(
-                    text: value,
-                  ),
+                  TextSpan(text: value),
                 ],
               ),
             ),
@@ -306,9 +293,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: Colors.grey.shade200,
-        ),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -379,10 +364,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.delete_outline,
-                              color: Colors.red,
-                            ),
+                            Icon(Icons.delete_outline, color: Colors.red),
                             SizedBox(width: 10),
                             Text('Delete'),
                           ],
@@ -403,7 +385,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
             // --------------------------------------------------
             // INFORMATION
             // --------------------------------------------------
-
             _infoRow(
               icon: Icons.email_outlined,
               label: 'Email',
@@ -442,7 +423,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
             // --------------------------------------------------
             // USER ID
             // --------------------------------------------------
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(10),
@@ -452,10 +432,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ),
               child: Text(
                 'ID: ${customer.id}',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
               ),
             ),
           ],
@@ -493,10 +470,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
           Text(
             searching ? 'No customers found' : 'No customers yet',
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 8),
@@ -505,10 +479,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
             searching
                 ? 'Try a different search term.'
                 : 'Customers will appear here after registration.',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           ),
         ],
       ),
@@ -545,9 +516,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Container(
             height: 72,
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF6DEDE),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFFF6DEDE)),
             child: Row(
               children: [
                 IconButton(
@@ -562,10 +531,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                 const Text(
                   'Customers',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
 
                 const Spacer(),
@@ -573,10 +539,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 IconButton(
                   tooltip: 'Refresh',
                   onPressed: _loadCustomers,
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Color(0xFFC00000),
-                  ),
+                  icon: const Icon(Icons.refresh, color: Color(0xFFC00000)),
                 ),
               ],
             ),
@@ -585,7 +548,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
           // ====================================================
           // CONTENT
           // ====================================================
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -657,9 +619,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
-                          ),
+                          border: Border.all(color: Colors.grey.shade200),
                         ),
                         child: IconButton(
                           onPressed: _loadCustomers,
@@ -677,7 +637,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   // ------------------------------------------------
                   // SEARCH
                   // ------------------------------------------------
-
                   TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
@@ -699,21 +658,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade200,
-                        ),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade200,
-                        ),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFC00000),
-                        ),
+                        borderSide: const BorderSide(color: Color(0xFFC00000)),
                       ),
                     ),
                   ),
@@ -723,7 +676,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   // ------------------------------------------------
                   // BODY
                   // ------------------------------------------------
-
                   Expanded(
                     child: _isLoading
                         ? const Center(
@@ -732,83 +684,74 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             ),
                           )
                         : _errorMessage != null
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      size: 48,
-                                      color: Colors.red,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const Text(
-                                      'Unable to load customers',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _errorMessage!,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    FilledButton.icon(
-                                      onPressed: _loadCustomers,
-                                      icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry'),
-                                    ),
-                                  ],
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Colors.red,
                                 ),
-                              )
-                            : _filteredCustomers.isEmpty
-                                ? _emptyState()
-                                : LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      int crossAxisCount;
-
-                                      if (constraints.maxWidth >= 1500) {
-                                        crossAxisCount = 4;
-                                      } else if (constraints.maxWidth >= 1050) {
-                                        crossAxisCount = 3;
-                                      } else if (constraints.maxWidth >= 700) {
-                                        crossAxisCount = 2;
-                                      } else {
-                                        crossAxisCount = 1;
-                                      }
-
-                                      return GridView.builder(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 24,
-                                        ),
-                                        gridDelegate:
-                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount:
-                                              crossAxisCount,
-                                          crossAxisSpacing: 18,
-                                          mainAxisSpacing: 18,
-                                          childAspectRatio:
-                                              crossAxisCount == 1
-                                                  ? 1.8
-                                                  : 1.05,
-                                        ),
-                                        itemCount:
-                                            _filteredCustomers.length,
-                                        itemBuilder:
-                                            (context, index) {
-                                          return _customerCard(
-                                            _filteredCustomers[index],
-                                          );
-                                        },
-                                      );
-                                    },
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Unable to load customers',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                                const SizedBox(height: 18),
+                                FilledButton.icon(
+                                  onPressed: _loadCustomers,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _filteredCustomers.isEmpty
+                        ? _emptyState()
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              int crossAxisCount;
+
+                              if (constraints.maxWidth >= 1500) {
+                                crossAxisCount = 4;
+                              } else if (constraints.maxWidth >= 1050) {
+                                crossAxisCount = 3;
+                              } else if (constraints.maxWidth >= 700) {
+                                crossAxisCount = 2;
+                              } else {
+                                crossAxisCount = 1;
+                              }
+
+                              return GridView.builder(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: crossAxisCount,
+                                      crossAxisSpacing: 18,
+                                      mainAxisSpacing: 18,
+                                      childAspectRatio: crossAxisCount == 1
+                                          ? 1.8
+                                          : 1.05,
+                                    ),
+                                itemCount: _filteredCustomers.length,
+                                itemBuilder: (context, index) {
+                                  return _customerCard(
+                                    _filteredCustomers[index],
+                                  );
+                                },
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),

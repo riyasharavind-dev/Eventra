@@ -1,3 +1,5 @@
+import '../services/app_live_data.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -24,7 +26,15 @@ class FollowUsSection extends StatefulWidget {
   State<FollowUsSection> createState() => _FollowUsSectionState();
 }
 
-class _FollowUsSectionState extends State<FollowUsSection> {
+class _FollowUsSectionState extends State<FollowUsSection>
+    with LiveDataState<FollowUsSection> {
+  @override
+  Set<String> get liveDatasets => {'public:social_links'};
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await _refresh();
+  }
+
   List<SocialLinkModel> _links = SocialLinksRepository.cachedLinks;
   bool _opening = false;
   int _generation = 0;

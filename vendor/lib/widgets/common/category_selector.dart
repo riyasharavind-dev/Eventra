@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
 import 'app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -100,34 +102,56 @@ class CategorySelector extends StatelessWidget {
 
     return InkWell(
       onTap: enabled ? () => _openCategoryExplorer(context) : null,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(14),
       child: InputDecorator(
         decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          prefixIcon: const Icon(Icons.category_outlined),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE8E5E8)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE8E5E8)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.5),
+          ),
+          prefixIcon: const Icon(
+            Icons.category_outlined,
+            color: AppIconColors.standard,
+          ),
           suffixIcon: Icon(
             Icons.chevron_right,
-            color: enabled ? null : Colors.grey.shade400,
+            color: enabled ? const Color(0xFF73737D) : Colors.grey.shade400,
           ),
         ),
         child: selected == null
             ? const Text(
                 'Browse categories',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: Color(0xFF73737D)),
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     selected['name']?.toString() ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF17171B),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _buildCategoryPath(selected['id'].toString()),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF73737D),
+                    ),
                   ),
                 ],
               ),

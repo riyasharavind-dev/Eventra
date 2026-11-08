@@ -1,3 +1,4 @@
+import 'services/app_live_data.dart';
 import 'repositories/auth_repository.dart';
 import 'widgets/account_role_gate.dart';
 
@@ -65,6 +66,10 @@ class EventorCustomerApp extends StatelessWidget {
       animation: settings,
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
+        builder: (context, child) => AppLiveDataHost(
+          client: Supabase.instance.client,
+          child: child ?? const SizedBox.shrink(),
+        ),
         title: 'Eventor Customer',
         locale: Locale(settings.value.languageCode),
         supportedLocales: const [Locale('en'), Locale('ta')],
@@ -241,7 +246,10 @@ class _CustomerEntryScreenState extends State<CustomerEntryScreen> {
     // ====================================================
 
     if (session != null) {
-      return const AccountRoleGate(child: CustomerMainScreen());
+      return AccountRoleGate(
+        key: ValueKey(Supabase.instance.client.auth.currentUser?.id),
+        child: const CustomerMainScreen(),
+      );
     }
 
     // ====================================================

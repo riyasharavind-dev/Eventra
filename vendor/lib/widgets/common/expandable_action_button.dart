@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
+
+import '../../services/vendor_navigation_controller.dart';
 import 'app_shimmer.dart';
 
 import 'dart:math' as math;
@@ -58,104 +61,148 @@ class _ExpandableActionButtonState extends State<ExpandableActionButton> {
     int? selected;
     bool choosing = false;
     try {
-      selected = await showGeneralDialog<int>(
-        context: context,
+      final route = RawDialogRoute<int>(
+        settings: const RouteSettings(
+          name: VendorNavigationController.floatingActionsRouteName,
+        ),
         barrierDismissible: true,
         barrierLabel: MaterialLocalizations.of(context)
             .modalBarrierDismissLabel,
         barrierColor: Colors.transparent,
         transitionDuration: reduceMotion
             ? Duration.zero
-            : const Duration(milliseconds: 240),
+            : const Duration(milliseconds: 520),
         pageBuilder: (context, animation, secondaryAnimation) =>
             const SizedBox.shrink(),
         transitionBuilder: (context, animation, secondaryAnimation, child) =>
-            Stack(
-              children: [
-                Positioned(
-                  right: right,
-                  bottom: bottom,
-                  width: math.min(240, overlayBox.size.width - 32),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: maxHeight),
-                    child: SingleChildScrollView(
-                      reverse: true,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(actions.length, (index) {
-                          final action = actions[index];
-                          // The board closest to the button appears first.
-                          final start =
-                              (actions.length - 1 - index) /
-                              actions.length *
-                              0.35;
-                          final progress = Curves.easeOutCubic.transform(
-                            ((animation.value - start) / (1 - start)).clamp(
-                              0.0,
-                              1.0,
-                            ),
-                          );
-                          return Opacity(
-                            opacity: progress,
-                            child: Transform.translate(
-                              offset: Offset(0, 14 * (1 - progress)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Material(
-                                  color: Colors.white,
-                                  elevation: 5,
-                                  shadowColor: const Color(0x33000000),
-                                  borderRadius: BorderRadius.circular(12),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: InkWell(
-                                    onTap: () {
-                                      if (choosing) {
-                                        return;
-                                      }
-                                      choosing = true;
-                                      Navigator.pop(context, index);
-                                    },
+            AnimatedBuilder(
+              animation: animation,
+              builder: (context, _) => Stack(
+                children: [
+                  Positioned(
+                    right: right,
+                    bottom: bottom,
+                    width: math.min(240, overlayBox.size.width - 32),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxHeight),
+                      child: SingleChildScrollView(
+                        reverse: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(actions.length, (index) {
+                            final action = actions[index];
+                            // The board closest to the button appears first.
+                            final rank = actions.length - 1 - index;
+                            final start = actions.length <= 1
+                                ? 0.0
+                                : rank / (actions.length - 1) * 0.22;
+                            final progress = Curves.easeInOutSine.transform(
+                              ((animation.value - start) / (1 - start)).clamp(
+                                0.0,
+                                1.0,
+                              ),
+                            );
+                            return IgnorePointer(
+                              ignoring:
+                                  progress < 0.85 ||
+                                  animation.status == AnimationStatus.reverse,
+                              child: Opacity(
+                                opacity: progress,
+                                child: Transform.translate(
+                                  offset: Offset(
+                                    0,
+                                    (64.0 + rank * 62) * (1 - progress),
+                                  ),
+                                  child: Transform.scale(
+                                    scale: 0.88 + 0.12 * progress,
+                                    alignment: Alignment.bottomRight,
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 14,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            action.icon,
-                                            color: widget.color,
-                                            size: 21,
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
                                           ),
-                                          const SizedBox(width: 12),
-                                          Flexible(
-                                            child: Text(
-                                              action.label,
-                                              style: const TextStyle(
-                                                color: Color(0xFF282837),
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
+                                          border: Border.all(
+                                            color: const Color(0xFFF0EDF0),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF80152C)
+                                                  .withValues(alpha: 0.08),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: InkWell(
+                                            onTap: () {
+                                              if (choosing) {
+                                                return;
+                                              }
+                                              choosing = true;
+                                              Navigator.pop(context, index);
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 14,
+                                                  ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    action.icon,
+                                                    color:
+                                                        AppIconColors.standard,
+                                                    size: 21,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Flexible(
+                                                    child: Text(
+                                                      action.label,
+                                                      style: const TextStyle(
+                                                        color: Color(
+                                                          0xFF282837,
+                                                        ),
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
       );
+      selected = await navigator.push<int>(route);
+      // Let the boards finish closing before opening an editor screen.
+      await route.completed;
     } finally {
       if (mounted) setState(() => open = false);
     }
@@ -180,8 +227,8 @@ class _ExpandableActionButtonState extends State<ExpandableActionButton> {
             turns: open ? 0.125 : 0,
             duration: MediaQuery.disableAnimationsOf(context)
                 ? Duration.zero
-                : const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
+                : const Duration(milliseconds: 300),
+            curve: Curves.easeInOutCubicEmphasized,
             child: const Icon(Icons.add_rounded, size: 30),
           ),
   );

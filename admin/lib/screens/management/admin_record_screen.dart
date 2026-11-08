@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -28,7 +30,24 @@ class AdminRecordScreen extends StatefulWidget {
   State<AdminRecordScreen> createState() => _AdminRecordScreenState();
 }
 
-class _AdminRecordScreenState extends State<AdminRecordScreen> {
+class _AdminRecordScreenState extends State<AdminRecordScreen>
+    with LiveDataState<AdminRecordScreen> {
+  @override
+  bool get liveCanRefresh => !busy;
+  @override
+  Set<String> get liveDatasets => {
+    'admin:${widget.module.name}',
+    for (final f in widget.module.fields)
+      if (f.referenceTable != null) 'admin:${f.referenceTable}',
+    'admin:service_reviews',
+    'admin:booking_status_history',
+    'admin:support_messages',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    await load();
+  }
+
   AdminRecord? row;
   bool loading = true, busy = false;
   Object? error;
@@ -40,7 +59,7 @@ class _AdminRecordScreenState extends State<AdminRecordScreen> {
 
   Future<void> load() async {
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       error = null;
     });
     try {
@@ -805,7 +824,21 @@ class _Conversation extends StatefulWidget {
   State<_Conversation> createState() => _ConversationState();
 }
 
-class _ConversationState extends State<_Conversation> {
+class _ConversationState extends State<_Conversation>
+    with LiveDataState<_Conversation> {
+  @override
+  Set<String> get liveDatasets => {
+    'admin:support_messages',
+    'admin:support_tickets',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    setState(() {
+      messages = fetch();
+    });
+    await messages;
+  }
+
   late Future<AdminPage> messages;
   @override
   void initState() {

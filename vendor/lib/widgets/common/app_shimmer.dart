@@ -97,7 +97,7 @@ class AppShimmerIndicator extends StatelessWidget {
       width: 26,
       height: 20,
       child: AppShimmer(
-        color: color,
+        color: color ?? const Color(0xFF80152C),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -126,7 +126,7 @@ class ShimmerLoadingBar extends StatelessWidget {
     label: 'Loading',
     liveRegion: true,
     child: AppShimmer(
-      color: color,
+      color: color ?? const Color(0xFF80152C),
       child: SkeletonBox(
         width: double.infinity,
         height: math.max(minHeight, 3),

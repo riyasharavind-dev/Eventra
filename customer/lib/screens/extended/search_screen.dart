@@ -1,3 +1,5 @@
+import '../../services/app_live_data.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -22,7 +24,25 @@ class CustomerSearchScreen extends StatefulWidget {
   State<CustomerSearchScreen> createState() => _CustomerSearchScreenState();
 }
 
-class _CustomerSearchScreenState extends State<CustomerSearchScreen> {
+class _CustomerSearchScreenState extends State<CustomerSearchScreen>
+    with LiveDataState<CustomerSearchScreen> {
+  @override
+  Set<String> get liveDatasets => {
+    'public:services',
+    'public:businesses',
+    'public:vendors',
+    'public:category_nodes',
+    'public:event_types',
+  };
+  @override
+  Future<void> onLiveData(Set<String> changed) async {
+    if (submitted && query.length >= 2) {
+      await _fetch(++generation);
+    } else {
+      await _loadBrowse();
+    }
+  }
+
   late final CustomerSearchRepository repo;
   late final CustomerSearchHistoryRepository historyRepo;
   final input = TextEditingController();
@@ -144,7 +164,7 @@ class _CustomerSearchScreenState extends State<CustomerSearchScreen> {
       results = [];
       more = false;
       failed = false;
-      loading = true;
+      if (!liveRefreshing) loading = true;
     });
     if (scroll.hasClients) scroll.jumpTo(0);
     _editHistory(historyRepo.remember(value));
@@ -159,7 +179,7 @@ class _CustomerSearchScreenState extends State<CustomerSearchScreen> {
       results = [];
       failed = false;
       more = false;
-      loading = true;
+      if (!liveRefreshing) loading = true;
     });
     if (scroll.hasClients) scroll.jumpTo(0);
     _fetch(request);
@@ -168,7 +188,7 @@ class _CustomerSearchScreenState extends State<CustomerSearchScreen> {
   Future<void> _fetch(int request, {bool append = false}) async {
     if (!mounted || request != generation) return;
     setState(() {
-      loading = true;
+      if (!liveRefreshing) loading = true;
       failed = false;
     });
     final activeQuery = query, activeKind = kind;

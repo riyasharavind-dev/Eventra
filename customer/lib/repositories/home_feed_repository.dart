@@ -63,12 +63,13 @@ class HomeFeedController extends ChangeNotifier {
       _replaceOnSuccess = false;
   Object? error;
   double? lat, lng;
-  int _offset = 0, _generation = 0;
+  int _offset = 0, _generation = 0, _restoreOffset = 0;
   void emit() {
     if (!_disposed) notifyListeners();
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool keepWindow = false}) async {
+    _restoreOffset = keepWindow ? _offset : 0;
     final request = ++_generation;
     _replaceOnSuccess = true;
     loading = true;
@@ -109,7 +110,8 @@ class HomeFeedController extends ChangeNotifier {
               .map((e) => HomeFeedSection(Map<String, dynamic>.from(e as Map)))
               .where((s) => s.items.isNotEmpty),
         );
-      } while (fresh.isEmpty && hasMore);
+      } while (hasMore &&
+          (fresh.isEmpty || (reset && _offset < _restoreOffset)));
       if (reset || _replaceOnSuccess) {
         sections.clear();
         _replaceOnSuccess = false;
