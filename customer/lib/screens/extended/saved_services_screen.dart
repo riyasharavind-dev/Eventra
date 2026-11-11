@@ -1,3 +1,5 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import '../../widgets/common/app_empty_state.dart';
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
@@ -19,12 +21,14 @@ class _SavedServicesScreenState extends State<SavedServicesScreen>
   @override
   Set<String> get liveDatasets => {
     'public:services',
+    'own:customer_service_collections',
     'public:businesses',
     'public:vendors',
     'local_saved_services',
   };
   @override
   Future<void> onLiveData(Set<String> changed) async {
+    await _repo.getSaved(refresh: true);
     await _load();
   }
 
@@ -74,8 +78,13 @@ class _SavedServicesScreenState extends State<SavedServicesScreen>
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to remove saved service. Please retry.'),
+          SnackBar(
+            content: Text(
+              AppSettingsScope.translate(
+                context,
+                "customer.unable_to_remove_saved_service_please_retry.443bc419",
+              ),
+            ),
           ),
         );
       }
@@ -116,62 +125,146 @@ class _SavedServicesScreenState extends State<SavedServicesScreen>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Saved Services')),
+    backgroundColor: const Color(0xFFF8F8FA),
+    appBar: AppBar(
+      centerTitle: true,
+      title: Text(
+        AppSettingsScope.translate(context, "customer.saved_services.433e4634"),
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
+          color: Color(0xFF17171B),
+        ),
+      ),
+      backgroundColor: const Color(0xFFF8F8FA),
+      elevation: 0,
+    ),
     body: FutureBuilder<List<ServiceModel>>(
       future: _future,
       builder: (context, snapshot) {
         if (!snapshot.hasData && !snapshot.hasError) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF80152C)),
+          );
         }
         if (snapshot.hasError) {
           return Center(
-            child: TextButton(
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF80152C),
+              ),
               onPressed: _load,
-              child: const Text('Unable to load. Retry'),
+              icon: const Icon(Icons.refresh),
+              label: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "customer.unable_to_load_retry.007ee6bc",
+                ),
+              ),
             ),
           );
         }
         final rows = snapshot.data ?? [];
         return RefreshIndicator(
+          color: const Color(0xFF80152C),
           onRefresh: _load,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
-                'Saved on this device for your account. Tap the heart on a service to save it.',
+              Text(
+                AppSettingsScope.translate(
+                  context,
+                  "customer.saved_on_this_device_for_your_account_tap_the.30fe77e0",
+                ),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF73737D),
+                ),
               ),
               const SizedBox(height: 16),
               if (rows.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('No saved services yet.'),
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: AppEmptyState(
+                    icon: Icons.favorite_border_rounded,
+                    title: AppSettingsScope.translate(
+                      context,
+                      "customer.no_saved_services_yet.d842f6a0",
+                    ),
+                    message: 'Tap the heart icon on any service to save it here for quick access.',
+                  ),
                 ),
               for (final service in rows)
-                Card(
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFF0EDF0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF80152C).withValues(alpha: 0.04),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(12),
                     leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                       child: service.gallery.isEmpty
-                          ? const SizedBox(
-                              width: 56,
-                              height: 56,
-                              child: Icon(Icons.event_outlined),
+                          ? Container(
+                              width: 60,
+                              height: 60,
+                              color: const Color(0xFFF5E8EC),
+                              child: const Icon(
+                                Icons.event_outlined,
+                                color: Color(0xFF80152C),
+                              ),
                             )
                           : Image.network(
                               service.gallery.first,
-                              width: 56,
-                              height: 56,
+                              width: 60,
+                              height: 60,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, error, stack) =>
-                                  const Icon(Icons.image_outlined),
+                              errorBuilder: (_, error, stack) => Container(
+                                width: 60,
+                                height: 60,
+                                color: const Color(0xFFF5E8EC),
+                                child: const Icon(
+                                  Icons.image_outlined,
+                                  color: Color(0xFF80152C),
+                                ),
+                              ),
                             ),
                     ),
-                    title: Text(service.name),
-                    subtitle: Text('₹${service.price.toStringAsFixed(0)}'),
+                    title: Text(
+                      service.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF17171B),
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '₹${service.price.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF80152C),
+                        ),
+                      ),
+                    ),
                     trailing: IconButton(
-                      tooltip: 'Remove saved service',
+                      tooltip: AppSettingsScope.translate(
+                        context,
+                        "customer.remove_saved_service.37d31798",
+                      ),
                       icon: const Icon(
                         Icons.favorite,
                         color: Color(0xFF80152C),

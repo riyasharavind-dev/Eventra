@@ -1,56 +1,40 @@
-﻿import 'package:flutter/material.dart';
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
 
-class ServiceDescriptionSection
-    extends StatelessWidget {
+class ServiceDescriptionSection extends StatelessWidget {
+  const ServiceDescriptionSection({super.key, required this.service});
   final ServiceModel service;
-
-  const ServiceDescriptionSection({
-    super.key,
-    required this.service,
-  });
 
   @override
   Widget build(BuildContext context) {
-    final String description =
-        service.description?.trim() ?? '';
-
-    if (description.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+    final description = service.description?.trim() ?? '';
     return Container(
+      width: double.infinity,
       color: Colors.white,
-      margin: const EdgeInsets.only(
-        top: 8,
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        18,
-        16,
-        20,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'About this service',
-            style: TextStyle(
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "customer.about_this_service.58830b1a",
+            ),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
+              color: Color(0xFF17171B),
             ),
           ),
-
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 7),
           Text(
-            description,
-            style: TextStyle(
+            description.isEmpty ? 'No description added yet.' : description,
+            style: const TextStyle(
               fontSize: 14,
-              height: 1.6,
-              color: Colors.grey.shade700,
+              height: 1.5,
+              color: Color(0xFF73737D),
             ),
           ),
         ],

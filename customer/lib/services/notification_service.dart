@@ -1,4 +1,6 @@
-﻿import 'dart:async';
+import 'customer_notification_router.dart';
+
+import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +14,8 @@ class NotificationService {
   static final instance = NotificationService._();
   final _supabase = Supabase.instance.client;
   StreamSubscription<String>? _tokenRefresh;
-  StreamSubscription<RemoteMessage>? _foreground;
+  StreamSubscription<RemoteMessage>? _foreground, _opened;
+  bool _initialMessageRead = false;
   Future<bool>? _inFlight;
   String? _initializedUser;
   bool _enabled = false;
@@ -59,10 +62,11 @@ class NotificationService {
       return false;
     }
     await messaging.setAutoInitEnabled(true);
+    // The in-app banner handles foreground messages on both platforms.
     await messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
+      alert: false,
       badge: true,
-      sound: true,
+      sound: false,
     );
     final token = await messaging.getToken();
     if (generation != _generation || _supabase.auth.currentUser?.id != userId) {
@@ -96,8 +100,29 @@ class NotificationService {
       }
     });
     _foreground = FirebaseMessaging.onMessage.listen((message) {
-      if (_enabled) debugPrint('Eventor customer notification received.');
+      if (_enabled && _supabase.auth.currentUser?.id == userId) {
+        CustomerNotificationRouter.foreground(
+          message.data,
+          message.notification?.title,
+          message.notification?.body,
+        );
+      }
     });
+    await _opened?.cancel();
+    _opened = FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if (_enabled && _supabase.auth.currentUser?.id == userId) {
+        unawaited(CustomerNotificationRouter.open(message.data));
+      }
+    });
+    if (!_initialMessageRead) {
+      _initialMessageRead = true;
+      final initial = await messaging.getInitialMessage();
+      if (initial != null &&
+          _enabled &&
+          _supabase.auth.currentUser?.id == userId) {
+        unawaited(CustomerNotificationRouter.open(initial.data));
+      }
+    }
     return true;
   }
 
@@ -121,6 +146,8 @@ class NotificationService {
     await _foreground?.cancel();
     _tokenRefresh = null;
     _foreground = null;
+    await _opened?.cancel();
+    _opened = null;
     if (!_supported) return;
     // Finish any older registration before disabling SDK auto-init and deleting
     // the token; otherwise a late registration can turn auto-init back on.
@@ -195,5 +222,7 @@ class NotificationService {
     await _foreground?.cancel();
     _tokenRefresh = null;
     _foreground = null;
+    await _opened?.cancel();
+    _opened = null;
   }
 }

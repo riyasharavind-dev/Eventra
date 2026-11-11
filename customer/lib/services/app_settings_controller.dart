@@ -1,4 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import '../l10n/customer_strings.dart';
+import 'customer_localization.dart';
+
+import 'package:flutter/material.dart';
 
 import '../models/app_settings_model.dart';
 import '../repositories/app_settings_repository.dart';
@@ -7,6 +10,7 @@ import 'notification_service.dart';
 class AppSettingsController extends ChangeNotifier {
   AppSettingsController({
     required AppSettingsModel initial,
+    this.localization,
     AppSettingsRepository? repository,
     Future<bool> Function()? enableNotifications,
     Future<void> Function()? disableNotifications,
@@ -15,7 +19,26 @@ class AppSettingsController extends ChangeNotifier {
        _repository = repository ?? AppSettingsRepository(),
        _enable = enableNotifications,
        _disable = disableNotifications,
-       _permission = notificationPermission;
+       _permission = notificationPermission {
+    localization?.addListener(notifyListeners);
+  }
+  @override
+  void dispose() {
+    localization?.removeListener(notifyListeners);
+    super.dispose();
+  }
+
+  final CustomerLocalization? localization;
+  String tr(String key, {Map<String, Object?> args = const {}}) =>
+      localization?.tr(key, args: args) ?? _fallback(key, args);
+  String _fallback(String key, Map<String, Object?> args) {
+    var value = customerEnglishStrings[key] ?? key;
+    return value.replaceAllMapped(
+      RegExp(r'\{([A-Za-z][A-Za-z0-9_]*)\}'),
+      (m) => args[m[1]]?.toString() ?? '?',
+    );
+  }
+
   final AppSettingsRepository _repository;
   final Future<bool> Function()? _enable;
   final Future<void> Function()? _disable;
@@ -25,7 +48,12 @@ class AppSettingsController extends ChangeNotifier {
   bool _busy = false;
   bool get busy => _busy;
   bool get tamil => _value.languageCode == 'ta';
-  String text(String english, String tamilText) => tamil ? tamilText : english;
+  String text(String english, String tamilText) {
+    final translated = localization?.source(english);
+    if (translated != null && translated != english) return translated;
+    return tamil ? tamilText : english;
+  }
+
   Future<void> disablePush() =>
       _disable?.call() ??
       NotificationService.instance.removeToken(reportFailure: true);
@@ -102,7 +130,9 @@ class AppSettingsController extends ChangeNotifier {
     _busy = true;
     notifyListeners();
     try {
+      final pack = await localization?.prepare(code);
       await _repository.saveLanguage(code);
+      localization?.activate(code, pack);
       _value = _value.copyWith(languageCode: code);
     } finally {
       _busy = false;
@@ -124,6 +154,21 @@ class AppSettingsScope extends InheritedNotifier<AppSettingsController> {
     required AppSettingsController controller,
     required super.child,
   }) : super(notifier: controller);
+  static String translate(
+    BuildContext context,
+    String key, {
+    Map<String, Object?> args = const {},
+  }) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<AppSettingsScope>();
+    if (scope != null) return scope.notifier!.tr(key, args: args);
+    final fallback = customerEnglishStrings[key] ?? key;
+    return fallback.replaceAllMapped(
+      RegExp(r'\{([A-Za-z][A-Za-z0-9_]*)\}'),
+      (m) => args[m[1]]?.toString() ?? '?',
+    );
+  }
+
   static AppSettingsController of(BuildContext context) {
     final scope = context
         .dependOnInheritedWidgetOfExactType<AppSettingsScope>();

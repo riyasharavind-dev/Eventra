@@ -1,3 +1,5 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
@@ -108,7 +110,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Unable to open ${email ? 'email' : 'WhatsApp'}. Please submit a support request instead.',
+              AppSettingsScope.translate(
+                context,
+                "customer.unable_to_open_value0_please_submit_a_support.03be8957",
+                args: {"value0": email ? 'email' : 'WhatsApp'},
+              ),
             ),
           ),
         );
@@ -144,14 +150,26 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  email ? Icons.mail_outline : Icons.chat_bubble_outline,
-                  color: supportWine,
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5E8EC),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    email ? Icons.mail_outline : Icons.chat_bubble_outline,
+                    color: supportWine,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   email ? 'Email support' : 'WhatsApp support',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF17171B),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -163,7 +181,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                   style: const TextStyle(
                     fontSize: 12,
                     height: 1.5,
-                    color: Color(0xFF6F6F7A),
+                    color: Color(0xFF73737D),
                   ),
                 ),
               ],
@@ -189,12 +207,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     return Scaffold(
       backgroundColor: supportBackground,
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: Text(
+          AppSettingsScope.translate(context, "customer.help_support.1f8ecc24"),
+        ),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         actions: [
           IconButton(
-            tooltip: 'Refresh support',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "customer.refresh_support.74fe6d06",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -209,12 +232,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Unable to load support. Check your connection and try again.',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "customer.unable_to_load_support_check_your_connection_.15ccd2b3",
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                    FilledButton(
+                      onPressed: _load,
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.retry.942087cc",
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -225,8 +259,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const Text(
-                    'EVENTOR CUSTOMER SUPPORT',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.eventor_customer_support.f34f7c16",
+                    ),
                     style: TextStyle(
                       color: supportWine,
                       fontSize: 11,
@@ -235,29 +272,48 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'How can we help?',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.how_can_we_help.7b56e0d0",
+                    ),
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Find an answer or reach out to our team.',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.find_an_answer_or_reach_out_to_our_team.8d7018c7",
+                    ),
                     style: TextStyle(color: Color(0xFF6F6F7A)),
                   ),
                   const SizedBox(height: 22),
                   TextField(
                     onChanged: (value) => setState(() => _search = value),
                     decoration: InputDecoration(
-                      hintText: 'Search questions or topics…',
-                      prefixIcon: const Icon(Icons.search),
+                      hintText: AppSettingsScope.translate(
+                        context,
+                        "customer.search_questions_or_topics.80db7c0a",
+                      ),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF73737D)),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
                       ),
                     ),
                   ),
-                  _section('Frequently asked questions'),
+                  _section(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.frequently_asked_questions.e956a940",
+                    ),
+                  ),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -266,7 +322,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                           (category) => ChoiceChip(
                             label: Text(category),
                             selected: _category == category,
-                            selectedColor: const Color(0xFFFBEAEA),
+                            selectedColor: const Color(0xFFF5E8EC),
+                            side: BorderSide(
+                              color: _category == category
+                                  ? supportWine
+                                  : const Color(0xFFF0EDF0),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            labelStyle: TextStyle(
+                              color: _category == category
+                                  ? supportWine
+                                  : const Color(0xFF17171B),
+                              fontWeight: _category == category
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
+                            ),
                             onSelected: (_) =>
                                 setState(() => _category = category),
                           ),
@@ -276,10 +348,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                   const SizedBox(height: 12),
                   supportPanel(
                     filtered.isEmpty
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(20),
                             child: Text(
-                              'No matching questions. Try another search or report an issue.',
+                              AppSettingsScope.translate(
+                                context,
+                                "customer.no_matching_questions_try_another_search_or_r.0c5c7f29",
+                              ),
                             ),
                           )
                         : Column(
@@ -322,7 +397,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                                 .toList(),
                           ),
                   ),
-                  _section('Need a little more help?'),
+                  _section(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.need_a_little_more_help.12e7b448",
+                    ),
+                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -332,41 +412,81 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Material(
-                    color: const Color(0xFFFBEAEA),
-                    borderRadius: BorderRadius.circular(16),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.help_outline,
-                        color: supportWine,
-                      ),
-                      title: const Text(
-                        'Report an issue',
-                        style: TextStyle(
-                          color: supportWine,
-                          fontWeight: FontWeight.w700,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5E8EC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFF2D1DC)),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.help_outline,
+                            color: supportWine,
+                            size: 22,
+                          ),
                         ),
+                        title: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "customer.report_an_issue.635ae219",
+                          ),
+                          style: const TextStyle(
+                            color: supportWine,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                        subtitle: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "customer.tell_us_what_went_wrong.fb62f1c4",
+                          ),
+                          style: const TextStyle(
+                            color: Color(0xFF73737D),
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, color: Color(0xFF73737D)),
+                        onTap: () =>
+                            _open(ContactSupportScreen(repository: _repository)),
                       ),
-                      subtitle: const Text('Tell us what went wrong'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () =>
-                          _open(ContactSupportScreen(repository: _repository)),
                     ),
                   ),
                   _section(
-                    'My support requests',
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.my_support_requests.9cce51cb",
+                    ),
                     action: TextButton(
                       onPressed: () =>
                           _open(SupportRequestsScreen(repository: _repository)),
-                      child: const Text('View all'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.view_all.30a64216",
+                        ),
+                      ),
                     ),
                   ),
                   supportPanel(
                     _tickets.isEmpty
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(20),
                             child: Text(
-                              'No support requests yet. Your requests will appear here.',
+                              AppSettingsScope.translate(
+                                context,
+                                "customer.no_support_requests_yet_your_requests_will_ap.ed360d34",
+                              ),
                             ),
                           )
                         : Column(

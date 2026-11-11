@@ -1,3 +1,5 @@
+import 'category_result_test_repository.dart';
+
 import 'package:eventor_customer/services/app_live_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,27 +70,64 @@ void main() {
     expect(data.servicesFor(null).length, 3);
     expect(data.servicesFor('missing'), isEmpty);
   });
+  testWidgets('All and the side rail use the same global search ranking', (
+    tester,
+  ) async {
+    final ranked = ExploreData(
+      categories: data.categories,
+      services: data.services,
+      categoryScores: const {'catering': 8, 'decoration': 2},
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExploreScreen(repository: PreviewExploreRepository(ranked)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreServiceCard), findsNothing);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('parent-catering'))).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey('parent-decoration'))).dy,
+      ),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('child-catering'))).dx,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey('child-decoration'))).dx,
+      ),
+    );
+  });
   testWidgets(
     'Realtime updates Explore while retaining its selected parent category',
     (tester) async {
       final repo = PreviewExploreRepository(data);
       await tester.pumpWidget(
-        MaterialApp(home: ExploreScreen(repository: repo)),
+        MaterialApp(
+          home: ExploreScreen(
+            repository: repo,
+            resultRepository: CategoryResultTestRepository(repo.data),
+          ),
+        ),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('parent-decoration')));
       await tester.pumpAndSettle();
       repo.data = ExploreData(
-        categories: data.categories,
+        categories: [
+          ...data.categories,
+          category('live', 'Live category', 'decoration'),
+        ],
         services: [
           service('Live Flowers', 'flower'),
           service('Food', 'catering'),
         ],
       );
-      AppLiveData.instance.invalidate({'public:services'});
+      AppLiveData.instance.invalidate({'public:category_nodes'});
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
-      expect(find.text('Live Flowers'), findsOneWidget);
+      expect(find.byKey(const ValueKey('child-live')), findsOneWidget);
+      expect(find.byType(ExploreServiceCard), findsNothing);
       expect(find.text('Food'), findsNothing);
       expect(tester.takeException(), isNull);
     },
@@ -101,6 +140,7 @@ void main() {
         MaterialApp(
           home: ExploreScreen(
             repository: PreviewExploreRepository(data),
+            resultRepository: CategoryResultTestRepository(data),
             onOpen: (value) => opened = value,
           ),
         ),
@@ -122,14 +162,19 @@ void main() {
       }
       await tester.tap(find.byKey(const ValueKey('parent-decoration')));
       await tester.pumpAndSettle();
-      expect(find.text('Flowers'), findsOneWidget);
-      expect(find.text('Garlands'), findsOneWidget);
-      expect(find.text('Food'), findsNothing);
+      expect(find.byKey(const ValueKey('child-flower')), findsOneWidget);
+      expect(find.byKey(const ValueKey('child-rose')), findsOneWidget);
+      expect(find.byType(ExploreServiceCard), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('child-flower')));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Flowers'));
       expect(opened?.id, 'Flowers');
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('parent-all')));
       await tester.pumpAndSettle();
-      expect(find.text('Food'), findsOneWidget);
+      expect(find.byType(ExploreServiceCard), findsNothing);
+      expect(find.byKey(const ValueKey('child-catering')), findsOneWidget);
     },
   );
   testWidgets('Explore lists services beyond the previous preview limits', (
@@ -141,9 +186,16 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: ExploreScreen(repository: PreviewExploreRepository(rows)),
+        home: ExploreScreen(
+          repository: PreviewExploreRepository(rows),
+          resultRepository: CategoryResultTestRepository(rows),
+        ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('parent-decoration')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('child-flower')));
     await tester.pumpAndSettle();
     final scrollable = find
         .byWidgetPredicate(
@@ -201,6 +253,7 @@ void main() {
     repository.fail = false;
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
-    expect(find.text('Flowers'), findsOneWidget);
+    expect(find.byKey(const ValueKey('child-decoration')), findsOneWidget);
+    expect(find.byType(ExploreServiceCard), findsNothing);
   });
 }

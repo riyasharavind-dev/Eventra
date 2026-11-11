@@ -11,7 +11,7 @@ class CategoryRepository {
     for (var offset = 0; ; offset += 200) {
       final rows = await _client
           .from('category_nodes')
-          .select('id,name,slug,parent_id,created_at')
+          .select('id,name,slug,parent_id,created_at,icon_url')
           .order('name')
           .order('id')
           .range(offset, offset + 199);

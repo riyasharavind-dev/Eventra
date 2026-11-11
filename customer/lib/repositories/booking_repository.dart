@@ -1,11 +1,56 @@
-﻿import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/service_model.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/booking_model.dart';
 
 class BookingRepository {
-  BookingRepository();
+  BookingRepository({this.client});
+  final SupabaseClient? client;
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
+  List<String> lastBookingIds = const [];
+  Future<void> bookCart({
+    Map<String, int> quantities = const {},
+    required List<ServiceModel> services,
+    required DateTime date,
+    required int guests,
+    required String eventTime,
+    required String location,
+    required String requestId,
+  }) async {
+    final result = await _supabase.rpc(
+      'customer_book_services',
+      params: {
+        'p_items': [
+          for (final s in services)
+            {
+              'id': s.id,
+              'price': s.price,
+              'quantity': quantities[s.id] ?? 1,
+              ...s.pricing.toMap(),
+            },
+        ],
+        'p_event_date': date.toIso8601String().split('T').first,
+        'p_guest_count': guests,
+        'p_event_time': eventTime,
+        'p_location': location,
+        'p_request_id': requestId,
+      },
+    );
+    lastBookingIds = (result['booking_ids'] as List)
+        .map((id) => id.toString())
+        .toList();
+  }
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+  Future<void> acknowledgeCompletion(String id) async {
+    await _supabase.rpc(
+      'customer_acknowledge_completion',
+      params: {'p_booking_id': id},
+    );
+  }
+
+  static const _select =
+      '*,services(id,name,gallery),vendors(id,name,email),event_types(id,name)';
 
   // ============================================================
   // CREATE BOOKING
@@ -88,7 +133,7 @@ class BookingRepository {
 
     final response = await _supabase
         .from('bookings')
-        .select()
+        .select(_select)
         .eq('customer_id', user.id)
         .order('created_at', ascending: false);
 
@@ -102,9 +147,12 @@ class BookingRepository {
   // ============================================================
 
   Future<BookingModel?> getBookingById(String bookingId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw StateError('Please sign in to view your bookings.');
     final response = await _supabase
         .from('bookings')
-        .select()
+        .select(_select)
+        .eq('customer_id', user.id)
         .eq('id', bookingId)
         .maybeSingle();
 

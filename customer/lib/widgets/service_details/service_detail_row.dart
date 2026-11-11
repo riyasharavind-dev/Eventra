@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class ServiceDetailRow extends StatelessWidget {
   final IconData icon;
@@ -15,8 +15,7 @@ class ServiceDetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ====================================================
         // ICON
@@ -26,15 +25,10 @@ class ServiceDetailRow extends StatelessWidget {
           height: 38,
           width: 38,
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius:
-                BorderRadius.circular(8),
+            color: const Color(0xFFF5E8EC),
+            borderRadius: BorderRadius.circular(11),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: Colors.grey.shade700,
-          ),
+          child: Icon(icon, size: 20, color: const Color(0xFF80152C)),
         ),
 
         const SizedBox(width: 12),
@@ -42,18 +36,13 @@ class ServiceDetailRow extends StatelessWidget {
         // ====================================================
         // TEXT
         // ====================================================
-
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF73737D)),
               ),
 
               const SizedBox(height: 3),
@@ -63,6 +52,7 @@ class ServiceDetailRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
+                  color: Color(0xFF17171B),
                 ),
               ),
             ],

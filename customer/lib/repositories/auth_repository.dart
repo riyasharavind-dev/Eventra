@@ -58,11 +58,16 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
+    String? phone,
   }) async {
     return await _supabase.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {'name': name.trim(), 'role': 'customer'},
+      data: {
+        'name': name.trim(),
+        'role': 'customer',
+        'phone': ?phone,
+      },
     );
   }
 

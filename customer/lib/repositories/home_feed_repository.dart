@@ -1,3 +1,5 @@
+import 'feed_card_location.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,34 +13,50 @@ class HomeFeedRepository {
     int offset, {
     double? lat,
     double? lng,
-  }) async => Map<String, dynamic>.from(
-    await db.rpc(
-      'home_feed_page',
-      params: {'p_offset': offset, 'p_limit': 3, 'p_lat': lat, 'p_lng': lng},
-    ) as Map,
+  }) async => await addCardLocations(
+    db,
+    Map<String, dynamic>.from(
+      await db.rpc(
+        'home_feed_page',
+        params: {'p_offset': offset, 'p_limit': 3, 'p_lat': lat, 'p_lng': lng},
+      ) as Map,
+    ),
   );
   Future<Map<String, dynamic>> items(
     String id,
     int offset, {
     double? lat,
     double? lng,
-  }) async => Map<String, dynamic>.from(
-    await db.rpc(
-      'home_feed_items',
-      params: {
-        'p_section_id': id,
-        'p_offset': offset,
-        'p_limit': 20,
-        'p_lat': lat,
-        'p_lng': lng,
-      },
-    ) as Map,
+  }) async => await addCardLocations(
+    db,
+    Map<String, dynamic>.from(
+      await db.rpc(
+        'home_feed_items',
+        params: {
+          'p_section_id': id,
+          'p_offset': offset,
+          'p_limit': 20,
+          'p_lat': lat,
+          'p_lng': lng,
+        },
+      ) as Map,
+    ),
   );
   Future<Map<String, dynamic>> vendorServices(String id, int offset) async =>
+      await addCardLocations(
+        db,
+        Map<String, dynamic>.from(
+          await db.rpc(
+            'home_feed_vendor_services',
+            params: {'p_vendor_id': id, 'p_offset': offset},
+          ) as Map,
+        ),
+      );
+  Future<Map<String, dynamic>> businessServices(String id, int offset) async =>
       Map<String, dynamic>.from(
         await db.rpc(
-          'home_feed_vendor_services',
-          params: {'p_vendor_id': id, 'p_offset': offset},
+          'customer_business_services',
+          params: {'p_business_id': id, 'p_offset': offset},
         ) as Map,
       );
   Future<Map<String, dynamic>?> location() async {

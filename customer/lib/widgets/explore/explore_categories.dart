@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/category_node_model.dart';
 
@@ -114,72 +115,6 @@ class ExploreCategoryRail extends StatelessWidget {
   );
 }
 
-class ExploreChildCategories extends StatelessWidget {
-  const ExploreChildCategories({
-    super.key,
-    required this.categories,
-    required this.onSelect,
-  });
-  final List<CategoryNodeModel> categories;
-  final ValueChanged<CategoryNodeModel> onSelect;
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 440 ? 3 : 2;
-      final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
-      return Wrap(
-        spacing: 10,
-        runSpacing: 14,
-        children: categories
-            .map(
-              (category) => SizedBox(
-                width: width,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    key: ValueKey('child-${category.id}'),
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => onSelect(category),
-                    child: Padding(
-                      padding: const EdgeInsets.all(3),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 78,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8F0F3),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(
-                              exploreCategoryIcon(category.name),
-                              size: 36,
-                              color: exploreWine,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            category.name,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF282837),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      );
-    },
-  );
-}
-
 class ExploreCategoryTrail extends StatelessWidget {
   const ExploreCategoryTrail({
     super.key,
@@ -192,7 +127,12 @@ class ExploreCategoryTrail extends StatelessWidget {
   Widget build(BuildContext context) => Wrap(
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
-      TextButton(onPressed: () => onSelect(null), child: const Text('All')),
+      TextButton(
+        onPressed: () => onSelect(null),
+        child: Text(
+          AppSettingsScope.translate(context, "customer.all.a52ace42"),
+        ),
+      ),
       for (final category in path) ...[
         const Icon(
           Icons.chevron_right_rounded,

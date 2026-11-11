@@ -1,4 +1,4 @@
-﻿class ServiceReviewModel {
+class ServiceReviewModel {
   final String id,
       serviceId,
       vendorId,
@@ -7,6 +7,7 @@
       text,
       moderationStatus;
   final String? businessId, vendorReply;
+  final List<String> photoPaths, photoUrls;
   final int rating, version, replyVersion;
   final bool isMine, canReply, reported;
   final DateTime createdAt, updatedAt;
@@ -22,6 +23,8 @@
     required this.createdAt,
     required this.updatedAt,
     this.businessId,
+    this.photoPaths = const [],
+    this.photoUrls = const [],
     this.vendorReply,
     this.repliedAt,
     this.version = 1,
@@ -31,27 +34,30 @@
     this.reported = false,
     this.moderationStatus = 'visible',
   });
-  factory ServiceReviewModel.fromMap(Map<String, dynamic> m) =>
-      ServiceReviewModel(
-        id: m['id'].toString(),
-        serviceId: m['service_id'].toString(),
-        vendorId: m['vendor_id'].toString(),
-        customerName: m['customer_name']?.toString() ?? 'Customer',
-        serviceName: m['service_name']?.toString() ?? '',
-        text: m['review_text']?.toString() ?? '',
-        rating: (m['rating'] as num).toInt(),
-        businessId: m['business_id']?.toString(),
-        vendorReply: m['vendor_reply']?.toString(),
-        version: (m['version'] as num?)?.toInt() ?? 1,
-        replyVersion: (m['reply_version'] as num?)?.toInt() ?? 0,
-        isMine: m['is_mine'] == true,
-        canReply: m['can_reply'] == true,
-        reported: m['reported'] == true,
-        moderationStatus: m['moderation_status']?.toString() ?? 'visible',
-        createdAt: DateTime.parse(m['created_at'].toString()),
-        updatedAt: DateTime.parse(m['updated_at'].toString()),
-        repliedAt: DateTime.tryParse(m['replied_at']?.toString() ?? ''),
-      );
+  factory ServiceReviewModel.fromMap(
+    Map<String, dynamic> m,
+  ) => ServiceReviewModel(
+    id: m['id'].toString(),
+    serviceId: m['service_id'].toString(),
+    vendorId: m['vendor_id'].toString(),
+    customerName: m['customer_name']?.toString() ?? 'Customer',
+    serviceName: m['service_name']?.toString() ?? '',
+    text: m['review_text']?.toString() ?? '',
+    rating: (m['rating'] as num).toInt(),
+    businessId: m['business_id']?.toString(),
+    photoPaths: (m['photo_paths'] as List? ?? []).whereType<String>().toList(),
+    photoUrls: (m['photo_urls'] as List? ?? []).whereType<String>().toList(),
+    vendorReply: m['vendor_reply']?.toString(),
+    version: (m['version'] as num?)?.toInt() ?? 1,
+    replyVersion: (m['reply_version'] as num?)?.toInt() ?? 0,
+    isMine: m['is_mine'] == true,
+    canReply: m['can_reply'] == true,
+    reported: m['reported'] == true,
+    moderationStatus: m['moderation_status']?.toString() ?? 'visible',
+    createdAt: DateTime.parse(m['created_at'].toString()),
+    updatedAt: DateTime.parse(m['updated_at'].toString()),
+    repliedAt: DateTime.tryParse(m['replied_at']?.toString() ?? ''),
+  );
 }
 
 class ReviewSummary {

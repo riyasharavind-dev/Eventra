@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>Save selected service photos to your photo library.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Save selected service photos to your photo library.</string>
 </dict>
 </plist>

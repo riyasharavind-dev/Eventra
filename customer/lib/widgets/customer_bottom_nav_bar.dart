@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_icon_colors.dart';
+import '../services/app_settings_controller.dart';
 
 class CustomerBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -12,9 +14,10 @@ class CustomerBottomNavBar extends StatelessWidget {
 
   static const _wine = Color(0xFF80152C);
   static const _wineDark = Color(0xFF650C20);
-  static const inactiveIconColor = Color(0xFF73737D);
+  static const inactiveIconColor = AppIconColors.standard;
 
   static const _labels = ['Home', 'Explore', 'Bookings', 'Me'];
+  static const _tamilLabels = ['முகப்பு', 'ஆராய்', 'முன்பதிவு', 'சுயவிவரம்'];
 
   static const _icons = [
     Icons.home_outlined,
@@ -41,13 +44,13 @@ class CustomerBottomNavBar extends StatelessWidget {
         final alignX = -1.0 + (2.0 * position / (count - 1));
         return SafeArea(
           top: false,
-          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Container(
-            height: 88,
-            padding: const EdgeInsets.all(6),
+            height: 74,
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(34),
+              borderRadius: BorderRadius.circular(29),
               border: Border.all(color: const Color(0xFFF0EDF0)),
               boxShadow: const [
                 BoxShadow(
@@ -72,7 +75,7 @@ class CustomerBottomNavBar extends StatelessWidget {
                           end: Alignment.bottomRight,
                           colors: [_wine, _wineDark],
                         ),
-                        borderRadius: BorderRadius.circular(27),
+                        borderRadius: BorderRadius.circular(23),
                       ),
                     ),
                   ),
@@ -93,14 +96,19 @@ class CustomerBottomNavBar extends StatelessWidget {
                       emphasis,
                     )!;
 
+                    final label = AppSettingsScope.of(context).text(
+                      _labels[index],
+                      _tamilLabels[index],
+                    );
+
                     return Expanded(
                       child: Semantics(
-                        label: _labels[index],
+                        label: label,
                         button: true,
                         selected: selected,
                         child: Material(
                           color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(27),
+                          borderRadius: BorderRadius.circular(23),
                           clipBehavior: Clip.antiAlias,
                           child: InkWell(
                             onTap: () => onTap(index),
@@ -114,10 +122,10 @@ class CustomerBottomNavBar extends StatelessWidget {
                                   Transform.translate(
                                     offset: Offset(0, -2 * emphasis),
                                     child: Transform.scale(
-                                      scale: 1 + (2 / 27) * emphasis,
+                                      scale: 1 + (2 / 23) * emphasis,
                                       child: Icon(
                                         _icons[index],
-                                        size: 27,
+                                        size: 23,
                                         color: foreground,
                                       ),
                                     ),
@@ -127,7 +135,7 @@ class CustomerBottomNavBar extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       height: 1.2,
                                       fontWeight: FontWeight.lerp(
                                         FontWeight.w400,
@@ -137,7 +145,7 @@ class CustomerBottomNavBar extends StatelessWidget {
                                       color: foreground,
                                     ),
                                     child: Text(
-                                      _labels[index],
+                                      label,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),

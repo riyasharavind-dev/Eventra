@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import '../../core/theme/app_icon_colors.dart';
+import 'package:flutter/material.dart';
 
 class AppSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -21,16 +23,20 @@ class AppSearchBar extends StatelessWidget {
         // ========================================================
         // SEARCH FIELD
         // ========================================================
-
         Expanded(
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.grey.shade200,
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFF0EDF0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x08000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: TextField(
               controller: controller,
@@ -38,27 +44,31 @@ class AppSearchBar extends StatelessWidget {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 15,
+                hintStyle: const TextStyle(
+                  color: Color(0xFF73737D),
+                  fontSize: 14,
                 ),
                 prefixIcon: const Icon(
                   Icons.search,
                   size: 22,
+                  color: AppIconColors.standard,
                 ),
                 suffixIcon: IconButton(
                   onPressed: () {},
                   icon: const Icon(
                     Icons.mic_none_outlined,
                     size: 21,
+                    color: AppIconColors.standard,
                   ),
-                  tooltip: 'Voice Search',
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "customer.voice_search.f4f997cf",
+                  ),
                 ),
                 border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(
-                  vertical: 13,
-                ),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 13),
               ),
             ),
           ),
@@ -69,16 +79,20 @@ class AppSearchBar extends StatelessWidget {
         // ========================================================
         // CLOSE BUTTON
         // ========================================================
-
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey.shade100,
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ),
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x08000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
           child: IconButton(
             onPressed: () {
@@ -91,9 +105,13 @@ class AppSearchBar extends StatelessWidget {
             },
             icon: const Icon(
               Icons.close,
-              size: 23,
+              size: 22,
+              color: AppIconColors.standard,
             ),
-            tooltip: 'Clear',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "customer.clear.83b12c22",
+            ),
           ),
         ),
       ],

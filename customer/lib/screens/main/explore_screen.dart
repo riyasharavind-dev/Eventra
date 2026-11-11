@@ -1,18 +1,28 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
 
 import '../../models/explore_data.dart';
+import '../../models/category_node_model.dart';
 import '../../models/service_model.dart';
 import '../../repositories/explore_repository.dart';
 import '../../widgets/explore/explore_categories.dart';
-import '../../widgets/explore/explore_service_card.dart';
-import '../extended/service_details_screen.dart';
+import '../../widgets/explore/explore_cards.dart';
+import '../extended/result_screen.dart';
+import '../../repositories/customer_search_repository.dart';
 import '../extended/search_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key, this.repository, this.onOpen});
+  const ExploreScreen({
+    super.key,
+    this.repository,
+    this.onOpen,
+    this.resultRepository,
+  });
   final ExploreRepository? repository;
+  final CustomerSearchRepository? resultRepository;
   final ValueChanged<ServiceModel>? onOpen;
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -23,6 +33,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   Set<String> get liveDatasets => {
     'public:category_nodes',
+    'public:category_trends',
     'public:services',
     'public:businesses',
     'public:vendors',
@@ -55,7 +66,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   Future<void> _load() async {
     final generation = ++_generation;
     setState(() {
-      if (!liveRefreshing) _loading = true;
+      if (!liveRefreshing) _loading = _data == null;
       _failed = false;
     });
     try {
@@ -83,14 +94,15 @@ class _ExploreScreenState extends State<ExploreScreen>
     if (_scroll.hasClients) _scroll.jumpTo(0);
   }
 
-  void _open(ServiceModel service) {
-    if (widget.onOpen != null) {
-      widget.onOpen!(service);
-      return;
-    }
+  void _openCategory(CategoryNodeModel category) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ServiceDetailsScreen(service: service),
+        builder: (_) => ResultScreen(
+          query: category.name,
+          categoryId: category.id,
+          repository: widget.resultRepository,
+          onServiceOpen: widget.onOpen,
+        ),
       ),
     );
   }
@@ -98,10 +110,11 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   Widget build(BuildContext context) {
     final data = _data;
-    final services = data?.servicesFor(_selected) ?? <ServiceModel>[];
-    final path = data?.pathFor(_selected) ?? [];
-    final children = data?.childrenFor(_selected) ?? [];
-    final root = path.isEmpty ? null : path.first.id;
+    final parents = data?.parents ?? <CategoryNodeModel>[];
+    final selected = parents.where((c) => c.id == _selected).firstOrNull;
+    final categories = selected == null
+        ? parents
+        : data!.descendantsFor(selected.id);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -112,9 +125,12 @@ class _ExploreScreenState extends State<ExploreScreen>
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Explore',
+                      AppSettingsScope.translate(
+                        context,
+                        "customer.explore.3b73900b",
+                      ),
                       style: TextStyle(
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -123,13 +139,19 @@ class _ExploreScreenState extends State<ExploreScreen>
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Search',
-                    icon: const Icon(Icons.search, color: Color(0xFF73737D)),
-                    onPressed: () => Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const CustomerSearchScreen(),
-                      ),
+                    tooltip: AppSettingsScope.translate(
+                      context,
+                      "customer.search.49c266ba",
                     ),
+                    icon: const Icon(Icons.search, color: Color(0xFF73737D)),
+                    onPressed: () async {
+                      await Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const CustomerSearchScreen(),
+                        ),
+                      );
+                      if (mounted) await _load();
+                    },
                   ),
                 ],
               ),
@@ -143,7 +165,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 children: [
                   ExploreCategoryRail(
                     categories: data?.parents ?? [],
-                    selected: root,
+                    selected: selected?.id,
                     onSelect: _select,
                   ),
                   Expanded(
@@ -161,50 +183,20 @@ class _ExploreScreenState extends State<ExploreScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Unable to refresh Explore. Please retry.',
+                                    Text(
+                                      AppSettingsScope.translate(
+                                        context,
+                                        "customer.unable_to_refresh_explore_please_retry.e7ce3416",
+                                      ),
                                     ),
                                     TextButton(
                                       onPressed: _load,
-                                      child: const Text('Retry'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          if (path.isNotEmpty)
-                            SliverToBoxAdapter(
-                              child: ExploreCategoryTrail(
-                                path: path,
-                                onSelect: _select,
-                              ),
-                            ),
-                          if (children.isNotEmpty)
-                            SliverToBoxAdapter(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  12,
-                                  16,
-                                  12,
-                                  20,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _selected == null
-                                          ? 'Browse categories'
-                                          : 'Subcategories',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
+                                      child: Text(
+                                        AppSettingsScope.translate(
+                                          context,
+                                          "customer.retry.942087cc",
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    ExploreChildCategories(
-                                      categories: children,
-                                      onSelect: (category) =>
-                                          _select(category.id),
                                     ),
                                   ],
                                 ),
@@ -212,32 +204,47 @@ class _ExploreScreenState extends State<ExploreScreen>
                             ),
                           SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
-                              child: Text(
-                                path.isEmpty
-                                    ? 'All services'
-                                    : '${path.last.name} services',
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              padding: const EdgeInsets.fromLTRB(
+                                12,
+                                16,
+                                12,
+                                128,
                               ),
-                            ),
-                          ),
-                          if (!_loading && !_failed && services.isEmpty)
-                            const SliverToBoxAdapter(
-                              child: Padding(
-                                padding: EdgeInsets.all(18),
-                                child: Text(
-                                  'No services in this category yet.',
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    selected?.name ?? 'Browse categories',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  if (!_loading && categories.isEmpty)
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+                                      child: Text(
+                                        AppSettingsScope.translate(
+                                          context,
+                                          "customer.no_subcategories_yet.df3122d5",
+                                        ),
+                                      ),
+                                    ),
+                                  ExploreCards(
+                                    categories: categories,
+                                    onSelect: (category) {
+                                      if (selected == null) {
+                                        _select(category.id);
+                                      } else {
+                                        _openCategory(category);
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
-                            ),
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 128),
-                            sliver: ExploreServiceGrid(
-                              services: services,
-                              onOpen: _open,
                             ),
                           ),
                         ],

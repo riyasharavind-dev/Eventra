@@ -1,3 +1,11 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
+import 'vendor_profile_card.dart';
+import 'common/global_search_bar.dart';
+import '../screens/extended/search_screen.dart';
+
+import 'dart:math' as math;
+
 import '../services/app_live_data.dart';
 import '../models/service_pricing.dart';
 
@@ -49,187 +57,268 @@ void openHomeFeedItem(
   }
 }
 
+/// Shared sizing for Home feeds and search/category result cards.
+int feedCardColumns(double availableWidth) =>
+    (availableWidth / 180).floor().clamp(2, 4);
+double feedCardWidth(double availableWidth) {
+  final columns = feedCardColumns(availableWidth);
+  return (availableWidth - (columns - 1) * 12) / columns;
+}
+
+double feedCardHeight(double width, TextScaler scaler) {
+  final extraTextHeight = math.max(0.0, scaler.scale(13) / 13 - 1) * 64;
+  // Reserve the complete three-line details area even on narrow phones.
+  return width * .57 + math.max(width * .36, 68.0 + extraTextHeight);
+}
+
+double feedShelfHeight(BuildContext context) =>
+    feedCardHeight(
+      feedCardWidth(MediaQuery.sizeOf(context).width - 32),
+      MediaQuery.textScalerOf(context),
+    ) +
+    12;
+
 class HomeFeedItemCard extends StatelessWidget {
   final HomeFeedItem item;
   final VoidCallback onTap;
   const HomeFeedItemCard({super.key, required this.item, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0EDF0), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryWine.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 118,
-                    width: double.infinity,
-                    child: item.image?.isNotEmpty == true
-                        ? Image.network(
-                            item.image!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, error, stack) => Container(
-                              color: _softRose,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.image_outlined,
-                                  color: _primaryWine,
-                                  size: 32,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Container(
-                            color: _softRose,
-                            child: Center(
-                              child: Icon(
-                                item.isVendor
-                                    ? Icons.storefront_outlined
-                                    : Icons.event_outlined,
-                                color: _primaryWine,
-                                size: 38,
-                              ),
-                            ),
-                          ),
-                  ),
-                  if (item.rating != null)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xCC170208),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              color: _gold,
-                              size: 13,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              item.rating!.toStringAsFixed(1),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+    if (item.isVendor) return VendorProfileCard(item: item, onTap: onTap);
+    final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
+    final joined = DateTime.tryParse(
+      item.data['vendor_joined_at']?.toString() ?? '',
+    );
+    final age = joined == null ? null : DateTime.now().difference(joined);
+    final isNew =
+        item.data['is_new_vendor'] == true ||
+        (age != null && !age.isNegative && age.inDays < 30);
+    final location = item.data['location']?.toString().trim();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return SizedBox(
+          height: feedCardHeight(width, MediaQuery.textScalerOf(context)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFF0EDF0)),
+              boxShadow: [
+                BoxShadow(
+                  color: _primaryWine.withValues(alpha: .05),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: _textDark,
-                        height: 1.25,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.isVendor
-                          ? '${item.data['completed_count'] ?? 0} events completed'
-                          : ServicePricing.fromMap(item.data)
-                                .format(item.price.toDouble()),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _primaryWine,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      item.rating == null
-                          ? 'New on Eventor'
-                          : '${item.data['review_count'] ?? 0} reviews',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: _textGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (item.data['distance_km'] != null) ...[
-                      const SizedBox(height: 3),
-                      Row(
+                    SizedBox(
+                      height: width * .57,
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 11,
-                            color: _textGrey,
+                          ColoredBox(
+                            color: _softRose,
+                            child: item.image?.isNotEmpty == true
+                                ? Image.network(
+                                    item.image!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.image_outlined,
+                                      color: _primaryWine,
+                                      size: 32,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.image_outlined,
+                                    color: _primaryWine,
+                                    size: 32,
+                                  ),
                           ),
-                          const SizedBox(width: 2),
-                          Expanded(
-                            child: Text(
-                              '${item.data['distance_km']} km away',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: _textGrey,
+                          if (isNew)
+                            Positioned(
+                              top: 9,
+                              right: 9,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "customer.new.18fdd549",
+                                  ),
+                                  style: TextStyle(
+                                    color: _primaryWine,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0x99000000),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    size: 14,
+                                    color: _gold,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${item.rating == null || item.rating == 0 ? '0' : item.rating!.toStringAsFixed(1)} (${item.data['review_count'] ?? 0})',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 16 * scale,
+                              child: Text(
+                                item.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.25,
+                                  fontWeight: FontWeight.w800,
+                                  color: _textDark,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              item.isVendor
+                                  ? '${item.data['completed_count'] ?? 0} events completed'
+                                  : ServicePricing.fromMap(item.data)
+                                        .format(item.price.toDouble()),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _primaryWine,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 14,
+                                  color: _textGrey,
+                                ),
+                                const SizedBox(width: 3),
+                                Expanded(
+                                  child: Text(
+                                    location?.isNotEmpty == true
+                                        ? location!
+                                        : 'Location not added',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: _textGrey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class FeedSeeAllCard extends StatelessWidget {
+  const FeedSeeAllCard({super.key, required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 100,
+    child: Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        height: 180,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.arrow_forward_rounded, color: _primaryWine),
+                SizedBox(height: 10),
+                Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "customer.see_all.d7a8c446",
+                  ),
+                  style: TextStyle(
+                    color: _primaryWine,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class HomeFeedSliver extends StatelessWidget {
   final HomeFeedController controller;
   const HomeFeedSliver({super.key, required this.controller});
-
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: controller,
@@ -237,46 +326,30 @@ class HomeFeedSliver extends StatelessWidget {
       delegate: SliverChildBuilderDelegate((context, index) {
         if (index == controller.sections.length) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            padding: const EdgeInsets.all(20),
             child: controller.loading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: _primaryWine,
-                      strokeWidth: 2.5,
-                    ),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : controller.error != null
                 ? Center(
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: _primaryWine,
-                      ),
+                    child: TextButton(
                       onPressed: controller.loadMore,
-                      icon: const Icon(Icons.refresh_rounded, size: 18),
-                      label: const Text(
-                        'Unable to load feed. Tap to retry',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.unable_to_load_feed_retry.a0a2bb4f",
+                        ),
                       ),
                     ),
                   )
                 : controller.hasMore
                 ? Center(
                     child: TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: _primaryWine,
-                        backgroundColor: _softRose,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
                       onPressed: controller.loadMore,
-                      child: const Text(
-                        'Load more services',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.load_more_services.3a0db408",
+                        ),
                       ),
                     ),
                   )
@@ -284,6 +357,17 @@ class HomeFeedSliver extends StatelessWidget {
           );
         }
         final section = controller.sections[index];
+        void seeAll() => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => HomeFeedResultsScreen(
+              title: section.title,
+              sectionId: section.id,
+              repository: controller.repository,
+              lat: controller.lat,
+              lng: controller.lng,
+            ),
+          ),
+        );
         return Padding(
           padding: const EdgeInsets.only(top: 24),
           child: Column(
@@ -291,112 +375,54 @@ class HomeFeedSliver extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        section.title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: _textDark,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => HomeFeedResultsScreen(
-                            title: section.title,
-                            sectionId: section.id,
-                            repository: controller.repository,
-                            lat: controller.lat,
-                            lng: controller.lng,
-                          ),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text(
-                              'See All',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _primaryWine,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 11,
-                              color: _primaryWine,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  section.title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: _textDark,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              if (section.layout == 'grid')
-                Padding(
+              SizedBox(
+                height:
+                    section.items.isNotEmpty &&
+                        section.items.every((item) => item.isVendor)
+                    ? vendorProfileCardHeight(context) + 8
+                    : feedShelfHeight(context),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (final item in section.items)
-                        SizedBox(
-                          width: (MediaQuery.sizeOf(context).width - 44) / 2,
-                          child: HomeFeedItemCard(
-                            item: item,
-                            onTap: () => openHomeFeedItem(
-                              context,
-                              item,
-                              controller.repository,
+                  itemCount: section.items.length + 1,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (context, i) => i == section.items.length
+                      ? FeedSeeAllCard(onTap: seeAll)
+                      : SizedBox(
+                          width: section.items[i].isVendor
+                              ? vendorProfileCardWidth(context)
+                              : feedCardWidth(
+                                  MediaQuery.sizeOf(context).width - 32,
+                                ),
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: HomeFeedItemCard(
+                              item: section.items[i],
+                              onTap: () => section.items[i].isVendor
+                                  ? openVendorProfileCard(
+                                      context,
+                                      section.items[i],
+                                    )
+                                  : openHomeFeedItem(
+                                      context,
+                                      section.items[i],
+                                      controller.repository,
+                                    ),
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                )
-              else
-                SizedBox(
-                  height:
-                      256 +
-                      (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(
-                            0,
-                            42,
-                          ) *
-                          7,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: section.items.length,
-                    separatorBuilder: (_, index) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => SizedBox(
-                      width: 176,
-                      child: HomeFeedItemCard(
-                        item: section.items[i],
-                        onTap: () => openHomeFeedItem(
-                          context,
-                          section.items[i],
-                          controller.repository,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
+              ),
             ],
           ),
         );
@@ -408,6 +434,7 @@ class HomeFeedSliver extends StatelessWidget {
 class HomeFeedResultsScreen extends StatefulWidget {
   final String title;
   final String? sectionId;
+  final String? businessId;
   final HomeFeedItem? vendor;
   final HomeFeedRepository repository;
   final double? lat, lng;
@@ -415,6 +442,7 @@ class HomeFeedResultsScreen extends StatefulWidget {
     super.key,
     required this.title,
     this.sectionId,
+    this.businessId,
     this.vendor,
     required this.repository,
     this.lat,
@@ -426,6 +454,13 @@ class HomeFeedResultsScreen extends StatefulWidget {
 
 class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
     with LiveDataState<HomeFeedResultsScreen> {
+  final _searchInput = TextEditingController();
+  @override
+  void dispose() {
+    _searchInput.dispose();
+    super.dispose();
+  }
+
   int generation = 0;
   @override
   Set<String> get liveDatasets => {
@@ -442,7 +477,9 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
     final request = ++generation;
     setState(() => loading = true);
     try {
-      final data = widget.vendor != null
+      final data = widget.businessId != null
+          ? await widget.repository.businessServices(widget.businessId!, 0)
+          : widget.vendor != null
           ? await widget.repository.vendorServices(widget.vendor!.id, 0)
           : await widget.repository.items(
               widget.sectionId!,
@@ -487,7 +524,9 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
       error = null;
     });
     try {
-      final data = widget.vendor != null
+      final data = widget.businessId != null
+          ? await widget.repository.businessServices(widget.businessId!, offset)
+          : widget.vendor != null
           ? await widget.repository.vendorServices(widget.vendor!.id, offset)
           : await widget.repository.items(
               widget.sectionId!,
@@ -527,10 +566,31 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
       backgroundColor: Colors.white,
       foregroundColor: _textDark,
       elevation: 0,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: const Color(0xFFF0EDF0), height: 1),
-      ),
+      bottom: widget.businessId != null
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(65),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: GlobalSearchBar(
+                  controller: _searchInput,
+                  onChanged: (_) {},
+                  hintText: AppSettingsScope.translate(
+                    context,
+                    "customer.search_services_vendors_or_events.c4e70feb",
+                  ),
+                  readOnly: true,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const CustomerSearchScreen(),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(color: const Color(0xFFF0EDF0), height: 1),
+            ),
     ),
     body: NotificationListener<ScrollNotification>(
       onNotification: (n) {
@@ -568,7 +628,9 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
             children: [
               for (final item in items)
                 SizedBox(
-                  width: (MediaQuery.sizeOf(context).width - 44) / 2,
+                  width: item.isVendor
+                      ? vendorProfileCardWidth(context)
+                      : feedCardWidth(MediaQuery.sizeOf(context).width - 32),
                   child: HomeFeedItemCard(
                     item: item,
                     onTap: () =>
@@ -595,19 +657,25 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
                   style: TextButton.styleFrom(foregroundColor: _primaryWine),
                   onPressed: load,
                   icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text(
-                    'Unable to load. Tap to retry',
+                  label: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.unable_to_load_tap_to_retry.773260ce",
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
             ),
           if (!loading && items.isEmpty && error == null)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(
                 child: Text(
-                  'No services available right now.',
+                  AppSettingsScope.translate(
+                    context,
+                    "customer.no_services_available_right_now.edc30ff4",
+                  ),
                   style: TextStyle(color: _textGrey, fontSize: 14),
                 ),
               ),
@@ -629,8 +697,11 @@ class _HomeFeedResultsScreenState extends State<HomeFeedResultsScreen>
                     ),
                   ),
                   onPressed: load,
-                  child: const Text(
-                    'Load more',
+                  child: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.load_more.ac8991ef",
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),

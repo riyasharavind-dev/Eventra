@@ -1,4 +1,4 @@
-﻿class BannerModel {
+class BannerModel {
   final String id;
   final String title;
   final String? subtitle;
@@ -25,35 +25,23 @@
     this.updatedAt,
   });
 
-  factory BannerModel.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory BannerModel.fromMap(Map<String, dynamic> map) {
     return BannerModel(
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString() ?? '',
       subtitle: map['subtitle']?.toString(),
       imageUrl: map['image_url']?.toString() ?? '',
       imagePath: map['image_path']?.toString() ?? '',
-      actionType:
-          map['action_type']?.toString() ?? 'none',
-      actionValue:
-          map['action_value']?.toString(),
-      isActive:
-          map['is_active'] == true,
-      sortOrder:
-          (map['sort_order'] as num?)?.toInt() ?? 0,
-      createdAt:
-          map['created_at'] != null
-              ? DateTime.tryParse(
-                  map['created_at'].toString(),
-                )
-              : null,
-      updatedAt:
-          map['updated_at'] != null
-              ? DateTime.tryParse(
-                  map['updated_at'].toString(),
-                )
-              : null,
+      actionType: map['action_type']?.toString() ?? 'none',
+      actionValue: map['action_value']?.toString(),
+      isActive: map['is_active'] == true,
+      sortOrder: (map['sort_order'] as num?)?.toInt() ?? 0,
+      createdAt: map['created_at'] != null
+          ? DateTime.tryParse(map['created_at'].toString())
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'].toString())
+          : null,
     );
   }
 }

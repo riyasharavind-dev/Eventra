@@ -1,3 +1,4 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/app_live_data.dart';
@@ -9,7 +10,14 @@ import '../utils/auth_error_message.dart';
 
 /// Keeps protected screens hidden until the database confirms the account type.
 class AccountRoleGate extends StatefulWidget {
-  const AccountRoleGate({super.key, required this.child});
+  const AccountRoleGate({
+    super.key,
+    required this.child,
+    this.allowGuest = false,
+    this.accountId,
+  });
+  final bool allowGuest;
+  final String? accountId;
   final Widget child;
   @override
   State<AccountRoleGate> createState() => _AccountRoleGateState();
@@ -21,6 +29,10 @@ class _AccountRoleGateState extends State<AccountRoleGate>
   Set<String> get liveDatasets => {'own:access', 'own:users', 'own:admins'};
   @override
   Future<void> onLiveData(Set<String> changed) async {
+    if (widget.allowGuest &&
+        Supabase.instance.client.auth.currentSession == null) {
+      return;
+    }
     // Successful revalidation must not unmount the app or erase an open form.
     try {
       await AuthRepository().validateAccountRole();
@@ -47,13 +59,58 @@ class _AccountRoleGateState extends State<AccountRoleGate>
   @override
   void initState() {
     super.initState();
-    _check = AuthRepository().validateAccountRole();
+    _check = validate();
+  }
+
+  Future<void> validate() =>
+      widget.allowGuest && Supabase.instance.client.auth.currentSession == null
+      ? Future.value()
+      : AuthRepository().validateAccountRole();
+  @override
+  void didUpdateWidget(covariant AccountRoleGate old) {
+    super.didUpdateWidget(old);
+    if (old.accountId != widget.accountId) {
+      _check = validate();
+    }
   }
 
   @override
   Widget build(BuildContext context) => FutureBuilder<void>(
     future: _check,
     builder: (context, snapshot) {
+      if (widget.allowGuest) {
+        final ready =
+            snapshot.connectionState == ConnectionState.done &&
+            !snapshot.hasError;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Offstage(offstage: !ready, child: widget.child),
+            if (!ready)
+              Scaffold(
+                body: Center(
+                  child: snapshot.hasError
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(authErrorMessage(snapshot.error!)),
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _check = validate()),
+                              child: const Text('Retry'),
+                            ),
+                            TextButton(
+                              onPressed: () => AuthRepository().signOut(),
+                              child: const Text('Continue browsing'),
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+          ],
+        );
+      }
       if (snapshot.connectionState != ConnectionState.done) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
@@ -75,13 +132,23 @@ class _AccountRoleGateState extends State<AccountRoleGate>
                         _check = AuthRepository().validateAccountRole();
                       });
                     },
-                    child: const Text('Try again'),
+                    child: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "customer.try_again.d8b8392e",
+                      ),
+                    ),
                   ),
                   TextButton(
                     onPressed: () async {
                       await AuthRepository().signOut();
                     },
-                    child: const Text('Back to sign in'),
+                    child: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "customer.back_to_sign_in.71fe31cc",
+                      ),
+                    ),
                   ),
                 ],
               ),

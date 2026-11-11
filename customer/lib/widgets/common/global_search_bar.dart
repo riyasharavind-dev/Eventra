@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 /// Reusable search input with a clean, compact UI.
 class GlobalSearchBar extends StatelessWidget {
@@ -6,6 +6,8 @@ class GlobalSearchBar extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final String hintText;
   final String clearLabel;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const GlobalSearchBar({
     super.key,
@@ -13,11 +15,13 @@ class GlobalSearchBar extends StatelessWidget {
     required this.onChanged,
     required this.hintText,
     this.clearLabel = 'Clear search',
+    this.readOnly = false,
+    this.onTap,
   });
 
   static const Color _wine = Color(0xFF80152C);
-  static const Color _hintColor = Color(0xFF777783);
-  static const Color _borderColor = Color(0xFFE8E5EB);
+  static const Color _hintColor = Color(0xFF73737D);
+  static const Color _borderColor = Color(0xFFF0EDF0);
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +32,23 @@ class GlobalSearchBar extends StatelessWidget {
           height: 49,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: _borderColor,
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _borderColor, width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
           child: Center(
             child: TextField(
               key: const ValueKey('global-search-input'),
               controller: controller,
+              readOnly: readOnly,
+              showCursor: !readOnly,
+              onTap: onTap,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
               textAlignVertical: TextAlignVertical.center,
@@ -62,7 +73,7 @@ class GlobalSearchBar extends StatelessWidget {
                   minWidth: 45,
                   minHeight: 49,
                 ),
-                suffixIcon: value.text.isEmpty
+                suffixIcon: readOnly || value.text.isEmpty
                     ? null
                     : IconButton(
                         tooltip: clearLabel,
@@ -97,10 +108,7 @@ class GlobalSearchBar extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(
-                    color: _wine,
-                    width: 1.2,
-                  ),
+                  borderSide: const BorderSide(color: _wine, width: 1.2),
                 ),
               ),
             ),

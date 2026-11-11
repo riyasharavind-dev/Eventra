@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/service_model.dart';
 import 'explore_categories.dart';
@@ -17,8 +17,8 @@ class ExploreServiceCard extends StatelessWidget {
     elevation: 0,
     color: Colors.white,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: Color(0xFFECECF1)),
+      borderRadius: BorderRadius.circular(18),
+      side: const BorderSide(color: Color(0xFFF0EDF0)),
     ),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
@@ -63,7 +63,7 @@ class ExploreServiceCard extends StatelessWidget {
                     fontSize: 14,
                     height: 1.3,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF282837),
+                    color: Color(0xFF17171B),
                   ),
                 ),
                 const SizedBox(height: 9),
@@ -83,7 +83,7 @@ class ExploreServiceCard extends StatelessWidget {
     ),
   );
   Widget _placeholder() => const ColoredBox(
-    color: Color(0xFFF8F0F3),
+    color: Color(0xFFF5E8EC),
     child: Icon(Icons.event_outlined, size: 48, color: exploreWine),
   );
 }

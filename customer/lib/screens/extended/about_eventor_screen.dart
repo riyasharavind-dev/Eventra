@@ -1,3 +1,5 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
@@ -150,12 +152,20 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text('About Eventor'),
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "customer.about_eventor.3495d1b2",
+          ),
+        ),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         actions: [
           IconButton(
-            tooltip: 'Refresh About Eventor',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "customer.refresh_about_eventor.7beabf98",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -178,11 +188,19 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Center(
-                            child: Icon(
-                              Icons.celebration_outlined,
-                              color: _red,
-                              size: 72,
+                          Center(
+                            child: Container(
+                              width: 88,
+                              height: 88,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5E8EC),
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                              child: const Icon(
+                                Icons.celebration_outlined,
+                                color: _red,
+                                size: 48,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -190,8 +208,9 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                             about.title,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 28,
+                              fontSize: 26,
                               fontWeight: FontWeight.w800,
+                              color: Color(0xFF17171B),
                             ),
                           ),
                           if (about.tagline.isNotEmpty) ...[
@@ -201,17 +220,21 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 15,
-                                color: Color(0xFF6F6F7A),
+                                color: Color(0xFF73737D),
                               ),
                             ),
                           ],
                           const SizedBox(height: 10),
-                          const Text(
-                            'Version $_version · Build $_build',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "customer.version_value0_build_value1.767d3045",
+                              args: {"value0": _version, "value1": _build},
+                            ),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF777777),
+                              color: Color(0xFF73737D),
                             ),
                           ),
                           const SizedBox(height: 28),
@@ -219,10 +242,17 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFECECEC),
+                                color: const Color(0xFFF0EDF0),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _red.withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +262,7 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                                   style: const TextStyle(
                                     fontSize: 15,
                                     height: 1.65,
-                                    color: Color(0xFF6F6F7A),
+                                    color: Color(0xFF73737D),
                                   ),
                                 ),
                                 if (about.features.isNotEmpty)
@@ -242,46 +272,87 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                             ),
                           ),
                           const SizedBox(height: 24),
-                          const Text(
-                            'Policies',
-                            style: TextStyle(
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "customer.policies.d3ad1f1f",
+                            ),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Material(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.description_outlined,
-                                    color: _red,
-                                  ),
-                                  title: const Text('Terms & Conditions'),
-                                  trailing: const Icon(
-                                    Icons.chevron_right_rounded,
-                                  ),
-                                  onTap: () =>
-                                      _open(const TermsAndConditionsScreen()),
-                                ),
-                                const Divider(height: 1),
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.privacy_tip_outlined,
-                                    color: _red,
-                                  ),
-                                  title: const Text('Privacy Policy'),
-                                  trailing: const Icon(
-                                    Icons.chevron_right_rounded,
-                                  ),
-                                  onTap: () =>
-                                      _open(const PrivacyPolicyScreen()),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFF0EDF0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _red.withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.description_outlined,
+                                      color: _red,
+                                    ),
+                                    title: Text(
+                                      AppSettingsScope.translate(
+                                        context,
+                                        "customer.terms_conditions.173f5f9f",
+                                      ),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF17171B),
+                                      ),
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Color(0xFF73737D),
+                                    ),
+                                    onTap: () =>
+                                        _open(const TermsAndConditionsScreen()),
+                                  ),
+                                  const Divider(
+                                    height: 1,
+                                    color: Color(0xFFF0EDF0),
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.privacy_tip_outlined,
+                                      color: _red,
+                                    ),
+                                    title: Text(
+                                      AppSettingsScope.translate(
+                                        context,
+                                        "customer.privacy_policy.506ff394",
+                                      ),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF17171B),
+                                      ),
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Color(0xFF73737D),
+                                    ),
+                                    onTap: () =>
+                                        _open(const PrivacyPolicyScreen()),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

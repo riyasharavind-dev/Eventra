@@ -1,3 +1,7 @@
+import 'package:eventor_customer/widgets/reviews/review_editor_dialog.dart';
+import 'package:eventor_customer/screens/extended/my_profile_screen.dart';
+import 'package:eventor_customer/widgets/customer_profile_overview.dart';
+import 'package:eventor_customer/widgets/common/app_shimmer.dart';
 import 'package:eventor_customer/models/account_security_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +19,6 @@ import 'package:eventor_customer/repositories/review_repository.dart';
 import 'package:eventor_customer/services/app_settings_controller.dart';
 import 'package:eventor_customer/screens/main/me_screen.dart';
 import 'package:eventor_customer/screens/extended/account_security_screen.dart';
-import 'package:eventor_customer/screens/extended/my_reviews_screen.dart';
 import 'package:eventor_customer/screens/extended/saved_services_screen.dart';
 
 class ProfileRepository implements AuthRepository {
@@ -130,6 +133,67 @@ void main() {
       );
     },
   );
+  testWidgets(
+    'vendor-style customer Me fits narrow screens and keeps profile actions and notification toggle working',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      var disabled = 0;
+      final settings = AppSettingsController(
+        initial: const AppSettingsModel(),
+        notificationPermission: () async => true,
+        disableNotifications: () async {
+          disabled++;
+        },
+      );
+      Widget? opened;
+      await tester.pumpWidget(
+        AppSettingsScope(
+          controller: settings,
+          child: MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+              child: MeScreen(
+                repository: ProfileRepository(),
+                loadSocialLinks: () async => [],
+                onOpen: (screen) => opened = screen,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerProfileOverview), findsOneWidget);
+      expect(find.text('test@example.invalid'), findsNothing);
+      expect(find.byType(AppShimmer), findsNothing);
+      await tester.tap(find.text('Edit Profile'));
+      await tester.pumpAndSettle();
+      expect(opened, isA<MyProfileScreen>());
+      await tester.tap(
+        find.descendant(
+          of: find.byType(CustomerProfileOverview),
+          matching: find.text('Saved Services'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(opened, isA<SavedServicesScreen>());
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('notifications-toggle')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('notifications-toggle')));
+      await tester.pumpAndSettle();
+      expect(settings.value.notificationsEnabled, false);
+      expect(disabled, 1);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      settings.dispose();
+    },
+  );
   test(
     'Saved services persist and stay separate for different accounts',
     () async {
@@ -204,13 +268,35 @@ void main() {
       findsOneWidget,
     );
   });
-  testWidgets('My Reviews submits the selected stars and text', (tester) async {
+  testWidgets('Booking review editor submits selected stars and text', (
+    tester,
+  ) async {
     final repository = ReviewsRepository();
     await tester.pumpWidget(
-      MaterialApp(home: MyReviewsScreen(repository: repository)),
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () async {
+                final booking = (await repository.myReviews()).first;
+                if (context.mounted) {
+                  await showDialog<void>(
+                    context: context,
+                    builder: (_) => ReviewEditorDialog(
+                      booking: booking,
+                      repository: repository,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Give a Review'),
+            ),
+          ),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Write a review'));
+    await tester.tap(find.text('Give a Review'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('4 stars'));
     await tester.enterText(find.byType(TextField), 'Great service');

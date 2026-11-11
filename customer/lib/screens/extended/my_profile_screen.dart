@@ -1,17 +1,20 @@
-import '../../services/app_live_data.dart';
-
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../models/account_security_action.dart';
 import '../../models/auth_model.dart';
 import '../../repositories/profile_repository.dart';
-import '../../models/edit_profile_result.dart';
-import '../../widgets/profile/edit_profile_sheet.dart';
+import '../../services/app_live_data.dart';
+import '../../services/app_settings_controller.dart';
+import '../../utils/customer_contact_phone.dart';
+import 'account_security_screen.dart';
 
 class MyProfileScreen extends StatefulWidget {
-  const MyProfileScreen({super.key});
+  const MyProfileScreen({super.key, this.repository});
+
+  final ProfileRepository? repository;
 
   @override
   State<MyProfileScreen> createState() => _MyProfileScreenState();
@@ -19,516 +22,262 @@ class MyProfileScreen extends StatefulWidget {
 
 class _MyProfileScreenState extends State<MyProfileScreen>
     with LiveDataState<MyProfileScreen> {
+  static const wine = Color(0xFF80152C);
+  final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  late final _repo = widget.repository ?? ProfileRepository();
+  AuthModel? _profile;
+  Uint8List? _photo;
+  bool _loading = true, _saving = false, _picking = false;
+  int _loadVersion = 0;
+
+  bool get _busy => _saving || _picking;
+  bool get _dirty =>
+      _profile != null &&
+      (_name.text.trim() != _profile!.name.trim() ||
+          _phone.text.trim() != (_profile!.phone ?? '').trim() ||
+          _photo != null);
+
+  String t(String english, String tamil) =>
+      AppSettingsScope.of(context).text(english, tamil);
+
   @override
   Set<String> get liveDatasets => {'own:customers', 'own:users'};
+
+  @override
+  bool get liveCanRefresh => !_busy;
+
   @override
   Future<void> onLiveData(Set<String> changed) async {
-    await _loadProfile();
+    if (!_dirty) await _load();
   }
-
-  // =========================================================
-  // REPOSITORY
-  // =========================================================
-
-  final ProfileRepository _profileRepository = ProfileRepository();
-
-  final ImagePicker _imagePicker = ImagePicker();
-
-  // =========================================================
-  // COLORS
-  // =========================================================
-
-  static const Color primaryRed = Color(0xFF80152C);
-
-  static const Color background = Color(0xFFF8F8F8);
-
-  static const Color textDark = Color(0xFF202020);
-
-  static const Color textGrey = Color(0xFF777777);
-
-  static const Color lightRed = Color(0xFFFFEEEE);
-
-  // =========================================================
-  // STATE
-  // =========================================================
-
-  AuthModel? _user;
-
-  bool _isLoading = true;
-  bool _isSaving = false;
-
-  // =========================================================
-  // INIT
-  // =========================================================
 
   @override
   void initState() {
     super.initState();
-
-    _loadProfile();
+    _load();
   }
 
-  // =========================================================
-  // LOAD PROFILE
-  // =========================================================
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
 
-  Future<void> _loadProfile() async {
+  void _apply(AuthModel profile) {
+    _profile = profile;
+    _name.text = profile.name;
+    _phone.text = profile.phone ?? '';
+    _photo = null;
+    _loading = false;
+  }
+
+  Future<void> _load() async {
+    final request = ++_loadVersion;
     try {
-      final AuthModel? user = await _profileRepository.getProfile();
-
-      if (!mounted) return;
-
+      final profile = await _repo.getProfile();
+      if (!mounted || request != _loadVersion || _busy || _dirty) return;
       setState(() {
-        _user = user;
-        _isLoading = false;
+        if (profile != null) _apply(profile);
+        _loading = false;
       });
-    } catch (e, stackTrace) {
-      debugPrint('PROFILE LOAD ERROR: $e');
-
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      _showMessage('Unable to load profile', isError: true);
+    } catch (_) {
+      if (mounted && request == _loadVersion) setState(() => _loading = false);
     }
   }
 
-  // =========================================================
-  // EDIT PROFILE
-  // =========================================================
-
-  Future<void> _showEditProfile() async {
-    if (_user == null || _isSaving) {
-      return;
-    }
-
-    final EditProfileResult? result =
-        await showModalBottomSheet<EditProfileResult>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          builder: (_) {
-            return EditProfileSheet(
-              initialName: _user!.name,
-              initialPhone: _user!.phone ?? '',
-              email: _user!.email,
-            );
-          },
-        );
-
-    if (!mounted || result == null) {
-      return;
-    }
-
-    if (!result.saved) {
-      return;
-    }
-
-    await _updateProfile(name: result.name, phone: result.phone);
-  }
-
-  // =========================================================
-  // UPDATE PROFILE
-  // =========================================================
-
-  Future<void> _updateProfile({
-    required String name,
-    required String phone,
-  }) async {
-    if (_isSaving) return;
-
+  Future<void> _pickPhoto() async {
+    if (_busy) return;
+    setState(() => _picking = true);
     try {
-      setState(() {
-        _isSaving = true;
-      });
-
-      final AuthModel? updatedUser = await _profileRepository.updateProfile(
-        name: name,
-        phone: phone,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _user = updatedUser;
-        _isSaving = false;
-      });
-
-      _showMessage('Profile updated successfully');
-    } catch (e, stackTrace) {
-      debugPrint('PROFILE UPDATE ERROR: $e');
-
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isSaving = false;
-      });
-
-      _showMessage('Unable to update profile', isError: true);
-    }
-  }
-
-  // =========================================================
-  // PICK PROFILE IMAGE
-  // =========================================================
-
-  Future<void> _pickProfileImage() async {
-    if (_isSaving) return;
-
-    try {
-      final XFile? selectedImage = await _imagePicker.pickImage(
+      final photo = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        imageQuality: 80,
         maxWidth: 1000,
         maxHeight: 1000,
+        imageQuality: 85,
+        requestFullMetadata: false,
       );
-
-      if (selectedImage == null) {
-        return;
+      if (!mounted || photo == null) return;
+      final bytes = await photo.readAsBytes();
+      if (bytes.isEmpty || bytes.length > ProfileRepository.maxPhotoBytes) {
+        throw const FormatException();
       }
-
-      final File imageFile = File(selectedImage.path);
-
-      setState(() {
-        _isSaving = true;
-      });
-
-      final AuthModel? updatedUser = await _profileRepository
-          .updateProfileImage(imageFile);
-
-      if (!mounted) return;
-
-      setState(() {
-        _user = updatedUser;
-        _isSaving = false;
-      });
-
-      _showMessage('Profile photo updated successfully');
-    } catch (e, stackTrace) {
-      debugPrint('PROFILE IMAGE ERROR: $e');
-
-      debugPrint('$stackTrace');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isSaving = false;
-      });
-
-      _showMessage('Unable to update profile photo', isError: true);
+      if (mounted) {
+        setState(() => _photo = bytes);
+      }
+    } catch (_) {
+      if (mounted) {
+        _message(
+          t(
+            'Choose a valid photo up to 5 MB.',
+            '5 MB வரை உள்ள படத்தைத் தேர்ந்தெடுக்கவும்.',
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _picking = false);
     }
   }
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
-
-  void _showMessage(String message, {bool isError = false}) {
-    if (!mounted) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(
-        context,
-      );
-
-      if (messenger == null) return;
-
-      messenger.hideCurrentSnackBar();
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          backgroundColor: isError ? Colors.red.shade700 : primaryRed,
-          duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    });
+  String? _validatePhone(String? value) {
+    final phone = value?.trim() ?? '';
+    if (phone.isEmpty ||
+        phone == (_profile?.phone ?? '').trim() ||
+        customerContactPhone(phone) != null) {
+      return null;
+    }
+    return t(
+      'Enter a valid phone number.',
+      'சரியான தொலைபேசி எண்ணை உள்ளிடவும்.',
+    );
   }
 
-  // =========================================================
-  // PROFILE IMAGE
-  // =========================================================
-
-  Widget _buildProfileImage() {
-    final String? avatarUrl = _user?.avatarUrl;
-
-    return GestureDetector(
-      onTap: _isSaving ? null : _pickProfileImage,
-      child: Stack(
-        children: [
-          Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              image: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(avatarUrl),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: avatarUrl == null || avatarUrl.isEmpty
-                ? const Icon(Icons.person, size: 48, color: primaryRed)
-                : null,
+  Future<void> _save() async {
+    if (_busy || !_dirty || !_form.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    final phone = _phone.text.trim();
+    setState(() {
+      _saving = true;
+      ++_loadVersion;
+    });
+    try {
+      final saved = await _repo.saveProfile(
+        name: _name.text.trim(),
+        phone: phone == (_profile?.phone ?? '').trim()
+            ? phone
+            : customerContactPhone(phone) ?? '',
+        photo: _photo,
+      );
+      if (!mounted) return;
+      setState(() => _apply(saved));
+      _message(t('Profile updated.', 'சுயவிவரம் புதுப்பிக்கப்பட்டது.'));
+    } catch (_) {
+      if (mounted) {
+        _message(
+          t(
+            'Could not save your profile. Try again.',
+            'சுயவிவரத்தைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
           ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                size: 16,
-                color: primaryRed,
-              ),
+  void _message(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _confirmDiscard() async {
+    if (_busy) return;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(t('Discard changes?', 'மாற்றங்களை நீக்கவா?')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: Text(t('Keep editing', 'தொடர்ந்து திருத்து')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(
+              t('Discard', 'நீக்கு'),
+              style: const TextStyle(color: wine, fontWeight: FontWeight.w700),
             ),
           ),
-
-          if (_isSaving)
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black26,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: SizedBox(
-                    width: 25,
-                    height: 25,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
+    if (mounted && discard == true) Navigator.pop(context);
   }
 
-  // =========================================================
-  // BUILD
-  // =========================================================
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: background,
-        body: Center(child: CircularProgressIndicator(color: primaryRed)),
-      );
-    }
-
-    if (_user == null) {
-      return Scaffold(
-        backgroundColor: background,
-        body: Center(
-          child: ElevatedButton(
-            onPressed: _loadProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryRed,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Retry'),
-          ),
+  Widget _avatar(AuthModel profile) {
+    final name = _name.text.trim();
+    final fallback = CircleAvatar(
+      radius: 49,
+      backgroundColor: const Color(0xFFF4E5E9),
+      child: Text(
+        name.isEmpty ? 'C' : name.characters.first.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 42,
+          fontWeight: FontWeight.w700,
+          color: wine,
         ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: background,
-      appBar: AppBar(title: const Text('My Profile')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: primaryRed,
-          onRefresh: _loadProfile,
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 128),
+      ),
+    );
+    final avatar = profile.avatarUrl;
+    final photo = _photo;
+    return Semantics(
+      button: true,
+      label: t('Change photo', 'படத்தை மாற்று'),
+      child: InkWell(
+        onTap: _busy ? null : _pickPhoto,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 112,
+          height: 118,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              // =====================================================
-              // HEADER
-              // =====================================================
-
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  'Personal information',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: textDark,
-                  ),
+              Container(
+                width: 108,
+                height: 108,
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFCB48),
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: photo != null
+                      ? Image.memory(
+                          photo,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => fallback,
+                        )
+                      : avatar != null && avatar.isNotEmpty
+                      ? Image.network(
+                          avatar,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => fallback,
+                        )
+                      : fallback,
                 ),
               ),
-
-              const SizedBox(height: 18),
-
-              // =====================================================
-              // PROFILE CARD
-              // =====================================================
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF80152C), Color(0xFFAC4665)],
+              Positioned(
+                right: 0,
+                bottom: 2,
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: wine,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // PROFILE PHOTO
-
-                    _buildProfileImage(),
-
-                    const SizedBox(height: 16),
-
-                    // NAME
-                    Text(
-                      _user!.name.isEmpty ? 'User' : _user!.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // PHONE
-                    Text(
-                      (_user!.phone == null || _user!.phone!.isEmpty)
-                          ? 'Phone number not added'
-                          : _user!.phone!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    // EMAIL
-                    Text(
-                      _user!.email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    // EDIT PROFILE
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: OutlinedButton(
-                        onPressed: _isSaving ? null : _showEditProfile,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
+                  child: _picking
+                      ? const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
+                        )
+                      : const Icon(
+                          Icons.camera_alt_outlined,
+                          size: 18,
+                          color: Colors.white,
                         ),
-                        child: const Text(
-                          'Edit Profile',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // =====================================================
-              // PROFILE INFORMATION
-              // =====================================================
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoRow(
-                      icon: Icons.person_outline,
-                      title: 'Name',
-                      value: _user!.name,
-                    ),
-
-                    const Divider(height: 28),
-
-                    _buildInfoRow(
-                      icon: Icons.phone_outlined,
-                      title: 'Phone',
-                      value: (_user!.phone == null || _user!.phone!.isEmpty)
-                          ? 'Not added'
-                          : _user!.phone!,
-                    ),
-
-                    const Divider(height: 28),
-
-                    _buildInfoRow(
-                      icon: Icons.email_outlined,
-                      title: 'Email',
-                      value: _user!.email,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -536,52 +285,241 @@ class _MyProfileScreenState extends State<MyProfileScreen>
     );
   }
 
-  // =========================================================
-  // INFO ROW
-  // =========================================================
+  Widget _heading(String title) => Text(
+    title,
+    style: const TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFF202638),
+    ),
+  );
 
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: lightRed,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: primaryRed, size: 21),
-        ),
+  InputDecoration _field(String label, IconData icon) => InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon, color: const Color(0xFF73737D), size: 20),
+    filled: true,
+    fillColor: Colors.white,
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: wine, width: 1.5),
+    ),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
 
-        const SizedBox(width: 14),
-
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12, color: textGrey),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value.isEmpty ? 'Not added' : value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: textDark,
+  @override
+  Widget build(BuildContext context) {
+    final profile = _profile;
+    return PopScope(
+      canPop: !_busy && !_dirty,
+      onPopInvokedWithResult: (popped, _) {
+        if (!popped && _dirty) _confirmDiscard();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F8FA),
+        appBar: AppBar(title: Text(t('My Profile', 'எனது சுயவிவரம்'))),
+        bottomNavigationBar: profile == null
+            ? null
+            : SafeArea(
+                minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: FilledButton.icon(
+                  onPressed: _busy || !_dirty ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: wine,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  icon: _saving
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.check_rounded),
+                  label: Text(
+                    _saving
+                        ? t('Saving…', 'சேமிக்கிறது…')
+                        : t('Save changes', 'மாற்றங்களைச் சேமி'),
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : profile == null
+            ? Center(
+                child: TextButton(
+                  onPressed: () {
+                    setState(() => _loading = true);
+                    _load();
+                  },
+                  child: Text(
+                    t(
+                      'Could not load profile. Retry',
+                      'சுயவிவரத்தை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+                    ),
+                  ),
+                ),
+              )
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 540),
+                  child: Form(
+                    key: _form,
+                    onChanged: () => setState(() {}),
+                    child: ListView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(color: const Color(0xFFF0EDF0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: wine.withValues(alpha: 0.06),
+                                blurRadius: 20,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Center(child: _avatar(profile)),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _name.text.trim().isEmpty
+                                      ? t('Your name', 'உங்கள் பெயர்')
+                                      : _name.text.trim(),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: wine,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  profile.email,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF747783),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Divider(
+                                  height: 1,
+                                  color: Color(0xFFE8E8ED),
+                                ),
+                                const SizedBox(height: 20),
+                                _heading(
+                                  t('Personal details', 'தனிப்பட்ட விவரங்கள்'),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _name,
+                                  enabled: !_busy,
+                                  textCapitalization: TextCapitalization.words,
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [AutofillHints.name],
+                                  decoration: _field(
+                                    t('Full name', 'முழுப் பெயர்'),
+                                    Icons.person_outline_rounded,
+                                  ),
+                                  validator: (value) =>
+                                      (value ?? '').trim().isEmpty
+                                      ? t(
+                                          'Enter your name.',
+                                          'உங்கள் பெயரை உள்ளிடவும்.',
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(height: 24),
+                                _heading(
+                                  t('Contact details', 'தொடர்பு விவரங்கள்'),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _phone,
+                                  enabled: !_busy,
+                                  keyboardType: TextInputType.phone,
+                                  autofillHints: const [
+                                    AutofillHints.telephoneNumber,
+                                  ],
+                                  decoration: _field(
+                                    t('Contact phone', 'தொடர்பு எண்'),
+                                    Icons.phone_outlined,
+                                  ),
+                                  validator: _validatePhone,
+                                ),
+                                const SizedBox(height: 14),
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(Icons.email_outlined, color: Color(0xFF73737D)),
+                                  title: Text(
+                                    t('Sign-in email', 'உள்நுழைவு மின்னஞ்சல்'),
+                                    style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF17171B)),
+                                  ),
+                                  subtitle: Text(profile.email, style: const TextStyle(color: Color(0xFF73737D))),
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Color(0xFF73737D),
+                                  ),
+                                  onTap: _busy
+                                      ? null
+                                      : () async {
+                                          await Navigator.of(
+                                            context,
+                                          ).push<void>(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const AccountSecurityScreen(
+                                                    action:
+                                                        AccountSecurityAction
+                                                            .email,
+                                                  ),
+                                            ),
+                                          );
+                                          if (mounted && !_dirty) await _load();
+                                        },
+                                ),
+                                if (profile.createdAt case final joined?)
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(
+                                      Icons.event_available_outlined,
+                                      color: Color(0xFF73737D),
+                                    ),
+                                    title: Text(
+                                      t('Member since', 'உறுப்பினரான நாள்'),
+                                      style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF17171B)),
+                                    ),
+                                    subtitle: Text(
+                                      MaterialLocalizations.of(context)
+                                          .formatMediumDate(joined.toLocal()),
+                                      style: const TextStyle(color: Color(0xFF73737D)),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      ),
     );
   }
 }

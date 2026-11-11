@@ -1,3 +1,12 @@
+import 'package:eventor_customer/models/app_settings_model.dart';
+import 'package:eventor_customer/services/app_settings_controller.dart';
+import 'package:eventor_customer/widgets/search/filter_sort_sheet.dart';
+import 'package:eventor_customer/widgets/common/global_search_bar.dart';
+import 'package:eventor_customer/widgets/home_feed_widgets.dart';
+import 'package:eventor_customer/widgets/search/result_cards.dart';
+import 'package:eventor_customer/screens/extended/result_screen.dart';
+import 'package:eventor_customer/widgets/search/customer_search_widgets.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -21,10 +30,29 @@ CustomerSearchResult result(String name, {bool vendor = false}) =>
 
 class FakeSearch implements CustomerSearchRepository {
   final calls = <String>[];
+  final recorded = <String>[];
+  final sortedCalls = <String>[];
+  @override
+  Future<CustomerSearchPage> searchFiltered(
+    String query, {
+    String kind = 'all',
+    String sort = 'relevance',
+    int offset = 0,
+  }) async {
+    sortedCalls.add('$query:$kind:$sort:$offset');
+    return CustomerSearchPage(
+      items: [result('$query sorted', vendor: kind == 'vendors')],
+      hasMore: false,
+    );
+  }
+
+  @override
+  Future<void> recordSearch(String query) async {
+    recorded.add(query);
+  }
+
   final pending = <String, Completer<CustomerSearchPage>>{};
   bool delayed = false, fail = false;
-  @override
-  Future<List<String>> browseSuggestions() async => [];
   @override
   Future<CustomerSearchPage> search(
     String query, {
@@ -69,33 +97,92 @@ void main() {
     await history.clear();
     expect(await history.load(), isEmpty);
   });
+  testWidgets('Recent query opens service cards with global search', (
+    tester,
+  ) async {
+    final history = CustomerSearchHistoryRepository(accountId: 'one');
+    await history.remember('Wedding');
+    final repo = FakeSearch();
+    CustomerSearchResult? opened;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CustomerSearchScreen(
+          repository: repo,
+          historyRepository: history,
+          onOpen: (r) => opened = r,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Recent searches'), findsOneWidget);
+    expect(find.byType(ResultScreen), findsNothing);
+    expect(find.byType(CustomerSearchFilters), findsNothing);
+    await tester.tap(find.text('Wedding'));
+    await tester.pumpAndSettle();
+    expect(repo.calls.last, 'Wedding:all:0');
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(find.byType(ResultCards), findsOneWidget);
+    expect(find.byType(HomeFeedItemCard), findsOneWidget);
+    expect(find.byType(CustomerSearchResultTile), findsNothing);
+    expect(find.byType(CustomerSearchFilters), findsNothing);
+    expect(find.byType(GlobalSearchBar), findsOneWidget);
+    expect(find.text('Results'), findsNothing);
+    expect(repo.recorded, ['Wedding']);
+    await tester.tap(find.text('Wedding result'));
+    await tester.pumpAndSettle();
+    expect(opened?.isVendor, isFalse);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GlobalSearchBar),
+        matching: find.byType(TextField),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsNothing);
+    expect(find.byType(CustomerSearchResultTile), findsNothing);
+    expect(find.text('Recent searches'), findsOneWidget);
+    expect(repo.recorded, ['Wedding']);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
-    'Recent query submits search, filters vendors and opens a result',
+    'result chips and vendor-style filter sheet apply and reset backend sorting',
     (tester) async {
-      final history = CustomerSearchHistoryRepository(accountId: 'one');
-      await history.remember('Wedding');
       final repo = FakeSearch();
-      CustomerSearchResult? opened;
+      final settings = AppSettingsController(initial: const AppSettingsModel());
+      addTearDown(settings.dispose);
       await tester.pumpWidget(
-        MaterialApp(
-          home: CustomerSearchScreen(
-            repository: repo,
-            historyRepository: history,
-            onOpen: (r) => opened = r,
+        AppSettingsScope(
+          controller: settings,
+          child: MaterialApp(
+            home: ResultScreen(
+              query: 'Wedding',
+              repository: repo,
+              onOpen: (_) {},
+            ),
           ),
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Recent searches'), findsOneWidget);
-      await tester.tap(find.text('Wedding'));
-      await tester.pumpAndSettle();
-      expect(repo.calls.last, 'Wedding:all:0');
       await tester.tap(find.widgetWithText(ChoiceChip, 'Vendors'));
       await tester.pumpAndSettle();
       expect(repo.calls.last, 'Wedding:vendors:0');
-      await tester.tap(find.text('Wedding result'));
+      await tester.tap(find.byTooltip('Filter & Sort'));
       await tester.pumpAndSettle();
-      expect(opened?.isVendor, isTrue);
+      expect(find.byType(SearchFilterSortSheet), findsOneWidget);
+      await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Price: High to Low').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apply Filters'));
+      await tester.pumpAndSettle();
+      expect(repo.sortedCalls.last, 'Wedding:vendors:price_high:0');
+      await tester.tap(find.byTooltip('Filter & Sort'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Clear All'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apply Filters'));
+      await tester.pumpAndSettle();
+      expect(repo.calls.last, 'Wedding:all:0');
       expect(tester.takeException(), isNull);
     },
   );
@@ -129,6 +216,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('New service'), findsOneWidget);
       expect(find.text('Old service'), findsNothing);
+      expect(repo.recorded, isEmpty);
       repo.delayed = false;
       repo.fail = true;
       await tester.testTextInput.receiveAction(TextInputAction.search);
@@ -138,6 +226,7 @@ void main() {
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
       expect(find.text('new result'), findsOneWidget);
+      expect(repo.recorded, ['new']);
       expect(tester.takeException(), isNull);
     },
   );

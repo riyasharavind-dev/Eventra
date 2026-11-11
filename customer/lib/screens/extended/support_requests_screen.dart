@@ -1,9 +1,12 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
 
 import '../../models/support_model.dart';
 import '../../repositories/support_repository.dart';
+import '../../widgets/common/app_empty_state.dart';
 import '../../widgets/support/support_ui.dart';
 import '../../widgets/support/support_ticket_tile.dart';
 import 'support_request_detail_screen.dart';
@@ -48,10 +51,18 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen>
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: supportBackground,
     appBar: AppBar(
-      title: const Text('My support requests'),
+      title: Text(
+        AppSettingsScope.translate(
+          context,
+          "customer.my_support_requests.9cce51cb",
+        ),
+      ),
       actions: [
         IconButton(
-          tooltip: 'Refresh requests',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "customer.refresh_requests.2ce6d3e7",
+          ),
           onPressed: _reload,
           icon: const Icon(Icons.refresh),
         ),
@@ -61,30 +72,49 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen>
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: supportWine));
         }
         if (snapshot.hasError) {
           return Center(
             child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: supportWine,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
               onPressed: _reload,
-              child: const Text('Unable to load. Retry'),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "customer.unable_to_load_retry.007ee6bc",
+                ),
+              ),
             ),
           );
         }
         final tickets = snapshot.data ?? [];
         return RefreshIndicator(
+          color: supportWine,
           onRefresh: _reload,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            children: tickets.isEmpty
-                ? [
-                    const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('No support requests yet.'),
+          child: tickets.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                    AppEmptyState(
+                      icon: Icons.support_agent_outlined,
+                      title: AppSettingsScope.translate(
+                        context,
+                        "customer.no_support_requests_yet.7121a59c",
+                      ),
                     ),
-                  ]
-                : tickets
+                  ],
+                )
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  children: tickets
                       .map(
                         (ticket) => Padding(
                           padding: const EdgeInsets.only(bottom: 12),

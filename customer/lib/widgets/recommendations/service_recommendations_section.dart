@@ -1,3 +1,9 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
+import '../vendor_profile_card.dart';
+import '../../repositories/home_feed_repository.dart';
+import '../../screens/extended/recommendation_results_screen.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -66,7 +72,9 @@ class _SectionState extends State<ServiceRecommendationsSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    c.serviceId != null
+                    c.vendors
+                        ? 'Related vendors'
+                        : c.serviceId != null
                         ? 'Related services'
                         : 'Recommended for you',
                     style: const TextStyle(
@@ -77,7 +85,9 @@ class _SectionState extends State<ServiceRecommendationsSection> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    c.serviceId != null
+                    c.vendors
+                        ? 'Other vendors offering similar services'
+                        : c.serviceId != null
                         ? 'Similar options and more to discover'
                         : c.personalized
                         ? 'Your interests, with something new to explore'
@@ -93,34 +103,70 @@ class _SectionState extends State<ServiceRecommendationsSection> {
             const SizedBox(height: 12),
             if (c.items.isNotEmpty)
               SizedBox(
-                height:
-                    300 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 3),
+                height: c.vendors
+                    ? vendorProfileCardHeight(context) + 8
+                    : feedShelfHeight(context),
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: c.items.length,
+                  itemCount: c.items.length + 1,
                   separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
+                    if (index == c.items.length) {
+                      return FeedSeeAllCard(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => RecommendationResultsScreen(
+                              serviceId: c.serviceId,
+                              vendors: c.vendors,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
                     final item = c.items[index];
+                    if (c.vendors) {
+                      return SizedBox(
+                        width: vendorProfileCardWidth(context),
+                        child: VendorProfileCard(
+                          item: item,
+                          onTap: () => openVendorProfileCard(context, item),
+                        ),
+                      );
+                    }
                     return SizedBox(
-                      width: 180,
-                      child: HomeFeedItemCard(
-                        item: item,
-                        onTap: () {
-                          if (item.data['service'] is! Map) return;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (_) => ServiceDetailsScreen(
-                                service: ServiceModel.fromMap(
-                                  Map<String, dynamic>.from(
-                                    item.data['service'] as Map,
+                      width: feedCardWidth(
+                        MediaQuery.sizeOf(context).width - 32,
+                      ),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: HomeFeedItemCard(
+                          item: item,
+                          onTap: () {
+                            if (item.isVendor) {
+                              openHomeFeedItem(
+                                context,
+                                item,
+                                HomeFeedRepository(),
+                              );
+                              return;
+                            }
+                            if (item.data['service'] is! Map) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute<void>(
+                                builder: (_) => ServiceDetailsScreen(
+                                  service: ServiceModel.fromMap(
+                                    Map<String, dynamic>.from(
+                                      item.data['service'] as Map,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     );
                   },
@@ -137,15 +183,12 @@ class _SectionState extends State<ServiceRecommendationsSection> {
                 child: TextButton.icon(
                   onPressed: c.items.isEmpty ? c.refresh : c.loadMore,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Recommendations unavailable. Retry'),
-                ),
-              ),
-            if (!c.loading && c.error == null && c.hasMore)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextButton(
-                  onPressed: c.loadMore,
-                  child: const Text('Discover more'),
+                  label: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.recommendations_unavailable_retry.07e056e2",
+                    ),
+                  ),
                 ),
               ),
           ],

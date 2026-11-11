@@ -1,3 +1,5 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 
 import 'package:flutter/material.dart';
@@ -103,25 +105,42 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Screenshot'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Image.network(
-              url,
-              loadingBuilder: (_, child, progress) => progress == null
-                  ? child
-                  : const SizedBox(
-                      height: 180,
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-              errorBuilder: (_, error, stack) =>
-                  const Text('Unable to load screenshot. Please try again.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            AppSettingsScope.translate(context, "customer.screenshot.029320ad"),
+          ),
+          content: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: double.maxFinite,
+              child: Image.network(
+                url,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : const SizedBox(
+                        height: 180,
+                        child: Center(
+                          child: CircularProgressIndicator(color: supportWine),
+                        ),
+                      ),
+                errorBuilder: (_, error, stack) => Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "customer.unable_to_load_screenshot_please_try_again.f0cfeea5",
+                  ),
+                ),
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
+              child: Text(
+                AppSettingsScope.translate(context, "customer.close.7d9eb7ac"),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: supportWine),
+              ),
             ),
           ],
         ),
@@ -163,7 +182,10 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
       title: Text(_ticket.reference),
       actions: [
         IconButton(
-          tooltip: 'Refresh request',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "customer.refresh_request.f3ab0db6",
+          ),
           onPressed: _loading || _sending ? null : _load,
           icon: const Icon(Icons.refresh),
         ),
@@ -175,7 +197,12 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
         ? Center(
             child: FilledButton(
               onPressed: _load,
-              child: const Text('Unable to load. Retry'),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "customer.unable_to_load_retry.007ee6bc",
+                ),
+              ),
             ),
           )
         : RefreshIndicator(
@@ -194,12 +221,33 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                 const SizedBox(height: 10),
                 Text('${_ticket.category} · ${_ticket.statusLabel}'),
                 const SizedBox(height: 22),
-                _message('You', _ticket.description, _ticket.createdAt, false),
+                _message(
+                  AppSettingsScope.translate(context, "customer.you.08b04193"),
+                  _ticket.description,
+                  _ticket.createdAt,
+                  false,
+                ),
                 if (_ticket.screenshotPath != null)
-                  OutlinedButton.icon(
-                    onPressed: _attachment,
-                    icon: const Icon(Icons.image_outlined),
-                    label: const Text('View screenshot'),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: supportWine,
+                        side: const BorderSide(color: Color(0xFFF0EDF0)),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                      onPressed: _attachment,
+                      icon: const Icon(Icons.image_outlined, color: Color(0xFF73737D)),
+                      label: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.view_screenshot.acf862e2",
+                        ),
+                      ),
+                    ),
                   ),
                 ..._messages.map(
                   (message) => _message(
@@ -210,10 +258,14 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                   ),
                 ),
                 if (_messages.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(
-                      'Your request has been submitted. Replies from support will appear here.',
+                      AppSettingsScope.translate(
+                        context,
+                        "customer.your_request_has_been_submitted_replies_from_.4c85c2fc",
+                      ),
+                      style: const TextStyle(color: Color(0xFF73737D)),
                     ),
                   ),
                 if (_ticket.status != 'closed') ...[
@@ -224,25 +276,41 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                     maxLength: 4000,
                     minLines: 3,
                     maxLines: 6,
-                    decoration: const InputDecoration(
-                      labelText: 'Your reply',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppSettingsScope.translate(
+                        context,
+                        "customer.your_reply.74a41190",
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   FilledButton(
                     onPressed: _sending ? null : _send,
-                    style: FilledButton.styleFrom(backgroundColor: supportWine),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: supportWine,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                    ),
                     child: Text(_sending ? 'Sending…' : 'Send reply'),
                   ),
                   if (_ticket.status == 'resolved')
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 10),
-                      child: Text('Sending a reply will reopen this request.'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "customer.sending_a_reply_will_reopen_this_request.e84a424d",
+                        ),
+                      ),
                     ),
                 ] else
-                  const Text(
-                    'This request is closed. Create a new request if you need more help.',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "customer.this_request_is_closed_create_a_new_request_i.1038f2d1",
+                    ),
                   ),
               ],
             ),

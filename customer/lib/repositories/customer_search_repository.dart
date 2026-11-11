@@ -1,10 +1,11 @@
-﻿import 'dart:convert';
+import 'feed_card_location.dart';
+
+import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/customer_search_model.dart';
-import 'category_repository.dart';
 
 class CustomerSearchRepository {
   CustomerSearchRepository({SupabaseClient? client})
@@ -15,21 +16,73 @@ class CustomerSearchRepository {
     String kind = 'all',
     int offset = 0,
   }) async => CustomerSearchPage.fromMap(
-    Map<String, dynamic>.from(
-      await db.rpc(
-        'customer_search',
-        params: {
-          'p_query': normalizeSearch(query),
-          'p_kind': kind,
-          'p_offset': offset,
-          'p_limit': 20,
-        },
-      ) as Map,
+    await addCardLocations(
+      db,
+      Map<String, dynamic>.from(
+        await db.rpc(
+          'customer_search',
+          params: {
+            'p_query': normalizeSearch(query),
+            'p_kind': kind,
+            'p_offset': offset,
+            'p_limit': 20,
+          },
+        ) as Map,
+      ),
     ),
   );
-  Future<List<String>> browseSuggestions() async => (await CategoryRepository(
-    client: db,
-  ).getParentCategories()).take(8).map((c) => c.name).toList();
+  Future<CustomerSearchPage> searchFiltered(
+    String query, {
+    String kind = 'all',
+    String sort = 'relevance',
+    int offset = 0,
+  }) async => CustomerSearchPage.fromMap(
+    await addCardLocations(
+      db,
+      Map<String, dynamic>.from(
+        await db.rpc(
+          'customer_search_filtered',
+          params: {
+            'p_query': normalizeSearch(query),
+            'p_kind': kind,
+            'p_sort': sort,
+            'p_offset': offset,
+            'p_limit': 20,
+          },
+        ) as Map,
+      ),
+    ),
+  );
+  Future<CustomerSearchPage> categoryResults(
+    String categoryId, {
+    String kind = 'all',
+    String sort = 'relevance',
+    int offset = 0,
+  }) async => CustomerSearchPage.fromMap(
+    await addCardLocations(
+      db,
+      Map<String, dynamic>.from(
+        await db.rpc(
+          'customer_category_results',
+          params: {
+            'p_category_id': categoryId,
+            'p_kind': kind,
+            'p_sort': sort,
+            'p_offset': offset,
+            'p_limit': 20,
+          },
+        ) as Map,
+      ),
+    ),
+  );
+  Future<void> recordSearch(String query) async {
+    if (db.auth.currentUser == null) return;
+    await db.rpc(
+      'customer_record_category_search',
+      params: {'p_query': normalizeSearch(query)},
+    );
+  }
+
   CustomerSearchHistoryRepository history() => CustomerSearchHistoryRepository(
     accountId: db.auth.currentUser?.id ?? 'guest',
   );

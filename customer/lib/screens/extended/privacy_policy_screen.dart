@@ -1,3 +1,5 @@
+import 'package:eventor_customer/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 import '../../widgets/legal/legal_document_content.dart';
 
@@ -116,7 +118,12 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: _red),
+              style: FilledButton.styleFrom(
+                backgroundColor: _red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded),
               label: Text(error ? 'Retry' : 'Refresh'),
@@ -133,12 +140,20 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "customer.privacy_policy.506ff394",
+          ),
+        ),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         actions: [
           IconButton(
-            tooltip: 'Refresh privacy policy',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "customer.refresh_privacy_policy.017d223e",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -163,8 +178,11 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'EVENTOR CUSTOMER',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "customer.eventor_customer.ca00a0db",
+                            ),
                             style: TextStyle(
                               color: _red,
                               fontWeight: FontWeight.w700,
@@ -195,10 +213,17 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFECECEC),
+                                color: const Color(0xFFF0EDF0),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _red.withValues(alpha: 0.04),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: LegalDocumentContent(
                               text: document.contentMarkdown,

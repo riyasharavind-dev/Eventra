@@ -1,3 +1,5 @@
+import 'feed_card_location.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,17 +14,32 @@ class RecommendationRepository {
 
   Future<RecommendationPage> page({String? serviceId, int offset = 0}) async =>
       RecommendationPage(
-        Map<String, dynamic>.from(
-          await db.rpc(
-            'customer_recommendations',
-            params: {
-              'p_service_id': serviceId,
-              'p_offset': offset,
-              'p_limit': 12,
-            },
-          ) as Map,
+        await addCardLocations(
+          db,
+          Map<String, dynamic>.from(
+            await db.rpc(
+              'customer_recommendations',
+              params: {
+                'p_service_id': serviceId,
+                'p_offset': offset,
+                'p_limit': 12,
+              },
+            ) as Map,
+          ),
         ),
       );
+
+  Future<RecommendationPage> relatedVendorsPage({
+    required String serviceId,
+    int offset = 0,
+  }) async => RecommendationPage(
+    Map<String, dynamic>.from(
+      await db.rpc(
+        'customer_related_vendors',
+        params: {'p_service_id': serviceId, 'p_offset': offset, 'p_limit': 12},
+      ) as Map,
+    ),
+  );
 
   /// Discovery signals must never block saving, viewing, or booking a service.
   Future<void> signal(String serviceId, String action) async {
@@ -43,7 +60,12 @@ class RecommendationRepository {
 class RecommendationController extends ChangeNotifier {
   final RecommendationRepository repository;
   final String? serviceId;
-  RecommendationController({required this.repository, this.serviceId});
+  final bool vendors;
+  RecommendationController({
+    required this.repository,
+    this.serviceId,
+    this.vendors = false,
+  });
   final items = <HomeFeedItem>[];
   bool loading = false, hasMore = true, personalized = false;
   Object? error;
@@ -69,7 +91,12 @@ class RecommendationController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final page = await repository.page(serviceId: serviceId, offset: offset);
+      final page = vendors
+          ? await repository.relatedVendorsPage(
+              serviceId: serviceId!,
+              offset: offset,
+            )
+          : await repository.page(serviceId: serviceId, offset: offset);
       if (_disposed || request != _generation) return;
       if (replace || _replaceOnSuccess) {
         items.clear();

@@ -6,6 +6,11 @@ import 'package:eventor_customer/models/service_model.dart';
 import 'package:eventor_customer/repositories/explore_repository.dart';
 import 'package:eventor_customer/screens/main/explore_screen.dart';
 import 'package:eventor_customer/widgets/explore/explore_service_card.dart';
+import 'package:eventor_customer/widgets/explore/explore_categories.dart';
+import 'package:eventor_customer/screens/extended/result_screen.dart';
+import 'package:eventor_customer/widgets/home_feed_widgets.dart';
+
+import 'category_result_test_repository.dart';
 
 CategoryNodeModel category(String id, String name, [String? parent]) =>
     CategoryNodeModel(
@@ -64,34 +69,37 @@ void main() {
       expect(data.childrenFor('decor').map((c) => c.id), ['flower']);
     },
   );
-  testWidgets('Explore drills into children and opens a large service card', (
-    tester,
-  ) async {
-    String? opened;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExploreScreen(
-          repository: FakeExplore(),
-          onOpen: (s) => opened = s.id,
+  testWidgets(
+    'Explore shows all descendants together; services open only after choosing a type',
+    (tester) async {
+      String? opened;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExploreScreen(
+            repository: FakeExplore(),
+            resultRepository: CategoryResultTestRepository(data),
+            onOpen: (s) => opened = s.id,
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Explore'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('parent-decor')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('child-flower')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('child-flower')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('child-rose')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('child-rose')));
-    await tester.pumpAndSettle();
-    expect(find.byType(ExploreServiceCard), findsOneWidget);
-    await tester.ensureVisible(find.byType(ExploreServiceCard));
-    await tester.tap(find.byType(ExploreServiceCard));
-    expect(opened, 'rose-service');
-    expect(tester.takeException(), isNull);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Explore'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('parent-decor')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('child-flower')), findsOneWidget);
+      expect(find.byKey(const ValueKey('child-rose')), findsOneWidget);
+      expect(find.byType(ExploreCategoryTrail), findsNothing);
+      expect(find.byType(ExploreServiceCard), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('child-rose')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ResultScreen), findsOneWidget);
+      expect(find.byType(HomeFeedItemCard), findsOneWidget);
+      await tester.ensureVisible(find.byType(HomeFeedItemCard));
+      await tester.tap(find.byType(HomeFeedItemCard));
+      expect(opened, 'rose-service');
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'Explore fits a narrow screen with large text and supports retry',
     (tester) async {
@@ -107,7 +115,10 @@ void main() {
                 .copyWith(textScaler: const TextScaler.linear(1.6)),
             child: child!,
           ),
-          home: ExploreScreen(repository: repo),
+          home: ExploreScreen(
+            repository: repo,
+            resultRepository: CategoryResultTestRepository(data),
+          ),
         ),
       );
       await tester.pumpAndSettle();

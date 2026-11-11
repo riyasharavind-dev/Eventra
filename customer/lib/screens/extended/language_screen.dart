@@ -1,90 +1,99 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../services/app_settings_controller.dart';
+import '../../models/app_language_pack.dart';
 
 class LanguageScreen extends StatelessWidget {
   const LanguageScreen({super.key});
-  Future<void> choose(BuildContext context, String code) async {
-    final settings = AppSettingsScope.of(context);
-    if (settings.busy) {
-      return;
-    }
-    try {
-      await settings.setLanguage(code);
-      if (context.mounted) {
-        Navigator.pop(context);
-      }
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              settings.text(
-                'Unable to save language. Please retry.',
-                'மொழியைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
-              ),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final settings = AppSettingsScope.of(context),
-        colors = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(settings.text('Language', 'மொழி'))),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            settings.text(
-              'Choose your app language',
-              'உங்கள் செயலி மொழியைத் தேர்வு செய்யவும்',
-            ),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            settings.text(
-              'The language changes only when you select an option below.',
-              'கீழே ஒரு மொழியைத் தேர்வு செய்யும்போது மட்டுமே மொழி மாறும்.',
-            ),
-          ),
-          const SizedBox(height: 24),
-          ...const {'en': 'English', 'ta': 'தமிழ்'}.entries.map((e) {
-            final selected = settings.value.languageCode == e.key;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: selected
-                    ? colors.primaryContainer
-                    : colors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(16),
-                clipBehavior: Clip.antiAlias,
-                child: ListTile(
-                  key: ValueKey('language-option-${e.key}'),
-                  title: Text(
-                    e.value,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  leading: const Icon(Icons.language),
-                  trailing: Icon(
-                    selected
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: colors.primary,
-                  ),
-                  enabled: !settings.busy,
-                  onTap: () => choose(context, e.key),
-                ),
+    final settings = AppSettingsScope.of(context);
+    final localization = settings.localization;
+    return ListenableBuilder(
+      listenable: localization ?? settings,
+      builder: (context, _) => Scaffold(
+        backgroundColor: const Color(0xFFF8F8FA),
+        appBar: AppBar(title: Text(settings.text('Language', 'மொழி'))),
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              settings.text(
+                'Choose your app language',
+                'உங்கள் செயலி மொழியைத் தேர்வு செய்யவும்',
               ),
-            );
-          }),
-          if (settings.busy) const Center(child: CircularProgressIndicator()),
-        ],
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF17171B),
+              ),
+            ),
+            const SizedBox(height: 24),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount:
+                  (localization?.options ?? [AppLanguageOption.english]).length,
+              itemBuilder: (context, i) {
+                final item =
+                    (localization?.options ?? [AppLanguageOption.english])[i];
+                final selected = item.code == settings.value.languageCode;
+                return OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: selected
+                        ? const Color(0xFFF5E8EC)
+                        : Colors.white,
+                    foregroundColor: selected
+                        ? const Color(0xFF80152C)
+                        : const Color(0xFF17171B),
+                    side: BorderSide(
+                      color: selected
+                          ? const Color(0xFF80152C)
+                          : const Color(0xFFF0EDF0),
+                      width: selected ? 1.5 : 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: settings.busy
+                      ? null
+                      : () async {
+                          try {
+                            await settings.setLanguage(item.code);
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (_) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Unable to download language. Retry when connected.',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  child: Text(
+                    item.nativeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

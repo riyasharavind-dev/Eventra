@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'language_pack_repository.dart';
+
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_settings_model.dart';
@@ -10,9 +12,12 @@ class AppSettingsRepository {
 
   Future<AppSettingsModel> load() async {
     final prefs = await SharedPreferences.getInstance();
+    final options = await LanguagePackRepository().cachedManifest();
+    final saved = prefs.getString(_language) ?? 'en';
+    final valid = ['en', 'ta', ...options.map((v) => v.code)].contains(saved);
     return AppSettingsModel(
       notificationsEnabled: prefs.getBool(_notifications) ?? true,
-      languageCode: prefs.getString(_language) == 'ta' ? 'ta' : 'en',
+      languageCode: valid ? saved : 'en',
       themeMode: ThemeMode.light,
     );
   }
@@ -25,7 +30,11 @@ class AppSettingsRepository {
   }
 
   Future<void> saveLanguage(String code) async {
-    if (code != 'en' && code != 'ta') {
+    final options = await LanguagePackRepository().cachedManifest();
+    if (!['en', 'ta', ...options.map((v) => v.code)].contains(code)) {
+      throw ArgumentError('Language is not published');
+    }
+    if (!RegExp(r'^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$').hasMatch(code)) {
       throw ArgumentError('Unsupported language');
     }
     final prefs = await SharedPreferences.getInstance();
