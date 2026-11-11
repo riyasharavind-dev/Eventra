@@ -961,30 +961,12 @@ class _BannerFormDialogState extends State<_BannerFormDialog> {
 
         final bytes = await image.readAsBytes();
 
-        final extension = _getExtension(image.name);
-
-        final contentType = _getContentType(extension);
-
-        final fileName =
-            'banner_${DateTime.now().millisecondsSinceEpoch}.$extension';
-
-        imagePath = 'home/$fileName';
-
-        imageUrl = await widget.repository.uploadBannerImage(
-          path: imagePath,
+        final upload = await widget.repository.uploadBannerImage(
           bytes: bytes,
-          contentType: contentType,
+          filename: image.name,
         );
-
-        // Delete old image after
-        // successful new upload.
-        if (widget.banner != null &&
-            widget.banner!.imagePath.isNotEmpty &&
-            widget.banner!.imagePath != imagePath) {
-          try {
-            await widget.repository.deleteImage(widget.banner!.imagePath);
-          } catch (_) {}
-        }
+        imagePath = upload['path']!;
+        imageUrl = upload['url']!;
       }
 
       final int sortOrder = int.tryParse(_sortOrderController.text.trim()) ?? 0;
@@ -1030,6 +1012,17 @@ class _BannerFormDialogState extends State<_BannerFormDialog> {
         );
       }
 
+      final previousPath = widget.banner?.imagePath;
+      if (previousPath != null &&
+          previousPath.isNotEmpty &&
+          previousPath != imagePath) {
+        try {
+          await widget.repository.deleteImage(previousPath);
+        } catch (_) {
+          // The saved banner already points to the new image.
+        }
+      }
+
       if (!mounted) {
         return;
       }
@@ -1053,33 +1046,6 @@ class _BannerFormDialogState extends State<_BannerFormDialog> {
   // ============================================================
   // HELPERS
   // ============================================================
-
-  String _getExtension(String fileName) {
-    final lower = fileName.toLowerCase();
-
-    if (lower.endsWith('.png')) {
-      return 'png';
-    }
-
-    if (lower.endsWith('.webp')) {
-      return 'webp';
-    }
-
-    return 'jpg';
-  }
-
-  String _getContentType(String extension) {
-    switch (extension) {
-      case 'png':
-        return 'image/png';
-
-      case 'webp':
-        return 'image/webp';
-
-      default:
-        return 'image/jpeg';
-    }
-  }
 
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context)

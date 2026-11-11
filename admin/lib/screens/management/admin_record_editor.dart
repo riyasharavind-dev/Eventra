@@ -98,10 +98,16 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
     try {
       final socialIcon =
           widget.module.name == 'social_links' && f.name == 'icon_url';
+      final bannerImage =
+          widget.module.name == 'banners' && f.name == 'image_url';
       final image = await ImagePicker().pickImage(
         source: ImageSource.gallery,
         maxWidth: socialIcon ? null : 2000,
-        imageQuality: socialIcon ? null : 88,
+        imageQuality: socialIcon
+            ? null
+            : bannerImage
+            ? 80
+            : 88,
       );
       if (image == null) {
         return;
@@ -493,6 +499,8 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
               );
             },
           ),
+        if (widget.module.name == 'banners' && f.name == 'image_url')
+          const Text('JPG, PNG or WebP, up to 5 MB.'),
         if (f.image)
           Align(
             alignment: Alignment.centerLeft,

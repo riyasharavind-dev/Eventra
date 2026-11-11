@@ -143,6 +143,9 @@ class AdminRepository {
     if (socialIcon && bytes.length > 2 * 1024 * 1024) {
       throw StateError('Choose a social icon smaller than 2 MB.');
     }
+    if (module == 'banners' && bytes.length > 5 * 1024 * 1024) {
+      throw StateError('Choose a banner image up to 5 MB.');
+    }
     if (bytes.length > 8 * 1024 * 1024) {
       throw StateError('Choose an image smaller than 8 MB.');
     }
