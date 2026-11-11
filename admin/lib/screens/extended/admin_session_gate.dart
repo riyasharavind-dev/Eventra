@@ -2,6 +2,7 @@ import '../../services/app_live_data.dart';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +12,21 @@ import '../auth/login_screen.dart';
 import '../main/admin_main_screen.dart';
 import 'admin_mfa_screen.dart';
 import 'admin_password_screen.dart';
+
+@visibleForTesting
+bool adminAccessChanged(
+  Map<String, dynamic>? previous,
+  Map<String, dynamic>? current,
+) {
+  if (current == null) return true;
+  return previous?['id'] != current['id'] ||
+      previous?['access_level'] != current['access_level'] ||
+      previous?['mfa_required'] != current['mfa_required'] ||
+      !mapEquals(
+        previous?['permissions'] as Map?,
+        current['permissions'] as Map?,
+      );
+}
 
 class AdminSessionGate extends StatefulWidget {
   final Uri? callbackUri;
@@ -41,12 +57,9 @@ class _AdminSessionGateState extends State<AdminSessionGate>
       final next = raw == null ? null : Map<String, dynamic>.from(raw as Map);
       if (!mounted) return;
       _observedContext = next;
-      if (changed.contains('own:team_permissions')) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-      if (next == null ||
-          prior?['access_level'] != next['access_level'] ||
-          prior?['mfa_required'] != next['mfa_required']) {
+      // Returning from a file chooser triggers a refresh of every watched
+      // dataset. Close protected routes only if the server reports a change.
+      if (adminAccessChanged(prior, next)) {
         Navigator.of(context).popUntil((route) => route.isFirst);
         setState(() {
           identity = Future.value(next);
