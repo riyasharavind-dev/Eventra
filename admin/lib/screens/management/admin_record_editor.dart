@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/admin_module.dart';
 import '../../repositories/admin_repository.dart';
 import '../../widgets/admin_management_helpers.dart';
+import '../../widgets/eventor_image_cropper.dart';
 
 class AdminRecordEditor extends StatefulWidget {
   final AdminRepository repo;
@@ -96,22 +97,30 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
     }
     setState(() => busy = true);
     try {
-      final socialIcon =
-          widget.module.name == 'social_links' && f.name == 'icon_url';
-      final bannerImage =
-          widget.module.name == 'banners' && f.name == 'image_url';
-      final image = await ImagePicker().pickImage(
+      final icon =
+          f.name == 'icon_url' &&
+          ['category_nodes', 'social_links'].contains(widget.module.name);
+      final banner = widget.module.name == 'banners' && f.name == 'image_url';
+      final cropRequired = icon || banner;
+      final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        maxWidth: socialIcon ? null : 2000,
-        imageQuality: socialIcon
-            ? null
-            : bannerImage
-            ? 80
-            : 88,
+        maxWidth: cropRequired ? null : 2000,
+        imageQuality: cropRequired ? null : 88,
       );
-      if (image == null) {
-        return;
-      }
+      if (picked == null || !mounted) return;
+      final image = cropRequired
+          ? await EventorImageCropper.crop(
+              context,
+              picked,
+              title: banner ? 'Crop banner' : 'Crop icon',
+              aspectRatio: banner ? 16 / 9 : 1,
+              banner: banner,
+              maxDimension: banner ? 1800 : 512,
+              preserveTransparency: icon,
+              outputName: banner ? 'banner.jpg' : 'icon.png',
+            )
+          : picked;
+      if (image == null || !mounted) return;
       final result = await widget.repo.upload(
         widget.module.name,
         f.name,
@@ -455,7 +464,8 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
             }
           },
         ),
-        if (widget.module.name == 'social_links' && f.name == 'icon_url')
+        if (f.name == 'icon_url' &&
+            ['category_nodes', 'social_links'].contains(widget.module.name))
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: controls[f.name]!,
             builder: (context, value, _) {
@@ -500,7 +510,7 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
             },
           ),
         if (widget.module.name == 'banners' && f.name == 'image_url')
-          const Text('JPG, PNG or WebP, up to 5 MB.'),
+          const Text('Banners are cropped to 16:9.'),
         if (f.image)
           Align(
             alignment: Alignment.centerLeft,
@@ -508,9 +518,7 @@ class _AdminRecordEditorState extends State<AdminRecordEditor> {
               onPressed: () => upload(f),
               icon: const Icon(Icons.upload_file_outlined),
               label: Text(
-                widget.module.name == 'social_links' && f.name == 'icon_url'
-                    ? 'Upload social icon'
-                    : 'Upload image',
+                f.name == 'icon_url' ? 'Upload icon' : 'Upload image',
               ),
             ),
           ),
