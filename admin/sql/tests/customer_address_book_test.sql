@@ -1,0 +1,34 @@
+begin;
+do $$
+declare actor uuid:=gen_random_uuid(); other_actor uuid:=gen_random_uuid(); st text; dist text; sub text; a uuid; b uuid; bid uuid; svc record; expected text; blocked boolean;
+begin
+ insert into auth.users(id,email,raw_user_meta_data) values(actor,actor::text||'@example.invalid','{"role":"customer","name":"Address rollback test"}'),(other_actor,other_actor::text||'@example.invalid','{"role":"customer","name":"Other address rollback test"}');
+ select s.id,d.id,x.id into st,dist,sub from public.administrative_regions s join public.administrative_regions d on d.parent_id=s.id and d.is_active join public.administrative_regions x on x.parent_id=d.id and x.is_active where s.level='state' and s.is_active and d.level='district' and x.level='subdistrict' limit 1;
+ select id,vendor_id,price into svc from eventra_feed.eligible_services limit 1;
+ if st is null or svc.id is null then raise exception 'Missing region/service fixtures'; end if;
+ perform set_config('request.jwt.claim.sub',actor::text,true);
+ execute 'set local role authenticated';
+ a:=public.save_customer_address(null,'Home','12 Main Street','Local Area','600001',st,dist,sub,false);
+ b:=public.save_customer_address(null,'Work','24 Office Road','Office Area','600002',st,dist,sub,false);
+ if (select count(*) from public.customer_addresses where is_active)<>1 or not(select is_active from public.customer_addresses where id=a) then raise exception 'First address not active or multiple active'; end if;
+ select full_address into expected from public.customer_addresses where id=a;
+ insert into public.bookings(customer_id,vendor_id,service_id,event_date,guest_count,price,status,location) values(actor,svc.vendor_id,svc.id,current_date+10,10,svc.price,'pending','Separate event venue') returning id into bid;
+ perform public.activate_customer_address(b);
+ if (select count(*) from public.customer_addresses where is_active)<>1 then raise exception 'Activation is not exclusive'; end if;
+ if (select customer_address from public.bookings where id=bid) is distinct from expected then raise exception 'Booking address snapshot changed'; end if;
+ if (select address from public.customers where id=actor) is distinct from (select full_address from public.customer_addresses where id=b) then raise exception 'Profile address not synced'; end if;
+ blocked:=false;begin perform public.save_customer_address(null,'Bad','Street 12','Area','600001',st,st,null,false);exception when others then blocked:=true;end;
+ if not blocked then raise exception 'Invalid hierarchy accepted'; end if;
+ perform set_config('request.jwt.claim.sub',other_actor::text,true);
+ if (select count(*) from public.customer_addresses)<>0 then raise exception 'RLS leaked another customer address'; end if;
+ blocked:=false;begin perform public.activate_customer_address(a);exception when others then blocked:=true;end;
+ if not blocked then raise exception 'Foreign address activation accepted'; end if;
+ perform set_config('request.jwt.claim.sub',actor::text,true);
+ perform public.delete_customer_address(b);
+ if not(select is_active from public.customer_addresses where id=a) then raise exception 'Active deletion did not choose replacement'; end if;
+ perform public.delete_customer_address(a);
+ if (select address from public.customers where id=actor) is not null then raise exception 'Deleted last address remained on profile'; end if;
+ execute 'reset role';
+end $$;
+select 'PASS: hierarchy, multiple addresses, exclusive activation, owner RLS, deletion fallback, profile sync and booking snapshot; rolled back' result;
+rollback;

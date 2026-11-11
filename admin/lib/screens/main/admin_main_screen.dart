@@ -1,3 +1,4 @@
+import '../extended/admin_languages_screen.dart';
 import '../../services/app_live_data.dart';
 import '../../repositories/admin_connections_repository.dart';
 import '../extended/admin_team_screen.dart';
@@ -408,6 +409,25 @@ class _AdminMainScreenState extends State<AdminMainScreen>
                         session?['access_level'] == 'admin' ||
                         (session?['access_level'] == 'staff' &&
                             (session?['permissions'] as Map?)?[name] == true),
+                  )
+                : selected == 'app_languages' ||
+                      selected == 'app_language_releases'
+                ? AdminLanguagesScreen(
+                    key: ValueKey('languages-$refreshKey'),
+                    canWrite:
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions']
+                                    as Map?)?['app_languages'] ==
+                                true),
+                    canPublish:
+                        session?['access_level'] == 'owner' ||
+                        session?['access_level'] == 'admin' ||
+                        (session?['access_level'] == 'staff' &&
+                            (session?['permissions']
+                                    as Map?)?['app_language_releases'] ==
+                                true),
                   )
                 : selected == 'team_access'
                 ? AdminTeamScreen(key: ValueKey('team-$refreshKey'))
