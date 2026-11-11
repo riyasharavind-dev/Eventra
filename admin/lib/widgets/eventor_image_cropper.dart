@@ -67,23 +67,23 @@ class EventorImageCropper {
 
 Future<ui.Image> decodeCropPhoto(Uint8List bytes) async {
   final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-  ui.ImageDescriptor? descriptor;
-  ui.Codec? codec;
+  // Use Flutter's platform codec so browsers never access ImageDescriptor.width.
+  final codec = await PaintingBinding.instance.instantiateImageCodecWithSize(
+    buffer,
+    getTargetSize: (width, height) {
+      final edge = math.max(width, height);
+      if (edge <= 2400) return const ui.TargetImageSize();
+      final factor = 2400 / edge;
+      return ui.TargetImageSize(
+        width: math.max(1, (width * factor).round()),
+        height: math.max(1, (height * factor).round()),
+      );
+    },
+  );
   try {
-    descriptor = await ui.ImageDescriptor.encoded(buffer);
-    final factor = math.min(
-      1.0,
-      2400 / math.max(descriptor.width, descriptor.height),
-    );
-    codec = await descriptor.instantiateCodec(
-      targetWidth: math.max(1, (descriptor.width * factor).round()),
-      targetHeight: math.max(1, (descriptor.height * factor).round()),
-    );
     return (await codec.getNextFrame()).image;
   } finally {
-    codec?.dispose();
-    descriptor?.dispose();
-    buffer.dispose();
+    codec.dispose();
   }
 }
 

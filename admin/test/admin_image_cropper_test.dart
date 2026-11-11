@@ -15,7 +15,12 @@ void main() {
       Paint()..color = Colors.red,
     );
     final picture = recorder.endRecording();
-    final source = await picture.toImage(200, 100);
+    final original = await picture.toImage(200, 100);
+    addTearDown(original.dispose);
+    final png = await original.toByteData(format: ui.ImageByteFormat.png);
+    final source = await decodeCropPhoto(
+      png!.buffer.asUint8List(png.offsetInBytes, png.lengthInBytes),
+    );
     addTearDown(source.dispose);
     addTearDown(picture.dispose);
 
