@@ -106,230 +106,43 @@ async function getFirebaseAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-type BookingRecord = {
-  id?: string;
-  customer_id?: string;
-  vendor_id?: string;
-  service_id?: string;
-  status?: string;
-};
-
 Deno.serve(async (req: Request) => {
-  try {
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Method not allowed",
-        }),
-        {
-          status: 405,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        },
-      );
-    }
-
-    const body = await req.json();
-
-    const record =
-      body?.record as BookingRecord | undefined;
-
-    if (!record?.id) {
-      throw new Error(
-        "Missing booking record",
-      );
-    }
-
-    const bookingId = record.id;
-    const customerId = record.customer_id;
-    const status = record.status;
-
-    if (!customerId) {
-      throw new Error(
-        "Booking does not contain customer_id",
-      );
-    }
-
-    if (
-      status !== "accepted" &&
-      status !== "rejected"
-    ) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          booking_id: bookingId,
-          status,
-          notifications_sent: 0,
-          message:
-            "Status does not require notification",
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        },
-      );
-    }
-
-    const { data: tokens, error: tokenError } =
-      await supabase
-        .from("fcm_tokens")
-        .select("token")
-        .eq("user_id", customerId);
-
-    if (tokenError) {
-      throw new Error(
-        `Failed to get customer tokens: ${tokenError.message}`,
-      );
-    }
-
-    if (!tokens || tokens.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          booking_id: bookingId,
-          customer_id: customerId,
-          status,
-          notifications_sent: 0,
-          message:
-            "No FCM token found for customer",
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        },
-      );
-    }
-
-    const accessToken =
-      await getFirebaseAccessToken();
-
-    const title =
-      status === "accepted"
-        ? "Booking Accepted"
-        : "Booking Rejected";
-
-    const message =
-      status === "accepted"
-        ? "Your booking request has been accepted by the vendor."
-        : "Your booking request has been rejected by the vendor.";
-
-    const notificationType =
-      status === "accepted"
-        ? "booking_accepted"
-        : "booking_rejected";
-
-    const results: Array<{
-      success: boolean;
-      error?: string;
-    }> = [];
-
-    for (const tokenRow of tokens) {
-      const fcmResponse = await fetch(
-        `https://fcm.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/messages:send`,
-        {
-          method: "POST",
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`,
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            message: {
-              token: tokenRow.token,
-
-              notification: {
-                title,
-                body: message,
-              },
-
-              data: {
-                type: notificationType,
-                booking_id: String(
-                  bookingId,
-                ),
-                status: String(status),
-              },
-
-              android: {
-                priority: "high",
-                notification: {
-                  sound: "default",
-                },
-              },
-            },
-          }),
-        },
-      );
-
-      const responseText =
-        await fcmResponse.text();
-
-      if (!fcmResponse.ok) {
-        results.push({
-          success: false,
-          error: responseText,
-        });
-      } else {
-        results.push({
-          success: true,
-        });
-      }
-    }
-
-    const notificationsSent =
-      results.filter(
-        (result) => result.success,
-      ).length;
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        booking_id: bookingId,
-        customer_id: customerId,
-        status,
-        notifications_sent:
-          notificationsSent,
-        results,
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-      },
-    );
-  } catch (error) {
-    console.error(
-      "Booking status notification error:",
-      error,
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-      },
-    );
+ const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json"}});
+ if(req.method!=="POST")return json({error:"Method not allowed"},405);
+ let eventId:string|undefined;
+ try {
+  const body=await req.json();eventId=body?.event_id;
+  if(typeof eventId!=="string"||!/^[0-9a-f-]{36}$/i.test(eventId))return json({error:"Invalid event"},400);
+  // The client cannot create/read these IDs. Never trust record/customer/token data from HTTP.
+  const {data:event,error}=await supabase.rpc("claim_booking_push",{p_id:eventId});
+  if(error)throw error;
+  if(!event?.id)return json({processed:false});
+  const {data:tokens,error:tokenError}=await supabase.from("fcm_tokens").select("token").eq("user_id",event.customer_id);
+  if(tokenError)throw tokenError;
+  let retry=false,sent=0;
+  if(tokens?.length){
+   const accessToken=await getFirebaseAccessToken();
+   for(const row of tokens){
+    const response=await fetch(`https://fcm.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/messages:send`,{
+     method:"POST",headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},
+     body:JSON.stringify({message:{token:row.token,notification:{title:event.title,body:event.body},
+      data:{type:event.event_type,booking_id:event.booking_id,event_id:event.id},
+      android:{priority:"high",notification:{tag:event.booking_id,sound:"default"}},
+      apns:{headers:{"apns-collapse-id":event.booking_id},payload:{aps:{sound:"default"}}}}})
+    });
+    if(response.ok){sent++;continue;}
+    const result=await response.json();
+    const unregistered=result?.error?.details?.some((d:{errorCode?:string})=>d.errorCode==="UNREGISTERED");
+    if(unregistered)await supabase.from("fcm_tokens").delete().eq("token",row.token).eq("user_id",event.customer_id);
+    else if(response.status===429||response.status>=500)retry=true;
+    else console.error("FCM delivery rejected",response.status);
+   }
   }
+  const {error:updateError}=await supabase.from("booking_push_outbox").update({status:retry?"pending":"sent",sent_at:retry?null:new Date().toISOString()}).eq("id",eventId);
+  if(updateError)throw updateError;
+  return json({processed:true,sent});
+ } catch(_error){
+  if(eventId)await supabase.from("booking_push_outbox").update({status:"pending"}).eq("id",eventId).eq("status","processing");
+  console.error("Booking push delivery failed");return json({error:"Delivery failed"},500);
+ }
 });
