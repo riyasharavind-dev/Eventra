@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../models/shop_region_boundary.dart';
@@ -117,8 +118,8 @@ class _ShopLocationPickerState extends State<ShopLocationPicker> {
   Widget build(BuildContext context) => VendorPageScaffold(
     backgroundColor: const Color(0xFFF8F8FA),
     appBar: AppBar(
-      title: const Text(
-        'Mark your shop',
+      title: Text(
+        AppSettingsScope.translate(context, "vendor.mark_your_shop.82f1599f"),
         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
       ),
       backgroundColor: const Color(0xFFF8F8FA),
@@ -373,8 +374,11 @@ class _ShopLocationPickerState extends State<ShopLocationPicker> {
                         ? null
                         : () => Navigator.pop(context, point),
                     icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: const Text(
-                      'Use this shop location',
+                    label: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.use_this_shop_location.88015d1e",
+                      ),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,

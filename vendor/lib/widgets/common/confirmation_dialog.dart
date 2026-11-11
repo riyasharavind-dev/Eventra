@@ -24,7 +24,11 @@ class ConfirmationDialog extends StatelessWidget {
       ),
       content: Text(
         message,
-        style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF73737D)),
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.5,
+          color: Color(0xFF73737D),
+        ),
       ),
       actions: [
         TextButton(

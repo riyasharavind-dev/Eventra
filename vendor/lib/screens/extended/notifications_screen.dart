@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -242,8 +243,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Your activity and updates will appear here.',
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.your_activity_and_updates_will_appear_here.d16ffc13",
+            ),
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF73737D), fontSize: 14),
           ),
@@ -259,8 +263,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F8FA),
         surfaceTintColor: Colors.transparent,
-        title: const Text(
-          'Notifications',
+        title: Text(
+          AppSettingsScope.translate(context, "vendor.notifications.78801183"),
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -337,7 +341,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             TextButton.icon(
               onPressed: () => load(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Unable to refresh. Retry'),
+              label: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.unable_to_refresh_retry.51d2b85d",
+                ),
+              ),
             ),
           Expanded(
             child: AppShimmerRefreshIndicator(
@@ -362,10 +371,20 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Unable to load notifications.'),
+                            Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.unable_to_load_notifications.92fb1eb0",
+                              ),
+                            ),
                             TextButton(
                               onPressed: () => load(),
-                              child: const Text('Try again'),
+                              child: Text(
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.try_again.d8b8392e",
+                                ),
+                              ),
                             ),
                           ],
                         ),

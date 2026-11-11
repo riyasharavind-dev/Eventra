@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import 'common/app_shimmer.dart';
 import '../utils/auth_error_message.dart';
 
@@ -130,8 +132,16 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
             nonce: _showCode ? _code.text : null,
           );
           if (!mounted) return;
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Password updated.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.password_updated.df01ff0d",
+                ),
+              ),
+            ),
+          );
           Navigator.of(context).pop();
           break;
         case AccountSecurityAction.email:
@@ -154,7 +164,14 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
           await _repository.updatePhone(_phone.text);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Contact phone updated.')),
+            SnackBar(
+              content: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.contact_phone_updated.e0b7fc70",
+                ),
+              ),
+            ),
           );
           Navigator.of(context).pop();
           break;
@@ -205,16 +222,36 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel deletion request?'),
-        content: const Text('Your account will remain active.'),
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.cancel_deletion_request.efb7562b",
+          ),
+        ),
+        content: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.your_account_will_remain_active.6ce9e6bf",
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep request'),
+            child: Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.keep_request.3259de86",
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel request'),
+            child: Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.cancel_request.56196683",
+              ),
+            ),
           ),
         ],
       ),
@@ -270,7 +307,10 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
         validator:
             validator ??
             (value) => value == null || value.isEmpty
-                ? 'Enter your current password.'
+                ? AppSettingsScope.translate(
+                    context,
+                    "vendor.enter_your_current_password.cf4d205e",
+                  )
                 : null,
       ),
     );
@@ -281,15 +321,28 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
     switch (widget.action) {
       case AccountSecurityAction.password:
         return [
-          const Text('Confirm your current password and choose a new one.'),
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.confirm_your_current_password_and_choose_a_ne.e1ce0c51",
+            ),
+          ),
           _secret(_password, 'Current password'),
           _secret(
             _newPassword,
             'New password',
             validator: (value) {
-              if ((value?.length ?? 0) < 8) return 'Use at least 8 characters.';
+              if ((value?.length ?? 0) < 8) {
+                return AppSettingsScope.translate(
+                  context,
+                  "vendor.use_at_least_8_characters.9b15ce9e",
+                );
+              }
               if (value == _password.text) {
-                return 'Choose a different password.';
+                return AppSettingsScope.translate(
+                  context,
+                  "vendor.choose_a_different_password.353fb0a7",
+                );
               }
               return null;
             },
@@ -297,32 +350,59 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
           _secret(
             _confirmPassword,
             'Confirm new password',
-            validator: (value) =>
-                value == _newPassword.text ? null : 'Passwords do not match.',
+            validator: (value) => value == _newPassword.text
+                ? null
+                : AppSettingsScope.translate(
+                    context,
+                    "vendor.passwords_do_not_match.6c6e178a",
+                  ),
           ),
           TextButton(
             onPressed: _busy ? null : _securityCode,
-            child: const Text('Security code required? Send code'),
+            child: Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.security_code_required_send_code.ec7abe96",
+              ),
+            ),
           ),
           if (_showCode)
             TextFormField(
               controller: _code,
               enabled: !_busy,
-              decoration: const InputDecoration(
-                labelText: 'Email security code',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.email_security_code.0dade3e8",
+                ),
                 border: OutlineInputBorder(),
               ),
               validator: (value) => value?.trim().isEmpty != false
-                  ? 'Enter the security code.'
+                  ? AppSettingsScope.translate(
+                      context,
+                      "vendor.enter_the_security_code.023e26fa",
+                    )
                   : null,
             ),
         ];
       case AccountSecurityAction.email:
         return [
-          Text('Current email: ${account.email}'),
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.current_email_value0.d6910595",
+              args: {"value0": account.email},
+            ),
+          ),
           if (account.pendingEmail?.isNotEmpty == true) ...[
             const SizedBox(height: 12),
-            Text('Awaiting confirmation: ${account.pendingEmail}'),
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.awaiting_confirmation_value0.066a8de5",
+                args: {"value0": account.pendingEmail},
+              ),
+            ),
           ],
           if (!_emailSent) ...[
             const SizedBox(height: 18),
@@ -331,17 +411,26 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
               enabled: !_busy,
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'New email',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.new_email.0d25c8b1",
+                ),
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 final email = value?.trim() ?? '';
                 if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
-                  return 'Enter a valid email address.';
+                  return AppSettingsScope.translate(
+                    context,
+                    "vendor.enter_a_valid_email_address.8a966af8",
+                  );
                 }
                 if (email.toLowerCase() == account.email.toLowerCase()) {
-                  return 'Enter a different email.';
+                  return AppSettingsScope.translate(
+                    context,
+                    "vendor.enter_a_different_email.53a02cfd",
+                  );
                 }
                 return null;
               },
@@ -350,13 +439,21 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
           ],
           TextButton(
             onPressed: _busy ? null : _load,
-            child: const Text('I have confirmed - refresh status'),
+            child: Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.i_have_confirmed_refresh_status.cd42f6b2",
+              ),
+            ),
           ),
         ];
       case AccountSecurityAction.phone:
         return [
-          const Text(
-            'Contact number only. This does not change your sign-in method or verify the number by SMS.',
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.contact_number_only_this_does_not_change_your.72abd67d",
+            ),
           ),
           const SizedBox(height: 18),
           TextFormField(
@@ -364,30 +461,46 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
             enabled: !_busy,
             keyboardType: TextInputType.phone,
             maxLength: 16,
-            decoration: const InputDecoration(
-              labelText: 'Phone number',
+            decoration: InputDecoration(
+              labelText: AppSettingsScope.translate(
+                context,
+                "vendor.phone_number.306f1bb2",
+              ),
               hintText: '+919876543210',
-              helperText: 'Include country code. Leave empty to remove.',
+              helperText: AppSettingsScope.translate(
+                context,
+                "vendor.include_country_code_leave_empty_to_remove.5baac4b4",
+              ),
               border: OutlineInputBorder(),
             ),
             validator: (value) =>
                 value?.trim().isNotEmpty == true &&
                     !RegExp(r'^\+[1-9][0-9]{6,14}$').hasMatch(value!.trim())
-                ? 'Use country code and digits, e.g. +919876543210.'
+                ? AppSettingsScope.translate(
+                    context,
+                    "vendor.use_country_code_and_digits_e_g_919876543210.542b2523",
+                  )
                 : null,
           ),
         ];
       case AccountSecurityAction.deleteAccount:
         final request = account.deletionRequest;
         return [
-          const Text(
-            'This submits an account deletion request for administrator review. Your account and data are not deleted immediately.',
+          Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.this_submits_an_account_deletion_request_for_.95771a70",
+            ),
             style: TextStyle(height: 1.6),
           ),
           if (request != null) ...[
             const SizedBox(height: 16),
             Text(
-              'Request status: ${request.label}',
+              AppSettingsScope.translate(
+                context,
+                "vendor.request_status_value0.5a58c83d",
+                args: {"value0": request.label},
+              ),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             if (request.publicNote?.isNotEmpty == true)
@@ -403,8 +516,11 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
               enabled: !_busy,
               maxLength: 1000,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Reason (optional)',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.reason_optional.0f7d4664",
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -416,8 +532,11 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
               onChanged: _busy
                   ? null
                   : (value) => setState(() => _confirmed = value ?? false),
-              title: const Text(
-                'I want to request deletion of my Eventor account.',
+              title: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.i_want_to_request_deletion_of_my_eventor_acco.2c5d245f",
+                ),
                 style: TextStyle(fontSize: 13),
               ),
             ),
@@ -425,13 +544,21 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
           if (request?.status == 'pending')
             TextButton(
               onPressed: _busy ? null : _cancelRequest,
-              child: const Text('Cancel deletion request'),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.cancel_deletion_request.c6869022",
+                ),
+              ),
             ),
           if (request?.status == 'in_review')
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 12),
               child: Text(
-                'Your request is being reviewed. Contact support if you need help.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.your_request_is_being_reviewed_contact_suppor.e54a9aab",
+                ),
               ),
             ),
         ];
@@ -496,8 +623,11 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
                         if (_account == null)
                           TextButton(
                             onPressed: _load,
-                            child: const Text(
-                              'Retry',
+                            child: Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.retry.942087cc",
+                              ),
                               style: TextStyle(color: Color(0xFF80152C)),
                             ),
                           ),
@@ -509,7 +639,10 @@ class _AccountSecurityDialogState extends State<AccountSecurityDialog> {
         actions: [
           TextButton(
             onPressed: _busy ? null : () => Navigator.of(context).pop(),
-            child: const Text('Close', style: TextStyle(color: Color(0xFF73737D))),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.close.7d9eb7ac"),
+              style: TextStyle(color: Color(0xFF73737D)),
+            ),
           ),
           if (!activeDeletion &&
               !(widget.action == AccountSecurityAction.email && _emailSent))

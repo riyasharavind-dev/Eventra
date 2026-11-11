@@ -4,27 +4,18 @@ import '../../models/booking_model.dart';
 import '../../repositories/booking_repository.dart';
 import '../../services/app_settings_controller.dart';
 
-String bookingText(BuildContext c, String en, String ta) =>
-    AppSettingsScope.of(c).text(en, ta);
+String bookingText(BuildContext c, String en) => AppSettingsScope.source(c, en);
 String bookingStatus(BuildContext c, String status) {
-  const tamil = {
-    'pending': 'நிலுவையில்',
-    'accepted': 'ஏற்கப்பட்டது',
-    'rejected': 'நிராகரிக்கப்பட்டது',
-    'completed': 'முடிந்தது',
-    'cancelled': 'ரத்து செய்யப்பட்டது',
-  };
   return bookingText(
     c,
     status.isEmpty
         ? 'Unknown'
         : '${status[0].toUpperCase()}${status.substring(1)}',
-    tamil[status] ?? status,
   );
 }
 
 String bookingDate(BuildContext c, DateTime? date) => date == null
-    ? bookingText(c, 'Not specified', 'குறிப்பிடப்படவில்லை')
+    ? AppSettingsScope.translate(c, "vendor.not_specified.dc12bec5")
     : MaterialLocalizations.of(c).formatMediumDate(date);
 String bookingTime(BuildContext c, String? time) {
   final parts = time?.split(':');
@@ -121,10 +112,9 @@ Future<bool> confirmBookingChange(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            bookingText(
+            AppSettingsScope.translate(
               context,
-              'Booking updated.',
-              'முன்பதிவு புதுப்பிக்கப்பட்டது.',
+              "vendor.booking_updated.5cf5f172",
             ),
           ),
         ),
@@ -160,31 +150,24 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
     final needsReason = ['rejected', 'cancelled'].contains(widget.status);
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
-        switch (widget.status) {
-          'accepted' => bookingText(
-            context,
-            'Accept booking?',
-            'முன்பதிவை ஏற்கவா?',
-          ),
-          'rejected' => bookingText(
-            context,
-            'Reject booking?',
-            'முன்பதிவை நிராகரிக்கவா?',
-          ),
-          'completed' => bookingText(
-            context,
-            'Mark as completed?',
-            'முடிந்ததாகக் குறிக்கவா?',
-          ),
-          _ => bookingText(
-            context,
-            'Cancel booking?',
-            'முன்பதிவை ரத்து செய்யவா?',
-          ),
-        },
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-      ),
+      title: Text(switch (widget.status) {
+        'accepted' => AppSettingsScope.translate(
+          context,
+          "vendor.accept_booking.fd704d2a",
+        ),
+        'rejected' => AppSettingsScope.translate(
+          context,
+          "vendor.reject_booking.5c515202",
+        ),
+        'completed' => AppSettingsScope.translate(
+          context,
+          "vendor.mark_as_completed.c3ec8c2e",
+        ),
+        _ => AppSettingsScope.translate(
+          context,
+          "vendor.cancel_booking.bcadf572",
+        ),
+      }, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       content: SingleChildScrollView(
         child: Form(
           key: form,
@@ -198,10 +181,9 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
               if (widget.conflicts.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
-                  bookingText(
+                  AppSettingsScope.translate(
                     context,
-                    'Another accepted event may overlap.',
-                    'ஏற்கப்பட்ட மற்றொரு நிகழ்வுடன் நேரம் மோதலாம்.',
+                    "vendor.another_accepted_event_may_overlap.c6ce6ea2",
                   ),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.error,
@@ -218,10 +200,9 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  bookingText(
+                  AppSettingsScope.translate(
                     context,
-                    'If exact times are missing, this warning uses event dates. Accept only if your team can handle both events.',
-                    'சரியான நேரம் இல்லையெனில் நிகழ்வு தேதிகளின் அடிப்படையில் எச்சரிக்கை காட்டப்படும். உங்கள் குழுவால் இரண்டையும் செய்ய முடிந்தால் ஏற்கலாம்.',
+                    "vendor.if_exact_times_are_missing_this_warning_uses_.45f59567",
                   ),
                 ),
               ],
@@ -232,17 +213,15 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
                   maxLength: 1000,
                   onChanged: (v) => reason = v,
                   decoration: InputDecoration(
-                    labelText: bookingText(
+                    labelText: AppSettingsScope.translate(
                       context,
-                      'Reason (shared with customer)',
-                      'காரணம் (வாடிக்கையாளருக்கும் தெரியும்)',
+                      "vendor.reason_shared_with_customer.f6e41a2d",
                     ),
                   ),
                   validator: (v) => (v?.trim().length ?? 0) < 3
-                      ? bookingText(
+                      ? AppSettingsScope.translate(
                           context,
-                          'Enter at least 3 characters',
-                          'குறைந்தது 3 எழுத்துகள் உள்ளிடவும்',
+                          "vendor.enter_at_least_3_characters.7638f7f1",
                         )
                       : null,
                 ),
@@ -251,10 +230,9 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    bookingText(
+                    AppSettingsScope.translate(
                       context,
-                      'Confirm that the booked service has been delivered.',
-                      'முன்பதிவு செய்யப்பட்ட சேவை வழங்கப்பட்டதை உறுதிப்படுத்தவும்.',
+                      "vendor.confirm_that_the_booked_service_has_been_deli.fa506e7d",
                     ),
                   ),
                 ),
@@ -266,7 +244,9 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
         TextButton(
           style: TextButton.styleFrom(foregroundColor: const Color(0xFF73737D)),
           onPressed: () => Navigator.pop(context),
-          child: Text(bookingText(context, 'Back', 'பின்செல்')),
+          child: Text(
+            AppSettingsScope.translate(context, "vendor.back.76900f1b"),
+          ),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -281,7 +261,9 @@ class _BookingActionDialogState extends State<_BookingActionDialog> {
               Navigator.pop(context, reason.trim());
             }
           },
-          child: Text(bookingText(context, 'Confirm', 'உறுதிப்படுத்து')),
+          child: Text(
+            AppSettingsScope.translate(context, "vendor.confirm.eebdd24a"),
+          ),
         ),
       ],
     );

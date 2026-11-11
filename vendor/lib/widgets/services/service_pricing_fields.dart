@@ -16,7 +16,7 @@ class ServicePricingFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = AppSettingsScope.of(context);
-    String t(String en, String ta) => settings.text(en, ta);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -24,14 +24,17 @@ class ServicePricingFields extends StatelessWidget {
           initialValue: value.type,
           isExpanded: true,
           decoration: InputDecoration(
-            labelText: t('Pricing type', 'விலை வகை'),
+            labelText: AppSettingsScope.translate(
+              context,
+              "vendor.pricing_type.5e1b131a",
+            ),
             border: const OutlineInputBorder(),
           ),
           items: ServicePricingType.values
               .map(
                 (type) => DropdownMenuItem(
                   value: type,
-                  child: Text(settings.tamil ? type.tamilLabel : type.label),
+                  child: Text(settings.text(type.label)),
                 ),
               )
               .toList(),
@@ -61,10 +64,13 @@ class ServicePricingFields extends StatelessWidget {
             enabled: enabled,
             maxLength: 40,
             decoration: InputDecoration(
-              labelText: t('Unit name', 'அலகின் பெயர்'),
-              helperText: t(
-                'Example: chair, plate, person, kg, km',
-                'உதாரணம்: chair, plate, person, kg, km',
+              labelText: AppSettingsScope.translate(
+                context,
+                "vendor.unit_name.a1cc787b",
+              ),
+              helperText: AppSettingsScope.translate(
+                context,
+                "vendor.example_chair_plate_person_kg_km.c26afcad",
               ),
               border: const OutlineInputBorder(),
             ),
@@ -72,7 +78,10 @@ class ServicePricingFields extends StatelessWidget {
                 onChanged(ServicePricing(type: value.type, unit: unit)),
             validator: (unit) =>
                 unit == null || unit.trim().isEmpty || unit.trim().length > 40
-                ? t('Enter a unit', 'அலகை உள்ளிடவும்')
+                ? AppSettingsScope.translate(
+                    context,
+                    "vendor.enter_a_unit.c1415246",
+                  )
                 : null,
           ),
           const SizedBox(height: 12),
@@ -83,7 +92,10 @@ class ServicePricingFields extends StatelessWidget {
                 ? value.unit
                 : 'hour',
             decoration: InputDecoration(
-              labelText: t('Duration unit', 'கால அளவு'),
+              labelText: AppSettingsScope.translate(
+                context,
+                "vendor.duration_unit.7ba318fe",
+              ),
               border: const OutlineInputBorder(),
             ),
             items: ServicePricing.durationUnits
@@ -91,10 +103,22 @@ class ServicePricingFields extends StatelessWidget {
                   (unit) => DropdownMenuItem(
                     value: unit,
                     child: Text(switch (unit) {
-                      'hour' => t('Hour', 'மணி'),
-                      'day' => t('Day', 'நாள்'),
-                      'week' => t('Week', 'வாரம்'),
-                      _ => t('Month', 'மாதம்'),
+                      'hour' => AppSettingsScope.translate(
+                        context,
+                        "vendor.hour.f0063b80",
+                      ),
+                      'day' => AppSettingsScope.translate(
+                        context,
+                        "vendor.day.8f2364e1",
+                      ),
+                      'week' => AppSettingsScope.translate(
+                        context,
+                        "vendor.week.e78041ab",
+                      ),
+                      _ => AppSettingsScope.translate(
+                        context,
+                        "vendor.month.310ca503",
+                      ),
                     }),
                   ),
                 )
@@ -107,21 +131,21 @@ class ServicePricingFields extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         Text(switch (value.type) {
-          ServicePricingType.fixed => t(
-            'The amount is the fixed service price.',
-            'இந்தத் தொகை நிலையான சேவை விலை.',
+          ServicePricingType.fixed => AppSettingsScope.translate(
+            context,
+            "vendor.the_amount_is_the_fixed_service_price.8e4eea7b",
           ),
-          ServicePricingType.startingFrom => t(
-            'The amount is a starting price. Final price depends on requirements.',
-            'இது ஆரம்ப விலை. தேவைகளைப் பொறுத்து இறுதி விலை மாறும்.',
+          ServicePricingType.startingFrom => AppSettingsScope.translate(
+            context,
+            "vendor.the_amount_is_a_starting_price_final_price_de.f6e2a51a",
           ),
-          ServicePricingType.perUnit => t(
-            'Enter the price for one unit below.',
-            'கீழே ஒரு அலகிற்கான விலையை உள்ளிடவும்.',
+          ServicePricingType.perUnit => AppSettingsScope.translate(
+            context,
+            "vendor.enter_the_price_for_one_unit_below.184d2e62",
           ),
-          ServicePricingType.perDuration => t(
-            'Enter the price for one selected duration below.',
-            'தேர்ந்தெடுத்த ஒரு கால அளவிற்கான விலையை உள்ளிடவும்.',
+          ServicePricingType.perDuration => AppSettingsScope.translate(
+            context,
+            "vendor.enter_the_price_for_one_selected_duration_bel.110b00a2",
           ),
         }, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 16),

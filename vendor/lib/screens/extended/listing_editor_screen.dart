@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
@@ -65,10 +67,15 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
       picking = false;
   Object? businessError, categoryError;
   int categoryGeneration = 0, uploadedCount = 0;
-  String t(String en, String ta) => listingText(context, en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
   String get uid =>
       db.auth.currentUser?.id ??
-      (throw StateError(t('Please sign in again.', 'மீண்டும் உள்நுழையவும்.')));
+      (throw StateError(
+        AppSettingsScope.translate(
+          context,
+          "vendor.please_sign_in_again.2e1d1833",
+        ),
+      ));
   @override
   void initState() {
     super.initState();
@@ -223,6 +230,7 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
   }
 
   Future<void> pickPhotos() async {
+    final l10n = AppSettingsScope.localizationOf(context);
     if (picking || saving) {
       return;
     }
@@ -241,10 +249,7 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
         final bytes = await cropped.readAsBytes();
         if (bytes.length > 8 * 1024 * 1024) {
           throw StateError(
-            t(
-              'Each image must be smaller than 8 MB.',
-              'ஒவ்வொரு படமும் 8 MB-க்கு குறைவாக இருக்க வேண்டும்.',
-            ),
+            l10n.tr("vendor.each_image_must_be_smaller_than_8_mb.fc4d8ec8"),
           );
         }
         String extension, mime;
@@ -268,10 +273,7 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
           mime = 'image/webp';
         } else {
           throw StateError(
-            t(
-              'Choose JPG, PNG or WebP images.',
-              'JPG, PNG அல்லது WebP படங்களைத் தேர்வு செய்யவும்.',
-            ),
+            l10n.tr("vendor.choose_jpg_png_or_webp_images.a2685523"),
           );
         }
         setState(() => photos.add(_ListingPhoto.local(bytes, extension, mime)));
@@ -288,6 +290,7 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
   }
 
   Future<void> save() async {
+    final l10n = AppSettingsScope.localizationOf(context);
     if (saving || picking || loading || loadingCategories) {
       return;
     }
@@ -299,19 +302,13 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
         !categories.any((c) => c.id == categoryId)) {
       listingError(
         context,
-        t(
-          'Choose a business and eligible category.',
-          'வணிகம் மற்றும் பொருத்தமான வகையைத் தேர்வு செய்யவும்.',
-        ),
+        l10n.tr("vendor.choose_a_business_and_eligible_category.57992895"),
       );
       return;
     }
     final amount = double.tryParse(price.text.trim().replaceAll(',', ''));
     if (amount == null || !amount.isFinite || amount < 0) {
-      listingError(
-        context,
-        t('Enter a valid price.', 'சரியான விலையை உள்ளிடவும்.'),
-      );
+      listingError(context, l10n.tr("vendor.enter_a_valid_price.d9a7f498"));
       return;
     }
     try {
@@ -347,9 +344,8 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
       final existing = await repo.getServiceById(id);
       if (widget.service != null && existing == null) {
         throw StateError(
-          t(
-            'This service was removed. Return and refresh.',
-            'இந்த சேவை நீக்கப்பட்டது. திரும்பிச் சென்று புதுப்பிக்கவும்.',
+          l10n.tr(
+            "vendor.this_service_was_removed_return_and_refresh.64f13278",
           ),
         );
       }
@@ -434,7 +430,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
       ),
       validator: (v) {
         if (required && (v?.trim().isEmpty ?? true)) {
-          return t('Required', 'கட்டாயம்');
+          return AppSettingsScope.translate(
+            context,
+            "vendor.required.4850b174",
+          );
         }
         return null;
       },
@@ -450,8 +449,14 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
         appBar: AppBar(
           title: Text(
             widget.service == null
-                ? t('Add Service', 'சேவை சேர்')
-                : t('Edit Service', 'சேவையைத் திருத்து'),
+                ? AppSettingsScope.translate(
+                    context,
+                    "vendor.add_service.62e79d2a",
+                  )
+                : AppSettingsScope.translate(
+                    context,
+                    "vendor.edit_service.c7c19d6f",
+                  ),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
@@ -463,7 +468,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
               padding: const EdgeInsets.all(20),
               children: [
                 Text(
-                  t('Photos & cover', 'புகைப்படங்கள் மற்றும் அட்டைப்படம்'),
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.photos_cover.c30e0f29",
+                  ),
                   key: galleryKey,
                   style: const TextStyle(
                     fontSize: 18,
@@ -473,11 +481,14 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  t(
-                    'First photo is the cover. Changes apply when you save.',
-                    'முதல் படம் அட்டைப்படம். சேமிக்கும்போது மாற்றங்கள் செயல்படும்.',
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.first_photo_is_the_cover_changes_apply_when_y.377eef61",
                   ),
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF73737D)),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF73737D),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
@@ -492,8 +503,14 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: Text(
                     picking
-                        ? t('Reading images…', 'படங்களை ஏற்றுகிறது…')
-                        : t('Add photos', 'புகைப்படங்கள் சேர்'),
+                        ? AppSettingsScope.translate(
+                            context,
+                            "vendor.reading_images.3bde4d3b",
+                          )
+                        : AppSettingsScope.translate(
+                            context,
+                            "vendor.add_photos.7b0a3d74",
+                          ),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -528,7 +545,12 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                             children: [
                               if (index == 0)
                                 Chip(
-                                  label: Text(t('Cover photo', 'அட்டைப்படம்')),
+                                  label: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.cover_photo.0b91fdc2",
+                                    ),
+                                  ),
                                 ),
                               if (index != 0)
                                 TextButton(
@@ -537,11 +559,17 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                                     photos.insert(0, photo);
                                   }),
                                   child: Text(
-                                    t('Set as cover', 'அட்டைப்படமாக வை'),
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.set_as_cover.1a1cff92",
+                                    ),
                                   ),
                                 ),
                               IconButton(
-                                tooltip: t('Move earlier', 'முன்னால் நகர்த்து'),
+                                tooltip: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.move_earlier.736612d4",
+                                ),
                                 onPressed: index == 0
                                     ? null
                                     : () => setState(() {
@@ -551,7 +579,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                                 icon: const Icon(Icons.arrow_upward),
                               ),
                               IconButton(
-                                tooltip: t('Move later', 'பின்னால் நகர்த்து'),
+                                tooltip: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.move_later.d6e85608",
+                                ),
                                 onPressed: index == photos.length - 1
                                     ? null
                                     : () => setState(() {
@@ -568,7 +599,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                                   color: colors.error,
                                 ),
                                 label: Text(
-                                  t('Remove', 'நீக்கு'),
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.remove.c3812fc4",
+                                  ),
                                   style: TextStyle(color: colors.error),
                                 ),
                               ),
@@ -584,23 +618,28 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                 if (businessError != null)
                   ListTile(
                     title: Text(
-                      t(
-                        'Could not load businesses.',
-                        'வணிகங்களை ஏற்ற முடியவில்லை.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.could_not_load_businesses.9f0d74a9",
                       ),
                     ),
                     trailing: TextButton(
                       onPressed: loadBusinesses,
-                      child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.retry.942087cc",
+                        ),
+                      ),
                     ),
                   ),
                 if (!loading && businessError == null && businesses.isEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
-                      t(
-                        'No active business found. Create a business first.',
-                        'செயலில் உள்ள வணிகம் இல்லை. முதலில் வணிகத்தை உருவாக்கவும்.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.no_active_business_found_create_a_business_fi.e39326b5",
                       ),
                     ),
                   ),
@@ -611,7 +650,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                       : null,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: t('Business', 'வணிகம்'),
+                    labelText: AppSettingsScope.translate(
+                      context,
+                      "vendor.business.76f68a75",
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -624,7 +666,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF80152C),
+                        width: 1.4,
+                      ),
                     ),
                   ),
                   items: businesses
@@ -640,7 +685,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                       .toList(),
                   onChanged: loading ? null : (v) => selectBusiness(v),
                   validator: (v) => v == null
-                      ? t('Select business', 'வணிகத்தைத் தேர்வு செய்')
+                      ? AppSettingsScope.translate(
+                          context,
+                          "vendor.select_business.f80cfed3",
+                        )
                       : null,
                 ),
                 const SizedBox(height: 18),
@@ -648,16 +696,21 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                 if (categoryError != null)
                   ListTile(
                     title: Text(
-                      t(
-                        'Could not load categories.',
-                        'வகைகளை ஏற்ற முடியவில்லை.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.could_not_load_categories.0a34a8fe",
                       ),
                     ),
                     trailing: TextButton(
                       onPressed: businessId == null
                           ? null
                           : () => selectBusiness(businessId),
-                      child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.retry.942087cc",
+                        ),
+                      ),
                     ),
                   ),
                 DropdownButtonFormField<String>(
@@ -667,7 +720,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   initialValue: categoryId,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: t('Category', 'வகை'),
+                    labelText: AppSettingsScope.translate(
+                      context,
+                      "vendor.category.292c06f0",
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -680,7 +736,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF80152C),
+                        width: 1.4,
+                      ),
                     ),
                   ),
                   items: categories
@@ -695,7 +754,10 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                       ? null
                       : (v) => setState(() => categoryId = v),
                   validator: (v) => v == null
-                      ? t('Select category', 'வகையைத் தேர்வு செய்')
+                      ? AppSettingsScope.translate(
+                          context,
+                          "vendor.select_category.e26788c5",
+                        )
                       : null,
                 ),
                 if (businessId != null &&
@@ -705,16 +767,19 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      t(
-                        'No child categories are available for this business.',
-                        'இந்த வணிகத்திற்கு துணை வகைகள் இல்லை.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.no_child_categories_are_available_for_this_bu.4bc38f75",
                       ),
                     ),
                   ),
                 const SizedBox(height: 20),
                 field(
                   name,
-                  t('Service name', 'சேவையின் பெயர்'),
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.service_name.1bb8870c",
+                  ),
                   required: true,
                 ),
                 ServicePricingFields(
@@ -723,18 +788,28 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                 ),
                 field(
                   price,
-                  t('Price (INR)', 'விலை (ரூபாய்)'),
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.price_inr.06cf5831",
+                  ),
                   required: true,
                   keyboard: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                 ),
-                field(description, t('Description', 'விளக்கம்'), lines: 5),
+                field(
+                  description,
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.description.526e0087",
+                  ),
+                  lines: 5,
+                ),
                 if (saving) ...[
                   const ShimmerLoadingBar(),
                   const SizedBox(height: 8),
                   Text(
-                    '${t('Saving photos', 'படங்கள் சேமிக்கப்படுகின்றன')}: $uploadedCount / ${photos.length}',
+                    '${AppSettingsScope.translate(context, "vendor.saving_photos.5a21dd22")}: $uploadedCount / ${photos.length}',
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -760,8 +835,14 @@ class _ListingEditorScreenState extends State<ListingEditorScreen> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       saving
-                          ? t('Saving…', 'சேமிக்கிறது…')
-                          : t('Save service', 'சேவையைச் சேமி'),
+                          ? AppSettingsScope.translate(
+                              context,
+                              "vendor.saving.23e39291",
+                            )
+                          : AppSettingsScope.translate(
+                              context,
+                              "vendor.save_service.c699ff1a",
+                            ),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,

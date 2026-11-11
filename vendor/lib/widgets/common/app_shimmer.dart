@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -91,7 +93,7 @@ class AppShimmerIndicator extends StatelessWidget {
   final double strokeWidth;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Loading',
+    label: AppSettingsScope.translate(context, "vendor.loading.dc380888"),
     liveRegion: true,
     child: SizedBox(
       width: 26,
@@ -123,7 +125,7 @@ class ShimmerLoadingBar extends StatelessWidget {
   final double minHeight;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Loading',
+    label: AppSettingsScope.translate(context, "vendor.loading.dc380888"),
     liveRegion: true,
     child: AppShimmer(
       color: color ?? const Color(0xFF80152C),
@@ -195,7 +197,10 @@ class AppContentSkeleton extends StatelessWidget {
   );
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Loading content',
+    label: AppSettingsScope.translate(
+      context,
+      "vendor.loading_content.d1049c5e",
+    ),
     liveRegion: true,
     child: SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -293,10 +298,14 @@ class AppShimmerRefreshIndicator extends StatefulWidget {
     super.key,
     required this.child,
     required this.onRefresh,
+    this.loading = false,
+    this.skeletonLayout = SkeletonLayout.listings,
     this.color,
   });
   final Widget child;
   final RefreshCallback onRefresh;
+  final bool loading;
+  final SkeletonLayout skeletonLayout;
   final Color? color;
   @override
   State<AppShimmerRefreshIndicator> createState() =>
@@ -311,9 +320,14 @@ class _AppShimmerRefreshIndicatorState
     children: [
       RefreshIndicator.noSpinner(
         onRefresh: widget.onRefresh,
+        triggerMode: RefreshIndicatorTriggerMode.onEdge,
+        notificationPredicate: (notification) =>
+            notification.depth == 0 &&
+            notification.metrics.axisDirection == AxisDirection.down,
         onStatusChange: (status) {
           final visible =
-              status == RefreshIndicatorStatus.drag ||
+              // A drag starts before there is a meaningful downward pull.
+              // Keep taps, focus changes and small scrolls visually idle.
               status == RefreshIndicatorStatus.armed ||
               status == RefreshIndicatorStatus.snap ||
               status == RefreshIndicatorStatus.refresh;
@@ -323,6 +337,14 @@ class _AppShimmerRefreshIndicatorState
         },
         child: widget.child,
       ),
+      // Overlay rather than replace the content, preserving search/form state.
+      if (widget.loading)
+        Positioned.fill(
+          child: ColoredBox(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: AppContentSkeleton(layout: widget.skeletonLayout),
+          ),
+        ),
       if (_visible)
         Positioned(
           top: 0,

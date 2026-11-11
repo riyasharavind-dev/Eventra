@@ -1,148 +1,199 @@
-import '../../widgets/vendor_page_scaffold.dart';
-import '../../widgets/common/app_shimmer.dart';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../../services/app_settings_controller.dart';
+import '../../services/vendor_tour_controller.dart';
+import '../../widgets/trial/tour_anchor.dart';
+import '../../widgets/vendor_page_scaffold.dart';
 
-class LanguageScreen extends StatelessWidget {
-  const LanguageScreen({super.key});
-  Future<void> choose(BuildContext context, String code) async {
-    final settings = AppSettingsScope.of(context);
-    if (settings.busy) {
-      return;
+class LanguageScreen extends StatefulWidget {
+  const LanguageScreen({super.key, this.onSelected});
+
+  /// First launch embeds this page; Settings opens it as a normal route.
+  final VoidCallback? onSelected;
+  @override
+  State<LanguageScreen> createState() => _LanguageScreenState();
+}
+
+class _LanguageScreenState extends State<LanguageScreen> {
+  bool _started = false;
+  String? _pendingCode;
+  bool _saving = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      unawaited(AppSettingsScope.of(context).localization.refresh(force: true));
     }
+  }
+
+  Future<void> choose(String code) async {
+    final settings = AppSettingsScope.of(context);
+    if (settings.busy || _saving) return;
+    setState(() => _saving = true);
     try {
       await settings.setLanguage(code);
-      if (context.mounted) {
-        Navigator.pop(context);
+      if (mounted) {
+        if (widget.onSelected != null) {
+          widget.onSelected!();
+        } else {
+          Navigator.pop(context);
+        }
       }
     } catch (_) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               settings.text(
-                'Unable to save language. Please retry.',
-                'மொழியைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+                'Could not download or save this language. Your current language is unchanged. Retry when connected.',
               ),
             ),
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final settings = AppSettingsScope.of(context);
-    return VendorPageScaffold(
-      backgroundColor: const Color(0xFFF8F8FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F8FA),
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          settings.text('Language', 'மொழி'),
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+    final settings = AppSettingsScope.of(context),
+        localization = settings.localization;
+    final onboarding = widget.onSelected != null;
+    final selectedCode = onboarding
+        ? _pendingCode
+        : settings.value.languageCode;
+    final busy = _saving || settings.busy;
+    return PopScope(
+      canPop: !busy,
+      child: VendorPageScaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: widget.onSelected == null,
+          title: Text(settings.text('Language')),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            settings.text(
-              'Choose your app language',
-              'உங்கள் செயலி மொழியைத் தேர்வு செய்யவும்',
-            ),
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF17171B),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            settings.text(
-              'The language changes only when you select an option below.',
-              'கீழே ஒரு மொழியைத் தேர்வு செய்யும்போது மட்டுமே மொழி மாறும்.',
-            ),
-            style: const TextStyle(color: Color(0xFF73737D), fontSize: 14),
-          ),
-          const SizedBox(height: 24),
-          ...const {'en': 'English', 'ta': 'தமிழ்'}.entries.map((e) {
-            final selected = settings.value.languageCode == e.key;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: selected ? const Color(0xFFFFF8FA) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selected ? const Color(0xFF80152C) : const Color(0xFFF0EDF0),
-                  width: selected ? 1.5 : 1,
+        bottomNavigationBar: onboarding
+            ? SafeArea(
+                minimum: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: SizedBox(
+                  height: 50,
+                  child: FilledButton(
+                    key: const ValueKey('language-next'),
+                    onPressed: busy || _pendingCode == null
+                        ? null
+                        : () => choose(_pendingCode!),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF80152C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(settings.tr('vendor.next.1ff57a29')),
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF80152C).withValues(alpha: selected ? 0.08 : 0.04),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                  key: ValueKey('language-option-${e.key}'),
-                  title: Text(
-                    e.value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: selected ? const Color(0xFF80152C) : const Color(0xFF17171B),
-                    ),
-                  ),
-                  subtitle: Text(
-                    e.key == 'en' ? 'English (Default)' : 'தமிழ் மொழி',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: selected ? const Color(0xFF80152C).withValues(alpha: 0.7) : const Color(0xFF73737D),
-                    ),
-                  ),
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: selected ? const Color(0xFFF5E8EC) : const Color(0xFFF4F2F4),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.language_rounded,
-                      color: selected ? const Color(0xFF80152C) : const Color(0xFF73737D),
-                      size: 22,
-                    ),
-                  ),
-                  trailing: Icon(
-                    selected
-                        ? Icons.check_circle_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: selected ? const Color(0xFF80152C) : const Color(0xFFB8B5B8),
-                    size: 24,
-                  ),
-                  enabled: !settings.busy,
-                  onTap: () => choose(context, e.key),
+              )
+            : null,
+        body: TourAnchor(
+          id: TourTargets.languages,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text(
+                settings.text('Choose your app language'),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-            );
-          }),
-          if (settings.busy)
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                child: AppShimmerIndicator(color: Color(0xFF80152C)),
+              const SizedBox(height: 16),
+              if (localization.failed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    settings.text(
+                      'Offline or unable to refresh. Previously downloaded languages are still available.',
+                    ),
+                  ),
+                ),
+              LayoutBuilder(
+                builder: (context, constraints) => Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final option in localization.options)
+                      SizedBox(
+                        width: (constraints.maxWidth - 12) / 2,
+                        child: Semantics(
+                          button: true,
+                          selected: option.code == selectedCode,
+                          child: Material(
+                            color: option.code == selectedCode
+                                ? const Color(0xFFF5E8EC)
+                                : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: option.code == selectedCode
+                                    ? const Color(0xFF80152C)
+                                    : const Color(0xFFE8E5EB),
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              key: ValueKey('language-option-${option.code}'),
+                              onTap: busy
+                                  ? null
+                                  : () {
+                                      if (onboarding) {
+                                        setState(
+                                          () => _pendingCode = option.code,
+                                        );
+                                      } else {
+                                        choose(option.code);
+                                      }
+                                    },
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 84,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 22,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        option.nativeName,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: option.code == selectedCode
+                                              ? const Color(0xFF80152C)
+                                              : const Color(0xFF17171B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

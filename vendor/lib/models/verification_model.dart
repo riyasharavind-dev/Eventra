@@ -1,4 +1,3 @@
-
 class VerificationModel {
   final VendorIdentityVerification identity;
   final VendorVerification overall;
@@ -18,9 +17,7 @@ class VerificationModel {
     return VerificationModel(
       identity: VendorIdentityVerification.fromMap(identityMap),
       overall: VendorVerification.fromMap(overallMap),
-      documents: documentMaps
-          .map(VerificationDocument.fromMap)
-          .toList(),
+      documents: documentMaps.map(VerificationDocument.fromMap).toList(),
     );
   }
 }
@@ -64,9 +61,7 @@ class VendorIdentityVerification {
     this.updatedAt,
   });
 
-  factory VendorIdentityVerification.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory VendorIdentityVerification.fromMap(Map<String, dynamic> map) {
     return VendorIdentityVerification(
       id: _stringFrom(map['id']),
       vendorId: map['vendor_id'].toString(),

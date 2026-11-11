@@ -109,9 +109,8 @@ class _FollowUsSectionState extends State<FollowUsSection>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            settings.text(
-              'Unable to open this link. Please try again.',
-              'இணைப்பைத் திறக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+            settings.tr(
+              "vendor.unable_to_open_this_link_please_try_again.eadd0ff8",
             ),
           ),
         ),
@@ -184,15 +183,12 @@ class _FollowUsSectionState extends State<FollowUsSection>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ProfileSectionTitle(
-          settings.text('Follow Us', 'எங்களைப் பின்தொடருங்கள்'),
-        ),
+        ProfileSectionTitle(settings.tr("vendor.follow_us.e2514497")),
         const SizedBox(height: 8),
         if (_links.isEmpty)
           Text(
-            settings.text(
-              'Community links will appear here once added.',
-              'சமூக இணைப்புகள் சேர்க்கப்பட்டதும் இங்கே தோன்றும்.',
+            settings.tr(
+              "vendor.community_links_will_appear_here_once_added.b1608d75",
             ),
             style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
           )

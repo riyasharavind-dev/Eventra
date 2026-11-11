@@ -58,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _index = 0;
   bool _saving = false;
   String? _error;
-  String t(String en, String ta) => AppSettingsScope.of(context).text(en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void dispose() {
     _pages.dispose();
@@ -79,9 +79,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = t(
-            'Unable to save. Please try again.',
-            'சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+          _error = AppSettingsScope.translate(
+            context,
+            "vendor.unable_to_save_please_try_again.05cd3aad",
           );
         });
       }
@@ -112,7 +112,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 TextButton(
                   onPressed: _saving ? null : _finish,
-                  child: Text(t('Skip', 'தவிர்')),
+                  child: Text(
+                    AppSettingsScope.translate(context, "vendor.skip.28d03596"),
+                  ),
                 ),
               ],
             ),
@@ -124,29 +126,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 OnboardingSlide(
                   icon: Icons.storefront_outlined,
-                  title: t('Welcome to Eventor', 'Eventor வரவேற்கிறது'),
-                  description: t(
-                    'Showcase your business and help customers discover what you do best.',
-                    'உங்கள் வணிகத்தை அறிமுகப்படுத்தி, வாடிக்கையாளர்கள் உங்கள் சேவைகளைக் கண்டறிய உதவுங்கள்.',
+                  title: AppSettingsScope.translate(
+                    context,
+                    "vendor.welcome_to_eventor.d3155e5c",
+                  ),
+                  description: AppSettingsScope.translate(
+                    context,
+                    "vendor.showcase_your_business_and_help_customers_dis.661832e5",
                   ),
                 ),
                 OnboardingSlide(
                   icon: Icons.photo_library_outlined,
-                  title: t(
-                    'Your business. Your services.',
-                    'உங்கள் வணிகம். உங்கள் சேவைகள்.',
+                  title: AppSettingsScope.translate(
+                    context,
+                    "vendor.your_business_your_services.669273d3",
                   ),
-                  description: t(
-                    'Add a business, choose its category, then list services with photos and your preferred pricing.',
-                    'வணிகம் மற்றும் அதன் வகையைச் சேர்த்து, படங்கள் மற்றும் விருப்பமான விலையுடன் சேவைகளைப் பட்டியலிடுங்கள்.',
+                  description: AppSettingsScope.translate(
+                    context,
+                    "vendor.add_a_business_choose_its_category_then_list_.932a58b1",
                   ),
                 ),
                 OnboardingSlide(
                   icon: Icons.calendar_month_outlined,
-                  title: t('Bookings, made simple', 'எளிமையான முன்பதிவுகள்'),
-                  description: t(
-                    'Review requests, accept or reject bookings, and track events and history in your calendar.',
-                    'கோரிக்கைகளைப் பார்த்து ஏற்கலாம் அல்லது நிராகரிக்கலாம். நாட்காட்டியில் நிகழ்வுகளையும் வரலாற்றையும் பார்க்கலாம்.',
+                  title: AppSettingsScope.translate(
+                    context,
+                    "vendor.bookings_made_simple.0bca4e6c",
+                  ),
+                  description: AppSettingsScope.translate(
+                    context,
+                    "vendor.review_requests_accept_or_reject_bookings_and.ac12978b",
                   ),
                 ),
               ],
@@ -173,7 +181,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           if (_error != null)
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(_error!, textAlign: TextAlign.center),
+              child: Text(AppSettingsScope.source(context, _error!), textAlign: TextAlign.center),
             ),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -191,7 +199,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             duration: const Duration(milliseconds: 320),
                             curve: Curves.easeOutCubic,
                           ),
-                    child: Text(t('Back', 'முன்பு')),
+                    child: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.back.76900f1b",
+                      ),
+                    ),
                   ),
                 FilledButton(
                   onPressed: _saving
@@ -206,8 +219,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                   child: Text(
                     _index == 2
-                        ? t('Get Started', 'தொடங்குங்கள்')
-                        : t('Next', 'அடுத்து'),
+                        ? AppSettingsScope.translate(
+                            context,
+                            "vendor.get_started.983f3110",
+                          )
+                        : AppSettingsScope.translate(
+                            context,
+                            "vendor.next.1ff57a29",
+                          ),
                   ),
                 ),
               ],

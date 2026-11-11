@@ -1,3 +1,7 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+import 'package:eventor_vendor/services/vendor_tour_controller.dart';
+import 'package:eventor_vendor/widgets/trial/tour_anchor.dart';
+
 import '../../services/app_live_data.dart';
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
@@ -49,7 +53,7 @@ class _EventorCalendarState extends State<EventorCalendar>
   bool loading = true, opening = false;
   Object? error;
   int generation = 0;
-  String t(String en, String ta) => bookingText(context, en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void initState() {
     super.initState();
@@ -116,8 +120,7 @@ class _EventorCalendarState extends State<EventorCalendar>
 
   Widget empty(String message) => Padding(
     padding: const EdgeInsets.all(18),
-    child: Text(
-      message,
+    child: Text(AppSettingsScope.source(context, message),
       style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
@@ -133,7 +136,7 @@ class _EventorCalendarState extends State<EventorCalendar>
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
         title: Text(
-          t('Calendar', 'நாட்காட்டி'),
+          AppSettingsScope.translate(context, "vendor.calendar.d5d0a30b"),
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -165,19 +168,22 @@ class _EventorCalendarState extends State<EventorCalendar>
                     children: [
                       Text(
                         data == null
-                            ? t(
-                                'Could not load calendar bookings.',
-                                'நாட்காட்டி முன்பதிவுகளை ஏற்ற முடியவில்லை.',
+                            ? AppSettingsScope.translate(
+                                context,
+                                "vendor.could_not_load_calendar_bookings.18e25be4",
                               )
-                            : t(
-                                'Refresh failed. Showing previous bookings.',
-                                'புதுப்பிக்க முடியவில்லை. முந்தைய முன்பதிவுகள் காட்டப்படுகின்றன.',
+                            : AppSettingsScope.translate(
+                                context,
+                                "vendor.refresh_failed_showing_previous_bookings.6bb77ca7",
                               ),
                       ),
                       TextButton(
                         onPressed: load,
                         child: Text(
-                          t('Retry', 'மீண்டும் முயற்சி'),
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.retry.942087cc",
+                          ),
                           style: const TextStyle(
                             color: Color(0xFF80152C),
                             fontWeight: FontWeight.w700,
@@ -203,21 +209,24 @@ class _EventorCalendarState extends State<EventorCalendar>
                     ),
                   ],
                 ),
-                child: BookingMonthCalendar(
-                  compact: true,
-                  bookings: scoped,
-                  focusedMonth: month,
-                  selectedDay: selected,
-                  onMonthChanged: (d) {
-                    if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
-                      setState(() => month = d);
-                    }
-                  },
-                  onDaySelected: (d) {
-                    if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
-                      setState(() => selected = d);
-                    }
-                  },
+                child: TourAnchor(
+                  id: TourTargets.dates,
+                  child: BookingMonthCalendar(
+                    compact: true,
+                    bookings: scoped,
+                    focusedMonth: month,
+                    selectedDay: selected,
+                    onMonthChanged: (d) {
+                      if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
+                        setState(() => month = d);
+                      }
+                    },
+                    onDaySelected: (d) {
+                      if (d.year >= 2026 && d.year <= unlockedCalendarYear()) {
+                        setState(() => selected = d);
+                      }
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -259,7 +268,7 @@ class _EventorCalendarState extends State<EventorCalendar>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${selectedRows.length} ${t('bookings', 'முன்பதிவுகள்')}',
+                            '${selectedRows.length} ${AppSettingsScope.translate(context, "vendor.bookings.5cc6c019")}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -275,9 +284,9 @@ class _EventorCalendarState extends State<EventorCalendar>
                         padding: const EdgeInsets.symmetric(vertical: 30),
                         child: Center(
                           child: Text(
-                            t(
-                              'No bookings on this day',
-                              'இந்த நாளில் முன்பதிவுகள் இல்லை',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.no_bookings_on_this_day.5aa0a8ff",
                             ),
                             style: const TextStyle(
                               color: Color(0xFF73737D),

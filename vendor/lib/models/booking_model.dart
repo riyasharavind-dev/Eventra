@@ -1,11 +1,22 @@
 class BookingModel {
-  final String? businessId, businessName, customerPhone;
+  final int quantity, quoteVersion;
+  final double? unitPrice, quoteAmount;
+  final String pricingType;
+  final String? pricingUnit;
+  final DateTime? quoteApprovedAt;
+
+  final String? businessId, businessName, customerPhone, customerAddress;
   final String? eventStartTime, eventEndTime, statusReason;
   final String eventTimezone, vendorNote;
   final DateTime? eventEndDate;
   final double? latitude, longitude;
   final int noteVersion;
   final List<String> serviceGallery;
+  final DateTime? vendorCompletedAt, customerCompletedAt;
+  bool get awaitingCompletion =>
+      status == 'accepted' &&
+      vendorCompletedAt != null &&
+      customerCompletedAt == null;
   final String id;
 
   final String customerId;
@@ -39,9 +50,20 @@ class BookingModel {
   final String? eventTypeName;
 
   const BookingModel({
+    this.quantity = 1,
+    this.quoteVersion = 0,
+    this.unitPrice,
+    this.quoteAmount,
+    this.pricingType = 'fixed',
+    this.pricingUnit,
+    this.quoteApprovedAt,
+
+    this.vendorCompletedAt,
+    this.customerCompletedAt,
     this.businessId,
     this.businessName,
     this.customerPhone,
+    this.customerAddress,
     this.eventStartTime,
     this.eventEndTime,
     this.statusReason,
@@ -82,8 +104,24 @@ class BookingModel {
     final dynamic eventType = map['event_types'];
 
     return BookingModel(
+      quantity: (map['quantity'] as num?)?.toInt() ?? 1,
+      quoteVersion: (map['quote_version'] as num?)?.toInt() ?? 0,
+      unitPrice: (map['unit_price'] as num?)?.toDouble(),
+      quoteAmount: (map['quote_amount'] as num?)?.toDouble(),
+      pricingType: map['pricing_type']?.toString() ?? 'fixed',
+      pricingUnit: map['pricing_unit']?.toString(),
+      quoteApprovedAt: DateTime.tryParse(
+        map['quote_approved_at']?.toString() ?? '',
+      ),
+      vendorCompletedAt: DateTime.tryParse(
+        map['vendor_completed_at']?.toString() ?? '',
+      ),
+      customerCompletedAt: DateTime.tryParse(
+        map['customer_completed_at']?.toString() ?? '',
+      ),
       businessId: map['business_id']?.toString(),
       businessName: map['business_name']?.toString(),
+      customerAddress: map['customer_address']?.toString(),
       customerPhone: customer is Map ? customer['phone']?.toString() : null,
       eventStartTime: map['event_start_time']?.toString(),
       eventEndTime: map['event_end_time']?.toString(),

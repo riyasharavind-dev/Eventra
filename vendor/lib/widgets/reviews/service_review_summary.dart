@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -78,7 +79,6 @@ class _ServiceReviewSummaryState extends State<ServiceReviewSummary>
 
   @override
   Widget build(BuildContext context) {
-    final tamil = Localizations.localeOf(context).languageCode == 'ta';
     return FutureBuilder<ReviewSummary>(
       future: loading,
       builder: (context, snapshot) => Container(
@@ -116,19 +116,29 @@ class _ServiceReviewSummaryState extends State<ServiceReviewSummary>
               ),
             ),
             title: Text(
-              tamil ? 'மதிப்பீடு மற்றும் விமர்சனங்கள்' : 'Ratings & reviews',
+              AppSettingsScope.translate(
+                context,
+                "vendor.ratings_reviews.040a641f",
+              ),
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
             subtitle: Text(
               snapshot.hasError
-                  ? (tamil
-                        ? 'ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
-                        : 'Unable to load. Tap to retry.')
+                  ? (AppSettingsScope.translate(
+                      context,
+                      "vendor.unable_to_load_tap_to_retry.356321f4",
+                    ))
                   : !snapshot.hasData
-                  ? (tamil ? 'ஏற்றுகிறது…' : 'Loading…')
+                  ? (AppSettingsScope.translate(
+                      context,
+                      "vendor.loading.ba3bbbe1",
+                    ))
                   : snapshot.data!.count == 0
-                  ? (tamil ? 'இன்னும் விமர்சனங்கள் இல்லை' : 'No reviews yet')
-                  : '${snapshot.data!.average!.toStringAsFixed(1)} / 5 · ${snapshot.data!.count} ${tamil ? 'விமர்சனங்கள்' : 'reviews'}',
+                  ? (AppSettingsScope.translate(
+                      context,
+                      "vendor.no_reviews_yet.8b670b7e",
+                    ))
+                  : '${snapshot.data!.average!.toStringAsFixed(1)} / 5 · ${snapshot.data!.count} ${AppSettingsScope.translate(context, "vendor.reviews.54641051")}',
               style: const TextStyle(fontSize: 12, color: Color(0xFF73737D)),
             ),
             trailing: snapshot.connectionState == ConnectionState.waiting

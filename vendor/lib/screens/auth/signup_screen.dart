@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../widgets/common/app_shimmer.dart';
@@ -117,9 +118,12 @@ class _SignupScreenState extends State<SignupScreen> {
       if (response.user != null) {
         if (response.session == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Account created. Please verify your email before signing in.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.account_created_please_verify_your_email_befo.3389097e",
+                ),
               ),
             ),
           );
@@ -137,8 +141,13 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to create account. Please try again.'),
+        SnackBar(
+          content: Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.unable_to_create_account_please_try_again.51be557a",
+            ),
+          ),
         ),
       );
     } catch (error) {
@@ -179,49 +188,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // ==================================
-                      // BRAND BADGE
-                      // ==================================
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5E8EC),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.storefront_rounded,
-                                size: 16,
-                                color: AppIconColors.standard,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'EVENTOR VENDOR',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: _wine,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
-
-                      // ==================================
                       // TITLE
                       // ==================================
-                      const Text(
-                        'Create account',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.create_account.798ca2ce",
+                        ),
                         style: TextStyle(
                           fontSize: 29,
                           height: 1.2,
@@ -233,8 +206,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       const SizedBox(height: 8),
 
-                      const Text(
-                        'Join Eventor and start managing your business.',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.join_eventor_and_start_managing_your_business.1d6a7d2a",
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.5,
@@ -247,8 +223,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       // ==================================
                       // NAME
                       // ==================================
-                      const Text(
-                        'Full name',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.full_name.f13a64ba",
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -263,16 +242,25 @@ class _SignupScreenState extends State<SignupScreen> {
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         decoration: _inputDecoration(
-                          hint: 'Enter your name',
+                          hint: AppSettingsScope.translate(
+                            context,
+                            "vendor.enter_your_name.0421de12",
+                          ),
                           icon: Icons.person_outline_rounded,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your name';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_your_name.a286aa34",
+                            );
                           }
 
                           if (value.trim().length < 2) {
-                            return 'Name must be at least 2 characters';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.name_must_be_at_least_2_characters.9654ce02",
+                            );
                           }
 
                           return null;
@@ -281,8 +269,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       const SizedBox(height: 18),
 
-                      const Text(
-                        'Phone number',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.phone_number.306f1bb2",
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -330,11 +321,17 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your phone number';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_your_phone_number.f3ebc0cc",
+                            );
                           }
                           if (!RegExp(r'^[6-9][0-9]{9}$')
                               .hasMatch(value.trim())) {
-                            return 'Please enter a valid 10-digit Indian mobile number';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_a_valid_10_digit_indian_mobile_n.a201a4dc",
+                            );
                           }
                           return null;
                         },
@@ -344,8 +341,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       // ==================================
                       // EMAIL
                       // ==================================
-                      const Text(
-                        'Email address',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.email_address.f2488fd4",
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -361,17 +361,26 @@ class _SignupScreenState extends State<SignupScreen> {
                         textInputAction: TextInputAction.next,
                         autocorrect: false,
                         decoration: _inputDecoration(
-                          hint: 'Enter your email',
+                          hint: AppSettingsScope.translate(
+                            context,
+                            "vendor.enter_your_email.2837f6fa",
+                          ),
                           icon: Icons.mail_outline_rounded,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your email';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_your_email.15edb313",
+                            );
                           }
 
                           if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                               .hasMatch(value.trim())) {
-                            return 'Please enter a valid email';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_a_valid_email.845babfe",
+                            );
                           }
 
                           return null;
@@ -383,8 +392,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       // ==================================
                       // PASSWORD
                       // ==================================
-                      const Text(
-                        'Password',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.password.e7cf3ef4",
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -399,7 +411,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.next,
                         decoration: _inputDecoration(
-                          hint: 'Create a password',
+                          hint: AppSettingsScope.translate(
+                            context,
+                            "vendor.create_a_password.4defceba",
+                          ),
                           icon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             tooltip: _obscurePassword
@@ -421,11 +436,17 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a password';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_enter_a_password.617676ea",
+                            );
                           }
 
                           if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.password_must_be_at_least_6_characters.2005290d",
+                            );
                           }
 
                           return null;
@@ -437,8 +458,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       // ==================================
                       // CONFIRM PASSWORD
                       // ==================================
-                      const Text(
-                        'Confirm password',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.confirm_password.5ac265f3",
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -454,7 +478,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _signUp(),
                         decoration: _inputDecoration(
-                          hint: 'Re-enter your password',
+                          hint: AppSettingsScope.translate(
+                            context,
+                            "vendor.re_enter_your_password.210dfc7e",
+                          ),
                           icon: Icons.lock_outline_rounded,
                           suffixIcon: IconButton(
                             tooltip: _obscureConfirmPassword
@@ -477,11 +504,17 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.please_confirm_your_password.9d4287d7",
+                            );
                           }
 
                           if (value != _passwordController.text) {
-                            return 'Passwords do not match';
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.passwords_do_not_match.b6eb82cd",
+                            );
                           }
 
                           return null;
@@ -527,8 +560,11 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
-                                  'Create account',
+                              : Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.create_account.798ca2ce",
+                                  ),
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
@@ -545,9 +581,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Flexible(
+                          Flexible(
                             child: Text(
-                              'Already have an account? ',
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.already_have_an_account.04a38dd0",
+                              ),
                               style: TextStyle(fontSize: 13, color: _hintColor),
                             ),
                           ),
@@ -564,8 +603,11 @@ class _SignupScreenState extends State<SignupScreen> {
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            child: const Text(
-                              'Sign in',
+                            child: Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.sign_in.bfd402b2",
+                              ),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,

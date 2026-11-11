@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -46,8 +47,7 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
   bool loading = true, loadingMore = false, hasMore = false;
   Object? error;
   int generation = 0;
-  String t(String en, String ta) =>
-      Localizations.localeOf(context).languageCode == 'ta' ? ta : en;
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void initState() {
     super.initState();
@@ -133,7 +133,7 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
     }
   }
 
-  Future<void> action(ServiceReviewModel review, {bool report = false}) async {
+  Future<void> reportReview(ServiceReviewModel review) async {
     if (busyIds.contains(review.id)) {
       return;
     }
@@ -141,19 +141,12 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
     try {
       final result = await showDialog<String>(
         context: context,
-        builder: (c) => _ReviewTextDialog(
-          report: report,
-          initial: report ? '' : review.vendorReply ?? '',
-        ),
+        builder: (c) => const _ReviewTextDialog(),
       );
       if (result == null || !mounted) {
         return;
       }
-      if (report) {
-        await repo.report(review, result);
-      } else {
-        await repo.reply(review, result);
-      }
+      await repo.report(review, result);
       if (mounted) {
         await load();
       }
@@ -194,7 +187,10 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
             children: [
               Text(
                 value.count == 0
-                    ? t('No reviews yet', 'இன்னும் விமர்சனங்கள் இல்லை')
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.no_reviews_yet.8b670b7e",
+                      )
                     : value.average!.toStringAsFixed(1),
                 style: const TextStyle(
                   fontSize: 32,
@@ -223,7 +219,7 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
           ),
           const SizedBox(height: 2),
           Text(
-            '${value.count} ${t('public reviews', 'பொது விமர்சனங்கள்')}',
+            '${value.count} ${AppSettingsScope.translate(context, "vendor.public_reviews.56233001")}',
             style: const TextStyle(color: Color(0xFF73737D), fontSize: 13),
           ),
           if (value.count > 0) ...[
@@ -288,9 +284,9 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
           if (widget.vendorMode) ...[
             const SizedBox(height: 14),
             Text(
-              t(
-                'Only visible reviews contribute to ratings. Hidden reviews are labelled below.',
-                'தெரியும் விமர்சனங்கள் மட்டுமே மதிப்பீட்டில் சேரும். மறைக்கப்பட்டவை கீழே குறிப்பிடப்பட்டுள்ளன.',
+              AppSettingsScope.translate(
+                context,
+                "vendor.only_visible_reviews_contribute_to_ratings_hi.8c7c91c9",
               ),
               style: const TextStyle(fontSize: 11, color: Color(0xFF73737D)),
             ),
@@ -386,7 +382,7 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
                         if (review.version > 1) ...[
                           const SizedBox(width: 6),
                           Text(
-                            '· ${t('Edited', 'திருத்தப்பட்டது')}',
+                            '· ${AppSettingsScope.translate(context, "vendor.edited.7117f080")}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF73737D),
@@ -408,7 +404,7 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              '✓ ${t('Verified completed booking', 'சரிபார்க்கப்பட்ட முடிந்த முன்பதிவு')}',
+              '✓ ${AppSettingsScope.translate(context, "vendor.verified_completed_booking.9c6d6a2c")}',
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -431,7 +427,10 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                t('Hidden by admin', 'நிர்வாகத்தால் மறைக்கப்பட்டது'),
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.hidden_by_admin.be64441e",
+                ),
                 style: const TextStyle(color: Color(0xFFC62828), fontSize: 12),
               ),
             ),
@@ -468,7 +467,10 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        t('Vendor response', 'விற்பனையாளர் பதில்'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.vendor_response.6eac74fd",
+                        ),
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 13,
@@ -501,43 +503,28 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
               ),
             ),
           ],
-          if (widget.vendorMode && review.canReply) ...[
+          if (widget.vendorMode) ...[
             const SizedBox(height: 12),
             Row(
               children: [
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF80152C),
-                    side: const BorderSide(color: Color(0xFF80152C)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: busy ? null : () => action(review),
-                  icon: const Icon(Icons.reply_outlined, size: 16),
-                  label: Text(
-                    review.vendorReply == null
-                        ? t('Reply', 'பதில் அளி')
-                        : t('Edit reply', 'பதிலைத் திருத்து'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF73737D),
                   ),
                   onPressed: busy || review.reported
                       ? null
-                      : () => action(review, report: true),
+                      : () => reportReview(review),
                   icon: const Icon(Icons.flag_outlined, size: 16),
                   label: Text(
                     review.reported
-                        ? t('Reported', 'புகாரளிக்கப்பட்டது')
-                        : t('Report', 'புகார் அளி'),
+                        ? AppSettingsScope.translate(
+                            context,
+                            "vendor.reported.34540bb7",
+                          )
+                        : AppSettingsScope.translate(
+                            context,
+                            "vendor.report.b6ce788d",
+                          ),
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -558,8 +545,11 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
       surfaceTintColor: Colors.transparent,
       title: Text(
         widget.vendorMode
-            ? t('Customer Reviews', 'வாடிக்கையாளர் விமர்சனங்கள்')
-            : t('Reviews', 'விமர்சனங்கள்'),
+            ? AppSettingsScope.translate(
+                context,
+                "vendor.customer_reviews.8f8b1729",
+              )
+            : AppSettingsScope.translate(context, "vendor.reviews.84cb7871"),
         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
       ),
     ),
@@ -583,14 +573,19 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
                 child: Column(
                   children: [
                     Text(
-                      t(
-                        'Unable to load reviews.',
-                        'விமர்சனங்களை ஏற்ற முடியவில்லை.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.unable_to_load_reviews.f1be9338",
                       ),
                     ),
                     TextButton(
                       onPressed: load,
-                      child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.retry.942087cc",
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -603,9 +598,9 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
             Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                t(
-                  'Reviews from completed bookings will appear here.',
-                  'முடிந்த முன்பதிவுகளின் விமர்சனங்கள் இங்கே தோன்றும்.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.reviews_from_completed_bookings_will_appear_h.3963ba96",
                 ),
               ),
             ),
@@ -614,8 +609,14 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
               onPressed: loadingMore || loading ? null : more,
               child: Text(
                 loadingMore
-                    ? t('Loading…', 'ஏற்றுகிறது…')
-                    : t('Load more', 'மேலும் ஏற்று'),
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.loading.ba3bbbe1",
+                      )
+                    : AppSettingsScope.translate(
+                        context,
+                        "vendor.load_more.ac8991ef",
+                      ),
               ),
             ),
         ],
@@ -625,24 +626,15 @@ class _ServiceReviewsScreenState extends State<ServiceReviewsScreen>
 }
 
 class _ReviewTextDialog extends StatefulWidget {
-  final bool report;
-  final String initial;
-  const _ReviewTextDialog({required this.report, required this.initial});
+  const _ReviewTextDialog();
   @override
   State<_ReviewTextDialog> createState() => _ReviewTextDialogState();
 }
 
 class _ReviewTextDialogState extends State<_ReviewTextDialog> {
   final form = GlobalKey<FormState>();
-  late final TextEditingController text;
-  String t(String en, String ta) =>
-      Localizations.localeOf(context).languageCode == 'ta' ? ta : en;
-  @override
-  void initState() {
-    super.initState();
-    text = TextEditingController(text: widget.initial);
-  }
-
+  final text = TextEditingController();
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void dispose() {
     text.dispose();
@@ -652,9 +644,7 @@ class _ReviewTextDialogState extends State<_ReviewTextDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(
-      widget.report
-          ? t('Report review', 'விமர்சனத்தைப் புகாரளி')
-          : t('Vendor reply', 'விற்பனையாளர் பதில்'),
+      AppSettingsScope.translate(context, "vendor.report_review.caa4bf2a"),
     ),
     content: SingleChildScrollView(
       child: Form(
@@ -663,31 +653,27 @@ class _ReviewTextDialogState extends State<_ReviewTextDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              widget.report
-                  ? t(
-                      'An admin will review your report. Reporting does not automatically hide this review.',
-                      'உங்கள் புகாரை நிர்வாகி பரிசீலிப்பார். புகாரளிப்பதால் விமர்சனம் தானாக மறைக்கப்படாது.',
-                    )
-                  : t(
-                      'Your reply is public. Clear the text to remove an existing reply.',
-                      'உங்கள் பதில் பொதுவாகத் தெரியும். முந்தைய பதிலை நீக்க உரையை அழிக்கவும்.',
-                    ),
+              AppSettingsScope.translate(
+                context,
+                "vendor.an_admin_will_review_your_report_reporting_do.069e7974",
+              ),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: text,
               maxLines: 5,
-              maxLength: widget.report ? 1000 : 2000,
+              maxLength: 1000,
               decoration: InputDecoration(
-                labelText: widget.report
-                    ? t('Reason', 'காரணம்')
-                    : t('Reply', 'பதில்'),
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.reason.f81ab834",
+                ),
                 border: const OutlineInputBorder(),
               ),
-              validator: (v) => widget.report && (v?.trim().length ?? 0) < 3
-                  ? t(
-                      'Enter at least 3 characters',
-                      'குறைந்தது 3 எழுத்துகள் உள்ளிடவும்',
+              validator: (v) => (v?.trim().length ?? 0) < 3
+                  ? AppSettingsScope.translate(
+                      context,
+                      "vendor.enter_at_least_3_characters.7638f7f1",
                     )
                   : null,
             ),
@@ -698,7 +684,9 @@ class _ReviewTextDialogState extends State<_ReviewTextDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: Text(t('Cancel', 'ரத்து செய்')),
+        child: Text(
+          AppSettingsScope.translate(context, "vendor.cancel.19766ed6"),
+        ),
       ),
       FilledButton(
         onPressed: () {
@@ -706,7 +694,9 @@ class _ReviewTextDialogState extends State<_ReviewTextDialog> {
             Navigator.pop(context, text.text.trim());
           }
         },
-        child: Text(t('Submit', 'சமர்ப்பி')),
+        child: Text(
+          AppSettingsScope.translate(context, "vendor.report.b6ce788d"),
+        ),
       ),
     ],
   );

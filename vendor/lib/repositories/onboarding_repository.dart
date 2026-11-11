@@ -9,6 +9,7 @@ class OnboardingRepository {
   OnboardingRepository({SupabaseClient? client}) : _providedClient = client;
   final SupabaseClient? _providedClient;
   SupabaseClient get _client => _providedClient ?? Supabase.instance.client;
+  String? get accountId => _client.auth.currentUser?.id;
   static const introKey = 'vendor_introduction_v1';
   Future<bool> needsIntroduction() async =>
       !(await SharedPreferences.getInstance()).getBool(introKey).orFalse;

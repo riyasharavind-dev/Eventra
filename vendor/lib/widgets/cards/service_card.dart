@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../common/app_shimmer.dart';
@@ -105,7 +106,7 @@ class ServiceCard extends StatelessWidget {
                                 ),
                               ),
                               const PopupMenuDivider(),
-                              const PopupMenuItem<String>(
+                              PopupMenuItem<String>(
                                 value: 'delete',
                                 child: Row(
                                   children: [
@@ -116,7 +117,10 @@ class ServiceCard extends StatelessWidget {
                                     ),
                                     SizedBox(width: 10),
                                     Text(
-                                      'Delete',
+                                      AppSettingsScope.translate(
+                                        context,
+                                        "vendor.delete.e2d0a549",
+                                      ),
                                       style: TextStyle(
                                         color: Color(0xFFC62828),
                                         fontWeight: FontWeight.w600,

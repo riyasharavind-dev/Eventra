@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 import '../../repositories/service_repository.dart';
 import '../../widgets/vendor_page_scaffold.dart';
@@ -61,7 +63,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
   VoidCallback? get onManageImages => widget.onManageImages;
   @override
   Widget build(BuildContext context) {
-    String t(String en, String ta) => listingText(context, en, ta);
+    String t(String en) => AppSettingsScope.source(context, en);
     final colors = Theme.of(context).colorScheme;
     const wine = Color(0xFF80152C);
 
@@ -98,15 +100,32 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
     );
     if (!available) {
       return VendorPageScaffold(
-        appBar: AppBar(title: Text(t('Service Details', 'Service Details'))),
-        body: const Center(child: Text('This service is no longer available.')),
+        appBar: AppBar(
+          title: Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.service_details.3028f307",
+            ),
+          ),
+        ),
+        body: Center(
+          child: Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.this_service_is_no_longer_available.bf16bb61",
+            ),
+          ),
+        ),
       );
     }
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
         title: Text(
-          t('Service Details', 'சேவை விவரங்கள்'),
+          AppSettingsScope.translate(
+            context,
+            "vendor.service_details.3028f307",
+          ),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
       ),
@@ -184,7 +203,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
             ),
           ),
           Text(
-            t(service.pricing.type.label, service.pricing.type.tamilLabel),
+            t(service.pricing.type.label),
             style: const TextStyle(color: Color(0xFF73737D), fontSize: 13),
           ),
           const SizedBox(height: 20),
@@ -203,7 +222,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
                     ),
                   ),
                   icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(t('Edit service', 'சேவையைத் திருத்து')),
+                  label: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.edit_service.3b3ed7a7",
+                    ),
+                  ),
                 ),
               if (onManageImages != null)
                 OutlinedButton.icon(
@@ -216,37 +240,55 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
                     ),
                   ),
                   icon: const Icon(Icons.photo_library_outlined, size: 18),
-                  label: Text(t('Manage photos', 'படங்களை நிர்வகி')),
+                  label: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.manage_photos.6d385d88",
+                    ),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 20),
           section(
-            t('Description', 'விளக்கம்'),
+            AppSettingsScope.translate(context, "vendor.description.526e0087"),
             Text(
               service.description?.trim().isNotEmpty == true
                   ? service.description!
-                  : t('No description added.', 'விளக்கம் சேர்க்கப்படவில்லை.'),
+                  : AppSettingsScope.translate(
+                      context,
+                      "vendor.no_description_added.0b1efa8a",
+                    ),
             ),
           ),
           section(
-            t('Listing information', 'பட்டியல் தகவல்கள்'),
+            AppSettingsScope.translate(
+              context,
+              "vendor.listing_information.b6100e2d",
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (service.categoryName != null)
-                  Text('${t('Category', 'வகை')}: ${service.categoryName}'),
+                  Text(
+                    '${AppSettingsScope.translate(context, "vendor.category.292c06f0")}: ${service.categoryName}',
+                  ),
                 const SizedBox(height: 8),
-                SelectableText('${t('Service ID', 'சேவை எண்')}: ${service.id}'),
+                SelectableText(
+                  '${AppSettingsScope.translate(context, "vendor.service_id.a4bd8b91")}: ${service.id}',
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  '${t('Created', 'உருவாக்கப்பட்டது')}: ${MaterialLocalizations.of(context).formatMediumDate(service.createdAt.toLocal())}',
+                  '${AppSettingsScope.translate(context, "vendor.created.d70b9e24")}: ${MaterialLocalizations.of(context).formatMediumDate(service.createdAt.toLocal())}',
                 ),
               ],
             ),
           ),
           section(
-            t('Manage service', 'சேவையை நிர்வகி'),
+            AppSettingsScope.translate(
+              context,
+              "vendor.manage_service.a23b096c",
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -260,8 +302,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
                     ),
                     title: Text(
                       service.isActive
-                          ? t('Deactivate', 'செயலிழக்கச் செய்')
-                          : t('Activate', 'செயல்படுத்து'),
+                          ? AppSettingsScope.translate(
+                              context,
+                              "vendor.deactivate.fb1e6fa5",
+                            )
+                          : AppSettingsScope.translate(
+                              context,
+                              "vendor.activate.24433c70",
+                            ),
                     ),
                     onTap: onToggleStatus,
                   ),
@@ -269,14 +317,24 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.campaign_outlined),
-                    title: Text(t('Promote', 'விளம்பரப்படுத்து')),
+                    title: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.promote.5834dab0",
+                      ),
+                    ),
                     onTap: onPromote,
                   ),
                 if (onDuplicate != null)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.copy_outlined),
-                    title: Text(t('Duplicate', 'நகல் எடு')),
+                    title: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.duplicate.02cdaabf",
+                      ),
+                    ),
                     onTap: onDuplicate,
                   ),
                 if (onDelete != null)
@@ -284,7 +342,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen>
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.delete_outline, color: colors.error),
                     title: Text(
-                      t('Delete service', 'சேவையை நீக்கு'),
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.delete_service.9f0f483f",
+                      ),
                       style: TextStyle(color: colors.error),
                     ),
                     onTap: onDelete,

@@ -1,3 +1,7 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
+import '../../services/vendor_tour_controller.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -54,6 +58,11 @@ class _MainScreenBackGuardState extends State<MainScreenBackGuard> {
 
   void _onBack(bool didPop, Object? result) {
     if (didPop) return;
+    if (VendorTourController.instance.active) {
+      _reset();
+      unawaited(VendorTourController.instance.back());
+      return;
+    }
     if (widget.currentIndex != 0) {
       _reset();
       widget.onDashboard();
@@ -64,16 +73,17 @@ class _MainScreenBackGuardState extends State<MainScreenBackGuard> {
       SystemNavigator.pop();
       return;
     }
-    final tamil = Localizations.localeOf(context).languageCode == 'ta';
+
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
     _message = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         content: Text(
-          tamil
-              ? 'வெளியேற மீண்டும் பின் அழுத்தவும்'
-              : 'Press back again to exit',
+          AppSettingsScope.translate(
+            context,
+            "vendor.press_back_again_to_exit.c151b888",
+          ),
         ),
         duration: const Duration(seconds: 3),
       ),

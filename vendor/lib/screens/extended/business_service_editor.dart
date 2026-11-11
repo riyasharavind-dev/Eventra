@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
@@ -144,7 +146,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
               TextFormField(
                 controller: name,
                 decoration: InputDecoration(
-                  labelText: 'Service name',
+                  labelText: AppSettingsScope.translate(
+                    context,
+                    "vendor.service_name.1bb8870c",
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -157,18 +162,28 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF80152C),
+                      width: 1.4,
+                    ),
                   ),
                 ),
-                validator: (v) =>
-                    (v?.trim().length ?? 0) < 2 ? 'Enter a service name' : null,
+                validator: (v) => (v?.trim().length ?? 0) < 2
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.enter_a_service_name.dafb94c9",
+                      )
+                    : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: category,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: 'Category',
+                  labelText: AppSettingsScope.translate(
+                    context,
+                    "vendor.category.292c06f0",
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -181,7 +196,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF80152C),
+                      width: 1.4,
+                    ),
                   ),
                 ),
                 items: allowed
@@ -193,13 +211,20 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                     )
                     .toList(),
                 onChanged: (v) => category = v,
-                validator: (v) =>
-                    v == null ? 'Choose a business category' : null,
+                validator: (v) => v == null
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.choose_a_business_category.7777a320",
+                      )
+                    : null,
               ),
               if (allowed.isEmpty) ...[
                 const SizedBox(height: 6),
-                const Text(
-                  'Edit the business and choose categories first.',
+                Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.edit_the_business_and_choose_categories_first.68c54b35",
+                  ),
                   style: TextStyle(fontSize: 12, color: Color(0xFF73737D)),
                 ),
               ],
@@ -208,7 +233,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 controller: description,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: 'Service description',
+                  labelText: AppSettingsScope.translate(
+                    context,
+                    "vendor.service_description.7b004f18",
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -221,7 +249,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF80152C),
+                      width: 1.4,
+                    ),
                   ),
                 ),
               ),
@@ -236,7 +267,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Price (INR)',
+                  labelText: AppSettingsScope.translate(
+                    context,
+                    "vendor.price_inr.06cf5831",
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -249,13 +283,19 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF80152C),
+                      width: 1.4,
+                    ),
                   ),
                 ),
                 validator: (v) {
                   final n = double.tryParse(v?.trim() ?? '');
                   return n == null || !n.isFinite || n < 0
-                      ? 'Enter a valid price'
+                      ? AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_a_valid_price.ae33fb30",
+                        )
                       : null;
                 },
               ),
@@ -264,7 +304,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 controller: gallery,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: 'Gallery image URLs (one per line)',
+                  labelText: AppSettingsScope.translate(
+                    context,
+                    "vendor.gallery_image_urls_one_per_line.a865b1ba",
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -277,7 +320,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.4),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF80152C),
+                      width: 1.4,
+                    ),
                   ),
                 ),
                 validator: (v) {
@@ -290,7 +336,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                     if (u == null ||
                         !['https', 'http'].contains(u.scheme) ||
                         u.host.isEmpty) {
-                      return 'Enter full image URLs, one per line';
+                      return AppSettingsScope.translate(
+                        context,
+                        "vendor.enter_full_image_urls_one_per_line.0182f95f",
+                      );
                     }
                   }
                   return null;
@@ -298,7 +347,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
@@ -307,8 +359,11 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeTrackColor: const Color(0xFF80152C),
-                  title: const Text(
-                    'Enable service',
+                  title: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.enable_service.ee3648b1",
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   value: enabled,
@@ -317,8 +372,11 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
               ),
               if (widget.business.availabilityStatus != 'active') ...[
                 const SizedBox(height: 8),
-                const Text(
-                  'This service stays hidden until the business is active.',
+                Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.this_service_stays_hidden_until_the_business_.08f0aa0f",
+                  ),
                   style: TextStyle(fontSize: 12, color: Color(0xFF73737D)),
                 ),
               ],
@@ -336,7 +394,10 @@ class _BusinessServiceEditorState extends State<BusinessServiceEditor> {
                   ),
                   child: Text(
                     busy ? 'Saving…' : 'Save service',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

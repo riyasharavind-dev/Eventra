@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -22,9 +23,12 @@ String _supportDate(DateTime value) {
 void _supportError(BuildContext context, Object error) {
   debugPrint('Support error: $error');
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
+    SnackBar(
       content: Text(
-        'Something went wrong. Check your connection and try again.',
+        AppSettingsScope.translate(
+          context,
+          "vendor.something_went_wrong_check_your_connection_an.067b61d2",
+        ),
       ),
     ),
   );
@@ -141,7 +145,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Unable to open ${email ? 'email' : 'WhatsApp'}. Please submit a support request instead.',
+              AppSettingsScope.translate(
+                context,
+                "vendor.unable_to_open_value0_please_submit_a_support.03be8957",
+                args: {"value0": email ? 'email' : 'WhatsApp'},
+              ),
             ),
           ),
         );
@@ -222,12 +230,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
     return VendorPageScaffold(
       backgroundColor: _supportBackground,
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: Text(
+          AppSettingsScope.translate(context, "vendor.help_support.1f8ecc24"),
+        ),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         actions: [
           IconButton(
-            tooltip: 'Refresh support',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "vendor.refresh_support.74fe6d06",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -244,12 +257,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Unable to load support. Check your connection and try again.',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.unable_to_load_support_check_your_connection_.15ccd2b3",
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                    FilledButton(
+                      onPressed: _load,
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.retry.942087cc",
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -260,8 +284,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const Text(
-                    'EVENTOR VENDOR SUPPORT',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.eventor_vendor_support.cb8de67d",
+                    ),
                     style: TextStyle(
                       color: _supportRed,
                       fontSize: 11,
@@ -270,20 +297,29 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'How can we help?',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.how_can_we_help.7b56e0d0",
+                    ),
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Find an answer or reach out to our team.',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.find_an_answer_or_reach_out_to_our_team.8d7018c7",
+                    ),
                     style: TextStyle(color: Color(0xFF6F6F7A)),
                   ),
                   const SizedBox(height: 22),
                   TextField(
                     onChanged: (value) => setState(() => _search = value),
                     decoration: InputDecoration(
-                      hintText: 'Search questions or topics…',
+                      hintText: AppSettingsScope.translate(
+                        context,
+                        "vendor.search_questions_or_topics.80db7c0a",
+                      ),
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       fillColor: Colors.white,
@@ -292,7 +328,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                       ),
                     ),
                   ),
-                  _section('Frequently asked questions'),
+                  _section(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.frequently_asked_questions.e956a940",
+                    ),
+                  ),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -330,10 +371,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                   const SizedBox(height: 12),
                   _supportPanel(
                     filtered.isEmpty
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(20),
                             child: Text(
-                              'No matching questions. Try another search or report an issue.',
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.no_matching_questions_try_another_search_or_r.0c5c7f29",
+                              ),
                             ),
                           )
                         : Column(
@@ -376,7 +420,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                                 .toList(),
                           ),
                   ),
-                  _section('Need a little more help?'),
+                  _section(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.need_a_little_more_help.12e7b448",
+                    ),
+                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -394,14 +443,22 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                         Icons.help_outline,
                         color: AppIconColors.standard,
                       ),
-                      title: const Text(
-                        'Report an issue',
+                      title: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.report_an_issue.635ae219",
+                        ),
                         style: TextStyle(
                           color: _supportRed,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      subtitle: const Text('Tell us what went wrong'),
+                      subtitle: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.tell_us_what_went_wrong.fb62f1c4",
+                        ),
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _open(
                         ReportSupportIssueScreen(repository: _repository),
@@ -409,19 +466,30 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
                     ),
                   ),
                   _section(
-                    'My support requests',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.my_support_requests.9cce51cb",
+                    ),
                     action: TextButton(
                       onPressed: () =>
                           _open(SupportRequestsScreen(repository: _repository)),
-                      child: const Text('View all'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.view_all.30a64216",
+                        ),
+                      ),
                     ),
                   ),
                   _supportPanel(
                     _tickets.isEmpty
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(20),
                             child: Text(
-                              'No support requests yet. Your requests will appear here.',
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.no_support_requests_yet_your_requests_will_ap.ed360d34",
+                              ),
                             ),
                           )
                         : Column(
@@ -528,9 +596,12 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
           await file.length() > 5242880) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Choose a JPG, PNG or WebP image smaller than 5 MB.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.choose_a_jpg_png_or_webp_image_smaller_than_5.d78916c2",
+                ),
               ),
             ),
           );
@@ -556,7 +627,15 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Request ${ticket.reference} submitted.')),
+        SnackBar(
+          content: Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.request_value0_submitted.6dbad8ac",
+              args: {"value0": ticket.reference},
+            ),
+          ),
+        ),
       );
       Navigator.of(context).pop();
     } catch (error) {
@@ -571,26 +650,42 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
     canPop: !_saving,
     child: VendorPageScaffold(
       backgroundColor: _supportBackground,
-      appBar: AppBar(title: const Text('Report an issue')),
+      appBar: AppBar(
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.report_an_issue.635ae219",
+          ),
+        ),
+      ),
       body: Form(
         key: _form,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              'Tell us what happened',
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.tell_us_what_happened.70ca7e3a",
+              ),
               style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'A few details will help our team understand the issue.',
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.a_few_details_will_help_our_team_understand_t.357d1cf1",
+              ),
             ),
             const SizedBox(height: 24),
             DropdownButtonFormField<String>(
               initialValue: _category,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Category',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.category.292c06f0",
+                ),
                 border: OutlineInputBorder(),
               ),
               items: SupportRepository.categories
@@ -606,12 +701,18 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
               controller: _subject,
               enabled: !_saving,
               maxLength: 120,
-              decoration: const InputDecoration(
-                labelText: 'Subject',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.subject.68971283",
+                ),
                 border: OutlineInputBorder(),
               ),
               validator: (value) => (value?.trim().length ?? 0) < 3
-                  ? 'Enter a subject with at least 3 characters.'
+                  ? AppSettingsScope.translate(
+                      context,
+                      "vendor.enter_a_subject_with_at_least_3_characters.da3cf6a9",
+                    )
                   : null,
             ),
             const SizedBox(height: 12),
@@ -622,29 +723,51 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
               maxLength: 2000,
               minLines: 5,
               maxLines: 8,
-              decoration: const InputDecoration(
-                labelText: 'Description',
+              decoration: InputDecoration(
+                labelText: AppSettingsScope.translate(
+                  context,
+                  "vendor.description.526e0087",
+                ),
                 alignLabelWithHint: true,
-                hintText: 'What happened? What did you expect? Include the steps to reproduce it.',
+                hintText: AppSettingsScope.translate(
+                  context,
+                  "vendor.what_happened_what_did_you_expect_include_the.adac6381",
+                ),
                 border: OutlineInputBorder(),
               ),
               validator: (value) => (value?.trim().length ?? 0) < 10
-                  ? 'Describe the issue in at least 10 characters.'
+                  ? AppSettingsScope.translate(
+                      context,
+                      "vendor.describe_the_issue_in_at_least_10_characters.2a2368f5",
+                    )
                   : null,
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _saving ? null : _pick,
               icon: const Icon(Icons.attach_file),
-              label: const Text('Attach screenshot (optional)'),
+              label: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.attach_screenshot_optional.c47333b2",
+                ),
+              ),
             ),
             if (_screenshot != null)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(_screenshot!.name, overflow: TextOverflow.ellipsis),
-                subtitle: const Text('Private attachment · Max 5 MB'),
+                subtitle: Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.private_attachment_max_5_mb.56cb78cc",
+                  ),
+                ),
                 trailing: IconButton(
-                  tooltip: 'Remove screenshot',
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "vendor.remove_screenshot.ed14fa72",
+                  ),
                   onPressed: _saving
                       ? null
                       : () => setState(() => _screenshot = null),
@@ -652,8 +775,11 @@ class _ReportSupportIssueScreenState extends State<ReportSupportIssueScreen> {
                 ),
               ),
             const SizedBox(height: 14),
-            const Text(
-              'Never share passwords, PINs, full card numbers or unrelated personal documents.',
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.never_share_passwords_pins_full_card_numbers_.48ea9cf9",
+              ),
               style: TextStyle(
                 fontSize: 12,
                 height: 1.6,
@@ -723,10 +849,18 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen>
   Widget build(BuildContext context) => VendorPageScaffold(
     backgroundColor: _supportBackground,
     appBar: AppBar(
-      title: const Text('My support requests'),
+      title: Text(
+        AppSettingsScope.translate(
+          context,
+          "vendor.my_support_requests.9cce51cb",
+        ),
+      ),
       actions: [
         IconButton(
-          tooltip: 'Refresh requests',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "vendor.refresh_requests.2ce6d3e7",
+          ),
           onPressed: _reload,
           icon: const Icon(Icons.refresh),
         ),
@@ -744,7 +878,12 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen>
           return Center(
             child: FilledButton(
               onPressed: _reload,
-              child: const Text('Unable to load. Retry'),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.unable_to_load_retry.007ee6bc",
+                ),
+              ),
             ),
           );
         }
@@ -756,9 +895,14 @@ class _SupportRequestsScreenState extends State<SupportRequestsScreen>
             padding: const EdgeInsets.all(20),
             children: tickets.isEmpty
                 ? [
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(24),
-                      child: Text('No support requests yet.'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.no_support_requests_yet.7121a59c",
+                        ),
+                      ),
                     ),
                   ]
                 : tickets
@@ -888,7 +1032,9 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Screenshot'),
+          title: Text(
+            AppSettingsScope.translate(context, "vendor.screenshot.029320ad"),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: Image.network(
@@ -899,14 +1045,20 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                       height: 180,
                       child: Center(child: AppShimmerIndicator()),
                     ),
-              errorBuilder: (_, error, stack) =>
-                  const Text('Unable to load screenshot. Please try again.'),
+              errorBuilder: (_, error, stack) => Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.unable_to_load_screenshot_please_try_again.f0cfeea5",
+                ),
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
+              child: Text(
+                AppSettingsScope.translate(context, "vendor.close.7d9eb7ac"),
+              ),
             ),
           ],
         ),
@@ -948,7 +1100,10 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
       title: Text(_ticket.reference),
       actions: [
         IconButton(
-          tooltip: 'Refresh request',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "vendor.refresh_request.f3ab0db6",
+          ),
           onPressed: _loading || _sending ? null : _load,
           icon: const Icon(Icons.refresh),
         ),
@@ -962,7 +1117,12 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
         ? Center(
             child: FilledButton(
               onPressed: _load,
-              child: const Text('Unable to load. Retry'),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.unable_to_load_retry.007ee6bc",
+                ),
+              ),
             ),
           )
         : AppShimmerRefreshIndicator(
@@ -981,12 +1141,22 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                 const SizedBox(height: 10),
                 Text('${_ticket.category} · ${_ticket.statusLabel}'),
                 const SizedBox(height: 22),
-                _message('You', _ticket.description, _ticket.createdAt, false),
+                _message(
+                  AppSettingsScope.translate(context, "vendor.you.08b04193"),
+                  _ticket.description,
+                  _ticket.createdAt,
+                  false,
+                ),
                 if (_ticket.screenshotPath != null)
                   OutlinedButton.icon(
                     onPressed: _attachment,
                     icon: const Icon(Icons.image_outlined),
-                    label: const Text('View screenshot'),
+                    label: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.view_screenshot.acf862e2",
+                      ),
+                    ),
                   ),
                 ..._messages.map(
                   (message) => _message(
@@ -997,10 +1167,13 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                   ),
                 ),
                 if (_messages.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
-                      'Your request has been submitted. Replies from support will appear here.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.your_request_has_been_submitted_replies_from_.4c85c2fc",
+                      ),
                     ),
                   ),
                 if (_ticket.status != 'closed') ...[
@@ -1011,8 +1184,11 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                     maxLength: 4000,
                     minLines: 3,
                     maxLines: 6,
-                    decoration: const InputDecoration(
-                      labelText: 'Your reply',
+                    decoration: InputDecoration(
+                      labelText: AppSettingsScope.translate(
+                        context,
+                        "vendor.your_reply.74a41190",
+                      ),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -1023,13 +1199,21 @@ class _SupportRequestDetailScreenState extends State<SupportRequestDetailScreen>
                     child: Text(_sending ? 'Sending…' : 'Send reply'),
                   ),
                   if (_ticket.status == 'resolved')
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 10),
-                      child: Text('Sending a reply will reopen this request.'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.sending_a_reply_will_reopen_this_request.e84a424d",
+                        ),
+                      ),
                     ),
                 ] else
-                  const Text(
-                    'This request is closed. Create a new request if you need more help.',
+                  Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.this_request_is_closed_create_a_new_request_i.1038f2d1",
+                    ),
                   ),
               ],
             ),

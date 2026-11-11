@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -56,7 +57,10 @@ class BookingHistoryCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 20, right: 6),
               child: Text(
                 time.isEmpty
-                    ? bookingText(context, 'No time', 'நேரம் இல்லை')
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.no_time.95f75fb9",
+                      )
                     : time,
                 style: const TextStyle(
                   fontSize: 11,

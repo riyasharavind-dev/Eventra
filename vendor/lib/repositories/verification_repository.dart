@@ -1,4 +1,3 @@
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/verification_model.dart';
@@ -7,7 +6,7 @@ class VerificationRepository {
   final SupabaseClient _client;
 
   VerificationRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   static const String _identityTable = 'vendor_identity_verifications';
   static const String _verificationTable = 'vendor_verifications';
@@ -36,8 +35,7 @@ class VerificationRepository {
 
     final identityMap = results[0] as Map<String, dynamic>?;
     final overallMap = results[1] as Map<String, dynamic>?;
-    final documentMaps =
-        (results[2] as List).cast<Map<String, dynamic>>();
+    final documentMaps = (results[2] as List).cast<Map<String, dynamic>>();
 
     if (identityMap == null && overallMap == null && documentMaps.isEmpty) {
       return null;
@@ -45,16 +43,10 @@ class VerificationRepository {
 
     // Missing records are represented by defaults in memory.
     return VerificationModel.fromMaps(
-      identityMap: identityMap ??
-          {
-            'vendor_id': vendorId,
-            'status': 'not_started',
-          },
-      overallMap: overallMap ??
-          {
-            'vendor_id': vendorId,
-            'status': 'not_started',
-          },
+      identityMap:
+          identityMap ?? {'vendor_id': vendorId, 'status': 'not_started'},
+      overallMap:
+          overallMap ?? {'vendor_id': vendorId, 'status': 'not_started'},
       documentMaps: documentMaps,
     );
   }
@@ -63,27 +55,21 @@ class VerificationRepository {
   Future<void> saveIdentityVerification(
     VendorIdentityVerification verification,
   ) async {
-    await _client.from(_identityTable).upsert(
-          verification.toMap(),
-          onConflict: 'vendor_id',
-        );
+    await _client
+        .from(_identityTable)
+        .upsert(verification.toMap(), onConflict: 'vendor_id');
   }
 
   /// Create or update the vendor's overall verification status.
-  Future<void> saveOverallVerification(
-    VendorVerification verification,
-  ) async {
-    await _client.from(_verificationTable).upsert(
-          verification.toMap(),
-          onConflict: 'vendor_id',
-        );
+  Future<void> saveOverallVerification(VendorVerification verification) async {
+    await _client
+        .from(_verificationTable)
+        .upsert(verification.toMap(), onConflict: 'vendor_id');
   }
 
   /// Register a document or update an existing document record.
   /// This saves metadata only; it does not upload the actual file.
-  Future<String> saveDocument(
-    VerificationDocument document,
-  ) async {
+  Future<String> saveDocument(VerificationDocument document) async {
     final data = document.toMap();
 
     if (document.id == null) {
@@ -106,9 +92,7 @@ class VerificationRepository {
   }
 
   /// Get all documents for a vendor.
-  Future<List<VerificationDocument>> getDocuments(
-    String vendorId,
-  ) async {
+  Future<List<VerificationDocument>> getDocuments(String vendorId) async {
     final response = await _client
         .from(_documentsTable)
         .select()

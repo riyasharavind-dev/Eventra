@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import 'vendor_page_scaffold.dart';
@@ -49,7 +50,10 @@ class _AdministrativeRegionPickerState
                   Icons.search,
                   color: AppIconColors.standard,
                 ),
-                hintText: 'Search location…',
+                hintText: AppSettingsScope.translate(
+                  context,
+                  "vendor.search_location.bff046d4",
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
@@ -77,11 +81,14 @@ class _AdministrativeRegionPickerState
           ),
           Expanded(
             child: rows.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: Text(
-                        'No matching location. Contact Eventor support if yours is missing.',
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.no_matching_location_contact_eventor_support_.3217828c",
+                        ),
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Color(0xFF73737D)),
                       ),

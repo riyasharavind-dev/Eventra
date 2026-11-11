@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import 'app_shimmer.dart';
@@ -31,9 +32,12 @@ class CategorySelector extends StatelessWidget {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'No categories available. Please ask the admin to create categories.',
+              AppSettingsScope.translate(
+                context,
+                "vendor.no_categories_available_please_ask_the_admin_.340de63a",
+              ),
             ),
           ),
         );
@@ -63,7 +67,7 @@ class CategorySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const InputDecorator(
+      return InputDecorator(
         decoration: InputDecoration(
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.category_outlined),
@@ -76,7 +80,12 @@ class CategorySelector extends StatelessWidget {
               child: AppShimmerIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 12),
-            Text('Loading categories...'),
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.loading_categories.d3cf16ec",
+              ),
+            ),
           ],
         ),
       );
@@ -91,8 +100,10 @@ class CategorySelector extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          'No categories available. '
-          'Please ask the admin to create categories.',
+          AppSettingsScope.translate(
+            context,
+            "vendor.no_categories_available_please_ask_the_admin_.340de63a",
+          ),
           style: TextStyle(color: Colors.red.shade700),
         ),
       );
@@ -129,8 +140,11 @@ class CategorySelector extends StatelessWidget {
           ),
         ),
         child: selected == null
-            ? const Text(
-                'Browse categories',
+            ? Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.browse_categories.9ced903f",
+                ),
                 style: TextStyle(color: Color(0xFF73737D)),
               )
             : Column(

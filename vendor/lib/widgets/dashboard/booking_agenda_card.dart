@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../common/app_shimmer.dart';
 
 import 'package:flutter/material.dart';
@@ -23,8 +25,10 @@ class BookingAgendaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = booking;
-    String t(String en, String ta) => bookingText(context, en, ta);
+    final l10n = AppSettingsScope.localizationOf(context);
+
     Future<void> map() async {
+      final l10n = AppSettingsScope.localizationOf(context);
       final valid =
           b.latitude != null &&
           b.longitude != null &&
@@ -41,9 +45,7 @@ class BookingAgendaCard extends StatelessWidget {
           }),
           mode: LaunchMode.externalApplication,
         )) {
-          throw StateError(
-            t('Could not open Maps.', 'வரைபடத்தைத் திறக்க முடியவில்லை.'),
-          );
+          throw StateError(l10n.tr("vendor.could_not_open_maps.4823b62b"));
         }
       } catch (e) {
         if (context.mounted) {
@@ -132,7 +134,7 @@ class BookingAgendaCard extends StatelessWidget {
                 ),
                 if (b.eventStartTime == null)
                   Text(
-                    t('Time not specified', 'நேரம் குறிப்பிடப்படவில்லை'),
+                    l10n.tr("vendor.time_not_specified.34713273"),
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF73737D),
@@ -142,7 +144,10 @@ class BookingAgendaCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     '📍 ${b.location}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF73737D)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF73737D),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -158,11 +163,12 @@ class BookingAgendaCard extends StatelessWidget {
                       ),
                       onPressed: busy ? null : onOpen,
                       child: Text(
-                        t('View details', 'விவரங்களைப் பார்'),
+                        l10n.tr("vendor.view_details.d1bf045b"),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    if (showMap && (b.location.isNotEmpty || b.latitude != null))
+                    if (showMap &&
+                        (b.location.isNotEmpty || b.latitude != null))
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF80152C),
@@ -170,7 +176,7 @@ class BookingAgendaCard extends StatelessWidget {
                         ),
                         onPressed: busy ? null : map,
                         icon: const Icon(Icons.map_outlined, size: 16),
-                        label: Text(t('Open Maps', 'வரைபடம் திற')),
+                        label: Text(l10n.tr("vendor.open_maps.4fae8f1c")),
                       ),
                   ],
                 ),
@@ -194,7 +200,7 @@ class BookingAgendaCard extends StatelessWidget {
                           ),
                           onPressed: onAccept,
                           child: Text(
-                            t('Accept', 'ஏற்கவும்'),
+                            l10n.tr("vendor.accept.89713b9c"),
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -209,7 +215,7 @@ class BookingAgendaCard extends StatelessWidget {
                           ),
                           onPressed: onReject,
                           child: Text(
-                            t('Reject', 'நிராகரி'),
+                            l10n.tr("vendor.reject.ab604a36"),
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),

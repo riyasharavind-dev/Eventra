@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/vendor_tour_controller.dart';
+import 'package:eventor_vendor/widgets/trial/tour_anchor.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/vendor_navigation_controller.dart';
@@ -12,9 +14,11 @@ class FloatingMenuAction {
     required this.label,
     required this.icon,
     required this.onSelected,
+    this.tourId,
   });
   final String label;
   final IconData icon;
+  final String? tourId;
   final Future<void> Function() onSelected;
 }
 
@@ -103,84 +107,88 @@ class _ExpandableActionButtonState extends State<ExpandableActionButton> {
                                 1.0,
                               ),
                             );
-                            return IgnorePointer(
-                              ignoring:
-                                  progress < 0.85 ||
-                                  animation.status == AnimationStatus.reverse,
-                              child: Opacity(
-                                opacity: progress,
-                                child: Transform.translate(
-                                  offset: Offset(
-                                    0,
-                                    (64.0 + rank * 62) * (1 - progress),
-                                  ),
-                                  child: Transform.scale(
-                                    scale: 0.88 + 0.12 * progress,
-                                    alignment: Alignment.bottomRight,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 10),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFFF0EDF0),
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFF80152C)
-                                                  .withValues(alpha: 0.08),
-                                              blurRadius: 14,
-                                              offset: const Offset(0, 4),
+                            return TourAnchor(
+                              id: action.tourId ?? 'menu-action-$index',
+                              child: IgnorePointer(
+                                ignoring:
+                                    progress < 0.85 ||
+                                    animation.status == AnimationStatus.reverse,
+                                child: Opacity(
+                                  opacity: progress,
+                                  child: Transform.translate(
+                                    offset: Offset(
+                                      0,
+                                      (64.0 + rank * 62) * (1 - progress),
+                                    ),
+                                    child: Transform.scale(
+                                      scale: 0.88 + 0.12 * progress,
+                                      alignment: Alignment.bottomRight,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 10),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
                                             ),
-                                          ],
-                                        ),
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                            border: Border.all(
+                                              color: const Color(0xFFF0EDF0),
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(0xFF80152C)
+                                                    .withValues(alpha: 0.08),
+                                                blurRadius: 14,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
                                           ),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: InkWell(
-                                            onTap: () {
-                                              if (choosing) {
-                                                return;
-                                              }
-                                              choosing = true;
-                                              Navigator.pop(context, index);
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 14,
-                                                  ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    action.icon,
-                                                    color:
-                                                        AppIconColors.standard,
-                                                    size: 21,
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Flexible(
-                                                    child: Text(
-                                                      action.label,
-                                                      style: const TextStyle(
-                                                        color: Color(
-                                                          0xFF282837,
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: InkWell(
+                                              onTap: () {
+                                                if (choosing) {
+                                                  return;
+                                                }
+                                                choosing = true;
+                                                Navigator.pop(context, index);
+                                              },
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 14,
+                                                    ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      action.icon,
+                                                      color: AppIconColors
+                                                          .standard,
+                                                      size: 21,
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Flexible(
+                                                      child: Text(
+                                                        action.label,
+                                                        style: const TextStyle(
+                                                          color: Color(
+                                                            0xFF282837,
+                                                          ),
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w600,
                                                         ),
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
                                                       ),
                                                     ),
-                                                  ),
-                                                ],
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -200,6 +208,7 @@ class _ExpandableActionButtonState extends State<ExpandableActionButton> {
               ),
             ),
       );
+      VendorTourController.instance.menuOpened();
       selected = await navigator.push<int>(route);
       // Let the boards finish closing before opening an editor screen.
       await route.completed;
@@ -210,26 +219,29 @@ class _ExpandableActionButtonState extends State<ExpandableActionButton> {
   }
 
   @override
-  Widget build(BuildContext context) => FloatingActionButton(
-    key: anchor,
-    heroTag: 'vendor-listings-add',
-    tooltip: widget.tooltip,
-    onPressed: widget.busy ? null : toggle,
-    backgroundColor: widget.color,
-    foregroundColor: Colors.white,
-    child: widget.busy
-        ? const SizedBox(
-            width: 22,
-            height: 22,
-            child: AppShimmerIndicator(strokeWidth: 2, color: Colors.white),
-          )
-        : AnimatedRotation(
-            turns: open ? 0.125 : 0,
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 300),
-            curve: Curves.easeInOutCubicEmphasized,
-            child: const Icon(Icons.add_rounded, size: 30),
-          ),
+  Widget build(BuildContext context) => TourAnchor(
+    id: TourTargets.add,
+    child: FloatingActionButton(
+      key: anchor,
+      heroTag: 'vendor-listings-add',
+      tooltip: widget.tooltip,
+      onPressed: widget.busy ? null : toggle,
+      backgroundColor: widget.color,
+      foregroundColor: Colors.white,
+      child: widget.busy
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: AppShimmerIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : AnimatedRotation(
+              turns: open ? 0.125 : 0,
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubicEmphasized,
+              child: const Icon(Icons.add_rounded, size: 30),
+            ),
+    ),
   );
 }

@@ -67,10 +67,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     super.dispose();
   }
 
-  String _text(String english, String tamil) =>
-      AppSettingsScope.of(context).text(english, tamil);
-
-  String get _profileTitle => _text('Personal Details', 'தனிப்பட்ட விவரங்கள்');
+  String get _profileTitle =>
+      AppSettingsScope.translate(context, "vendor.personal_details.3a886778");
 
   Future<void> _loadVendor() async {
     if (!mounted) return;
@@ -188,14 +186,24 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove profile photo'),
-        content: const Text(
-          'Are you sure you want to remove your profile photo?',
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.remove_profile_photo.c710b044",
+          ),
+        ),
+        content: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.are_you_sure_you_want_to_remove_your_profile_.4f705e8e",
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.cancel.19766ed6"),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -203,7 +211,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
               backgroundColor: _wine,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Remove'),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.remove.c3812fc4"),
+            ),
           ),
         ],
       ),
@@ -248,7 +258,12 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.choose_from_gallery.763abbaa",
+                ),
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 _pickProfileImage();
@@ -257,7 +272,12 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             if (hasImage)
               ListTile(
                 leading: const Icon(Icons.delete_outline),
-                title: const Text('Remove photo'),
+                title: Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.remove_photo.f46512ab",
+                  ),
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   _removeProfileImage();
@@ -294,9 +314,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       });
 
       _showMessage(
-        _text(
-          'Profile updated successfully.',
-          'சுயவிவரம் புதுப்பிக்கப்பட்டது.',
+        AppSettingsScope.translate(
+          context,
+          "vendor.profile_updated_successfully.6ccf8b7d",
         ),
       );
     } catch (error) {
@@ -352,9 +372,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     } catch (_) {
       if (mounted) {
         _showMessage(
-          _text(
-            'Unable to refresh contact details.',
-            'தொடர்பு விவரங்களைப் புதுப்பிக்க முடியவில்லை.',
+          AppSettingsScope.translate(
+            context,
+            "vendor.unable_to_refresh_contact_details.8254523a",
           ),
           isError: true,
         );
@@ -366,7 +386,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     final date = _vendor?.createdAt?.toLocal();
 
     if (date == null) {
-      return _text('Not available', 'கிடைக்கவில்லை');
+      return AppSettingsScope.translate(
+        context,
+        "vendor.not_available.67a926f7",
+      );
     }
 
     return MaterialLocalizations.of(context).formatMediumDate(date);
@@ -426,7 +449,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                     const SizedBox(height: 4),
                     Text(
                       value.trim().isEmpty
-                          ? _text('Not added', 'சேர்க்கப்படவில்லை')
+                          ? AppSettingsScope.translate(
+                              context,
+                              "vendor.not_added.2460c620",
+                            )
                           : value,
                       style: const TextStyle(
                         fontSize: 14,
@@ -501,7 +527,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                           children: [
                             Text(
                               _nameController.text.trim().isEmpty
-                                  ? _text('Your Name', 'உங்கள் பெயர்')
+                                  ? AppSettingsScope.translate(
+                                      context,
+                                      "vendor.your_name.9cd26bee",
+                                    )
                                   : _nameController.text.trim(),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
@@ -526,7 +555,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: _sectionTitle(
-                            _text('Personal Details', 'தனிப்பட்ட விவரங்கள்'),
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.personal_details.3a886778",
+                            ),
                           ),
                         ),
                         TextFormField(
@@ -536,7 +568,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                           maxLength: 100,
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: _text('Full Name', 'முழுப் பெயர்'),
+                            labelText: AppSettingsScope.translate(
+                              context,
+                              "vendor.full_name.8e00cdf7",
+                            ),
                             prefixIcon: const Icon(
                               Icons.person_outline_rounded,
                               color: AppIconColors.standard,
@@ -562,9 +597,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             ),
                           ),
                           validator: (value) => value?.trim().isEmpty != false
-                              ? _text(
-                                  'Please enter your name.',
-                                  'உங்கள் பெயரை உள்ளிடவும்.',
+                              ? AppSettingsScope.translate(
+                                  context,
+                                  "vendor.please_enter_your_name.f9b561ae",
                                 )
                               : null,
                         ),
@@ -577,13 +612,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                           maxLines: 5,
                           maxLength: 500,
                           decoration: InputDecoration(
-                            labelText: _text(
-                              'About Me (optional)',
-                              'என்னைப் பற்றி (விருப்பம்)',
+                            labelText: AppSettingsScope.translate(
+                              context,
+                              "vendor.about_me_optional.af712642",
                             ),
-                            hintText: _text(
-                              'A short introduction about yourself',
-                              'உங்களைப் பற்றிய சிறு அறிமுகம்',
+                            hintText: AppSettingsScope.translate(
+                              context,
+                              "vendor.a_short_introduction_about_yourself.238360b7",
                             ),
                             alignLabelWithHint: true,
                             prefixIcon: const Padding(
@@ -614,9 +649,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             ),
                           ),
                           validator: (value) => (value?.runes.length ?? 0) > 500
-                              ? _text(
-                                  'Keep your introduction within 500 characters.',
-                                  'அறிமுகத்தை 500 எழுத்துகளுக்குள் எழுதவும்.',
+                              ? AppSettingsScope.translate(
+                                  context,
+                                  "vendor.keep_your_introduction_within_500_characters.e104b9c1",
                                 )
                               : null,
                         ),
@@ -628,13 +663,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                           initialValue: _preferredContactLanguage,
                           isExpanded: true,
                           decoration: InputDecoration(
-                            labelText: _text(
-                              'Preferred Contact Language',
-                              'விருப்பமான தொடர்பு மொழி',
+                            labelText: AppSettingsScope.translate(
+                              context,
+                              "vendor.preferred_contact_language.ed9e328b",
                             ),
-                            helperText: _text(
-                              'For customer communication; this does not change app language.',
-                              'வாடிக்கையாளர் தொடர்புக்கான மொழி; செயலி மொழி மாறாது.',
+                            helperText: AppSettingsScope.translate(
+                              context,
+                              "vendor.for_customer_communication_this_does_not_chan.f49a5f35",
                             ),
                             helperMaxLines: 3,
                             prefixIcon: const Icon(
@@ -665,23 +700,36 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             DropdownMenuItem<String>(
                               value: null,
                               child: Text(
-                                _text('No preference', 'விருப்பம் இல்லை'),
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.no_preference.35f994b0",
+                                ),
                               ),
                             ),
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: 'en',
-                              child: Text('English'),
+                              child: Text(
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.english.ba118bf7",
+                                ),
+                              ),
                             ),
-                            const DropdownMenuItem(
+                            DropdownMenuItem(
                               value: 'ta',
-                              child: Text('தமிழ்'),
+                              child: Text(
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.tamil.135d78ac",
+                                ),
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 'both',
                               child: Text(
-                                _text(
-                                  'Tamil & English',
-                                  'தமிழ் மற்றும் ஆங்கிலம்',
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.tamil_english.2829e0d0",
                                 ),
                               ),
                             ),
@@ -696,15 +744,18 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: _sectionTitle(
-                            _text('Contact Details', 'தொடர்பு விவரங்கள்'),
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.contact_details.3e84af61",
+                            ),
                           ),
                         ),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            _text(
-                              'Tap a contact detail to change it in Account & Security.',
-                              'தொடர்பு விவரத்தை மாற்ற கணக்கு மற்றும் பாதுகாப்பு அமைப்பைத் திறக்கவும்.',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.tap_a_contact_detail_to_change_it_in_account_.e6a795d8",
                             ),
                             style: TextStyle(
                               fontSize: 12,
@@ -715,14 +766,20 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         ),
                         const SizedBox(height: 14),
                         _contactDetails(
-                          title: _text('Email Address', 'மின்னஞ்சல் முகவரி'),
+                          title: AppSettingsScope.translate(
+                            context,
+                            "vendor.email_address.09bf25ef",
+                          ),
                           value: _emailController.text,
                           icon: Icons.mail_outline_rounded,
                           action: AccountSecurityAction.email,
                         ),
                         const SizedBox(height: 12),
                         _contactDetails(
-                          title: _text('Phone Number', 'தொலைபேசி எண்'),
+                          title: AppSettingsScope.translate(
+                            context,
+                            "vendor.phone_number.72dba9ae",
+                          ),
                           value: _phoneController.text,
                           icon: Icons.phone_outlined,
                           action: AccountSecurityAction.phone,
@@ -739,7 +796,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                             ),
                           ),
                           title: Text(
-                            _text('Member Since', 'உறுப்பினரான நாள்'),
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.member_since.f4d3b821",
+                            ),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF666A7A),
@@ -781,7 +841,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                                     ),
                                   )
                                 : Text(
-                                    _text('Save Changes', 'மாற்றங்களைச் சேமி'),
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.save_changes.35322b5b",
+                                    ),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 15,
@@ -916,7 +979,12 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 backgroundColor: _wine,
                 foregroundColor: Colors.white,
               ),
-              child: Text(_text('Try Again', 'மீண்டும் முயற்சி')),
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.try_again.df0fe9e0",
+                ),
+              ),
             ),
           ],
         ),

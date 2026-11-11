@@ -51,18 +51,25 @@ class VendorPageScaffold extends StatelessWidget {
           // that padding and leave a solid empty strip behind the floating bar.
           // Keep the reservation for snackbars/FABs, but let page content paint
           // through it using only the device's actual bottom safe area.
-          body: extendBody && space > 0 && body != null
-              ? Builder(
-                  builder: (innerContext) => MediaQuery(
-                    data: MediaQuery.of(innerContext).copyWith(
-                      padding: MediaQuery.paddingOf(
-                        innerContext,
-                      ).copyWith(bottom: MediaQuery.paddingOf(context).bottom),
-                    ),
-                    child: body!,
-                  ),
-                )
-              : body,
+          // Keep the element tree stable when the keyboard hides the nav.
+          // Switching between wrapped/raw body here remounts every tab.
+          body: body == null
+              ? null
+              : Builder(
+                  builder: (innerContext) {
+                    final data = MediaQuery.of(innerContext);
+                    return MediaQuery(
+                      data: extendBody && space > 0
+                          ? data.copyWith(
+                              padding: data.padding.copyWith(
+                                bottom: MediaQuery.paddingOf(context).bottom,
+                              ),
+                            )
+                          : data,
+                      child: body!,
+                    );
+                  },
+                ),
           floatingActionButton: floatingActionButton,
           floatingActionButtonLocation: floatingActionButtonLocation,
           bottomNavigationBar: space > 0

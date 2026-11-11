@@ -18,6 +18,7 @@ class ServiceModel {
   final List<String> gallery;
 
   final bool isActive;
+  final bool isArchived;
 
   final String? categoryName;
   final String? categorySlug;
@@ -39,6 +40,7 @@ class ServiceModel {
     required this.price,
     required this.gallery,
     required this.isActive,
+    this.isArchived = false,
     this.categoryName,
     this.categorySlug,
     this.categoryParentId,
@@ -97,6 +99,7 @@ class ServiceModel {
       gallery: gallery,
 
       isActive: map['is_active'] == true,
+      isArchived: map['is_archived'] == true,
 
       categoryName: categoryName,
 
@@ -124,6 +127,7 @@ class ServiceModel {
       ...pricing.toMap(),
       'gallery': gallery,
       'is_active': isActive,
+      'is_archived': isArchived,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -142,6 +146,7 @@ class ServiceModel {
     ServicePricing? pricing,
     List<String>? gallery,
     bool? isActive,
+    bool? isArchived,
     String? categoryName,
     String? categorySlug,
     String? categoryParentId,
@@ -161,6 +166,7 @@ class ServiceModel {
       price: price ?? this.price,
       gallery: gallery ?? this.gallery,
       isActive: isActive ?? this.isActive,
+      isArchived: isArchived ?? this.isArchived,
       categoryName: categoryName ?? this.categoryName,
       categorySlug: categorySlug ?? this.categorySlug,
       categoryParentId: categoryParentId ?? this.categoryParentId,

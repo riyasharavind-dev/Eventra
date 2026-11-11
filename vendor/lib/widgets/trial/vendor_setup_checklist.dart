@@ -64,17 +64,22 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
 
   @override
   Widget build(BuildContext context) {
-    final settings = AppSettingsScope.of(context);
-    String t(String en, String ta) => settings.text(en, ta);
     final data = _state;
     if (data?.completed == 3) return const SizedBox.shrink();
     if (data == null) {
       if (!_failed) return const SizedBox.shrink();
       return ListTile(
-        title: Text(t('Account setup checklist', 'கணக்கு அமைப்பு பட்டியல்')),
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.account_setup_checklist.71a3bbf5",
+          ),
+        ),
         trailing: TextButton(
           onPressed: _load,
-          child: Text(t('Retry', 'மீண்டும்')),
+          child: Text(
+            AppSettingsScope.translate(context, "vendor.retry.942087cc"),
+          ),
         ),
       );
     }
@@ -104,7 +109,10 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                t('Set up your account', 'உங்கள் கணக்கை அமைக்கவும்'),
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.set_up_your_account.34b78ccf",
+                ),
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -112,9 +120,10 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
               ),
               const SizedBox(height: 6),
               Text(
-                t(
-                  '${data.completed} of 3 complete',
-                  '${data.completed} / 3 முடிந்தது',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.value0_of_3_complete.fe71f2fa",
+                  args: {"value0": data.completed},
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -129,21 +138,30 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
                 minHeight: 3,
               ),
               row(
-                t('Complete your profile', 'சுயவிவரத்தை முடிக்கவும்'),
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.complete_your_profile.e6c40677",
+                ),
                 data.profileComplete,
                 () => _open(const MyProfileScreen()),
-                subtitle: t(
-                  'Add your name and contact phone',
-                  'பெயர் மற்றும் தொடர்பு எண்ணைச் சேர்க்கவும்',
+                subtitle: AppSettingsScope.translate(
+                  context,
+                  "vendor.add_your_name_and_contact_phone.8061a459",
                 ),
               ),
               row(
-                t('Add your first business', 'முதல் வணிகத்தைச் சேர்க்கவும்'),
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.add_your_first_business.2d5ed485",
+                ),
                 data.businessCount > 0,
                 () => _open(const AddBusinessScreen()),
               ),
               row(
-                t('Add your first service', 'முதல் சேவையைச் சேர்க்கவும்'),
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.add_your_first_service.88c65d17",
+                ),
                 data.serviceCount > 0,
                 () => _open(
                   data.businessCount == 0
@@ -151,9 +169,9 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
                       : const ListingEditorScreen(),
                 ),
                 subtitle: data.businessCount == 0
-                    ? t(
-                        'Start by adding a business',
-                        'முதலில் ஒரு வணிகத்தைச் சேர்க்கவும்',
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.start_by_adding_a_business.acc0a370",
                       )
                     : null,
               ),
@@ -161,7 +179,10 @@ class _VendorSetupChecklistCardState extends State<VendorSetupChecklistCard>
                 TextButton(
                   onPressed: _load,
                   child: Text(
-                    t('Refresh setup status', 'நிலையைப் புதுப்பிக்கவும்'),
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.refresh_setup_status.2c8e48ca",
+                    ),
                   ),
                 ),
             ],

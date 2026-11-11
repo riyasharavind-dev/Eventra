@@ -1,3 +1,5 @@
+import 'screens/onboarding/vendor_language_gate.dart';
+import 'services/vendor_localization.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'core/theme/app_icon_colors.dart';
 import 'services/app_live_data.dart';
@@ -29,7 +31,15 @@ Future<void> main() async {
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final initial = await AppSettingsRepository().load();
-  runApp(EventorVendorApp(settings: AppSettingsController(initial: initial)));
+  final localization = await VendorLocalization.loadLocal(initial.languageCode);
+  runApp(
+    EventorVendorApp(
+      settings: AppSettingsController(
+        initial: initial,
+        localization: localization,
+      ),
+    ),
+  );
 }
 
 class EventorVendorApp extends StatelessWidget {
@@ -48,13 +58,16 @@ class EventorVendorApp extends StatelessWidget {
         navigatorObservers: [VendorNavigationController.instance.observer],
         builder: (context, child) => AppLiveDataHost(
           client: Supabase.instance.client,
-          child: VendorNavigationHost(
-            controller: VendorNavigationController.instance,
-            child: child ?? const SizedBox.shrink(),
+          child: VendorLocalizationSync(
+            localization: settings.localization,
+            child: VendorNavigationHost(
+              controller: VendorNavigationController.instance,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         ),
-        locale: Locale(settings.value.languageCode),
-        supportedLocales: const [Locale('en'), Locale('ta')],
+        locale: settings.localization.frameworkLocale,
+        supportedLocales: settings.localization.frameworkLocales,
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: ThemeData(
           useMaterial3: true,
@@ -141,7 +154,9 @@ class EventorVendorApp extends StatelessWidget {
         ),
         themeMode: ThemeMode.light,
         home: const EventorSplashScreen(
-          nextScreen: VendorOnboardingGate(child: VendorEntryScreen()),
+          nextScreen: VendorLanguageGate(
+            child: VendorOnboardingGate(child: VendorEntryScreen()),
+          ),
         ),
       ),
     ),

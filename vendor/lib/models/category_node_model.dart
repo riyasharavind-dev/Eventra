@@ -19,9 +19,7 @@ class CategoryNodeModel {
       name: map['name'] as String,
       slug: map['slug'] as String,
       parentId: map['parent_id'] as String?,
-      createdAt: DateTime.parse(
-        map['created_at'].toString(),
-      ),
+      createdAt: DateTime.parse(map['created_at'].toString()),
     );
   }
 

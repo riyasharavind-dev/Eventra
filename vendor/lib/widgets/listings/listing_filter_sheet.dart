@@ -1,7 +1,6 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
-
-import 'listing_ui.dart';
 
 class ListingFilterSelection {
   final String business, category, sort, status;
@@ -68,8 +67,7 @@ class ListingFilterSheet extends StatefulWidget {
 class _ListingFilterSheetState extends State<ListingFilterSheet> {
   static const wine = Color(0xFF80152C);
   late String chosenBusiness, chosenCategory, chosenSort, chosenStatus;
-  String t(String english, String tamil) =>
-      listingText(context, english, tamil);
+  String t(String english) => AppSettingsScope.source(context, english);
   @override
   void initState() {
     super.initState();
@@ -94,9 +92,13 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
   }
 
   String _statusLabel(String value) => switch (value) {
-    'active' => t('Active', 'செயலில்'),
-    'inactive' => t('Inactive', 'செயலற்றவை'),
-    _ => t('All', 'அனைத்தும்'),
+    'active' => AppSettingsScope.translate(context, "vendor.active.92340695"),
+    'archived' => AppSettingsScope.translate(context, 'listing.archived'),
+    'inactive' => AppSettingsScope.translate(
+      context,
+      "vendor.inactive.ac7c949f",
+    ),
+    _ => AppSettingsScope.translate(context, "vendor.all.a52ace42"),
   };
   @override
   Widget build(BuildContext context) {
@@ -189,13 +191,19 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
               Row(
                 children: [
                   IconButton(
-                    tooltip: t('Close', 'மூடு'),
+                    tooltip: AppSettingsScope.translate(
+                      context,
+                      "vendor.close.7d9eb7ac",
+                    ),
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                   ),
                   Expanded(
                     child: Text(
-                      t('Filter & Sort', 'வடிகட்டி வரிசைப்படுத்து'),
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.filter_sort.8d76c3b1",
+                      ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,
@@ -206,7 +214,10 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                   TextButton(
                     onPressed: () => setState(reset),
                     child: Text(
-                      t('Clear All', 'அனைத்தையும் அழி'),
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.clear_all.ddceb7ad",
+                      ),
                       style: const TextStyle(
                         color: wine,
                         fontSize: 12,
@@ -217,9 +228,9 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                 ],
               ),
               Text(
-                t(
-                  "Find exactly what you're looking for",
-                  'தேவையான சேவைகளை எளிதில் கண்டறியுங்கள்',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.find_exactly_what_you_re_looking_for.656bff86",
                 ),
                 style: const TextStyle(color: Color(0xFF7B8194), fontSize: 12),
               ),
@@ -230,7 +241,10 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                     children: [
                       field(
                         Icons.storefront_rounded,
-                        t('Business', 'வணிகம்'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.business.76f68a75",
+                        ),
                         dropdown(
                           'business',
                           chosenBusiness,
@@ -241,7 +255,11 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                       if (widget.showCategory)
                         field(
                           Icons.sell_rounded,
-                          widget.categoryLabel ?? t('Category', 'வகை'),
+                          widget.categoryLabel ??
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.category.292c06f0",
+                              ),
                           dropdown(
                             'category',
                             chosenCategory,
@@ -252,14 +270,22 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                       if (widget.showStatus)
                         field(
                           Icons.pie_chart_rounded,
-                          t('Status', 'நிலை'),
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.status.920e413c",
+                          ),
                           Wrap(
                             spacing: 7,
                             runSpacing: 7,
                             children: [
                               for (final s
                                   in (widget.statusOptions?.keys ??
-                                      ['all', 'active', 'inactive']))
+                                      [
+                                        'all',
+                                        'active',
+                                        'inactive',
+                                        'archived',
+                                      ]))
                                 ChoiceChip(
                                   label: Text(
                                     widget.statusOptions?[s] ?? _statusLabel(s),
@@ -292,22 +318,31 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                         widget.additionalFilters!,
                       field(
                         Icons.sort_rounded,
-                        t('Sort by', 'வரிசை'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.sort_by.c9129025",
+                        ),
                         dropdown(
                           'sort',
                           chosenSort,
                           widget.sortOptions ??
                               {
-                                'newest': t('Newest first', 'புதியவை முதலில்'),
-                                'price_low': t(
-                                  'Price · low to high',
-                                  'விலை · குறைவிலிருந்து அதிகம்',
+                                'newest': AppSettingsScope.translate(
+                                  context,
+                                  "vendor.newest_first.ffb6f576",
                                 ),
-                                'price_high': t(
-                                  'Price · high to low',
-                                  'விலை · அதிகத்திலிருந்து குறைவு',
+                                'price_low': AppSettingsScope.translate(
+                                  context,
+                                  "vendor.price_low_to_high.6e679339",
                                 ),
-                                'name': t('Service name', 'சேவையின் பெயர்'),
+                                'price_high': AppSettingsScope.translate(
+                                  context,
+                                  "vendor.price_high_to_low.0dd9944a",
+                                ),
+                                'name': AppSettingsScope.translate(
+                                  context,
+                                  "vendor.service_name.1bb8870c",
+                                ),
                               },
                           (v) => chosenSort = v,
                         ),
@@ -330,7 +365,12 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                         ),
                       ),
                       onPressed: () => setState(reset),
-                      child: Text(t('Reset', 'மீட்டமை')),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.reset.daee7606",
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -357,7 +397,12 @@ class _ListingFilterSheetState extends State<ListingFilterSheet> {
                                 ),
                               );
                             },
-                      child: Text(t('Apply Filters', 'பயன்படுத்து')),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.apply_filters.09b2e220",
+                        ),
+                      ),
                     ),
                   ),
                 ],

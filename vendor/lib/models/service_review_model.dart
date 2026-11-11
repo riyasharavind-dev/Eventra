@@ -45,7 +45,7 @@ class ServiceReviewModel {
         version: (m['version'] as num?)?.toInt() ?? 1,
         replyVersion: (m['reply_version'] as num?)?.toInt() ?? 0,
         isMine: m['is_mine'] == true,
-        canReply: m['can_reply'] == true,
+        canReply: false,
         reported: m['reported'] == true,
         moderationStatus: m['moderation_status']?.toString() ?? 'visible',
         createdAt: DateTime.parse(m['created_at'].toString()),

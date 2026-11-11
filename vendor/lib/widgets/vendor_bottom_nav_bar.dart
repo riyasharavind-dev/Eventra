@@ -1,3 +1,7 @@
+import '../services/app_settings_controller.dart';
+
+import 'package:eventor_vendor/services/vendor_tour_controller.dart';
+import 'package:eventor_vendor/widgets/trial/tour_anchor.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -42,13 +46,18 @@ class VendorBottomNavBar extends StatelessWidget {
         final alignX = -1.0 + (2.0 * position / (count - 1));
         return SafeArea(
           top: false,
-          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          minimum: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width * 0.1,
+            0,
+            MediaQuery.sizeOf(context).width * 0.1,
+            MediaQuery.paddingOf(context).bottom + 20,
+          ),
           child: Container(
-            height: 88,
-            padding: const EdgeInsets.all(6),
+            height: 74,
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(34),
+              borderRadius: BorderRadius.circular(29),
               border: Border.all(color: const Color(0xFFF0EDF0)),
               boxShadow: const [
                 BoxShadow(
@@ -73,7 +82,7 @@ class VendorBottomNavBar extends StatelessWidget {
                           end: Alignment.bottomRight,
                           colors: [_wine, _wineDark],
                         ),
-                        borderRadius: BorderRadius.circular(27),
+                        borderRadius: BorderRadius.circular(23),
                       ),
                     ),
                   ),
@@ -95,55 +104,64 @@ class VendorBottomNavBar extends StatelessWidget {
                     )!;
 
                     return Expanded(
-                      child: Semantics(
-                        label: _labels[index],
-                        button: true,
-                        selected: selected,
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(27),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => onTap(index),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Transform.translate(
-                                    offset: Offset(0, -2 * emphasis),
-                                    child: Transform.scale(
-                                      scale: 1 + (2 / 27) * emphasis,
-                                      child: Icon(
-                                        _icons[index],
-                                        size: 27,
-                                        color: foreground,
+                      child: TourAnchor(
+                        id: index == 1 ? TourTargets.listings : 'nav-$index',
+                        child: Semantics(
+                          label: AppSettingsScope.source(
+                            context,
+                            _labels[index],
+                          ),
+                          button: true,
+                          selected: selected,
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(23),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: () => onTap(index),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Transform.translate(
+                                      offset: Offset(0, -2 * emphasis),
+                                      child: Transform.scale(
+                                        scale: 1 + (2 / 23) * emphasis,
+                                        child: Icon(
+                                          _icons[index],
+                                          size: 23,
+                                          color: foreground,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  DefaultTextStyle(
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      height: 1.2,
-                                      fontWeight: FontWeight.lerp(
-                                        FontWeight.w400,
-                                        FontWeight.w600,
-                                        emphasis,
-                                      ),
-                                      color: foreground,
-                                    ),
-                                    child: Text(
-                                      _labels[index],
+                                    const SizedBox(height: 3),
+                                    DefaultTextStyle(
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        height: 1.2,
+                                        fontWeight: FontWeight.lerp(
+                                          FontWeight.w400,
+                                          FontWeight.w600,
+                                          emphasis,
+                                        ),
+                                        color: foreground,
+                                      ),
+                                      child: Text(
+                                        AppSettingsScope.source(
+                                          context,
+                                          _labels[index],
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),

@@ -28,6 +28,7 @@ class ServiceRepository {
     pricing_unit,
     gallery,
     is_active,
+    is_archived,
     created_at,
     updated_at,
     category_nodes (
@@ -201,6 +202,9 @@ class ServiceRepository {
   Future<ServiceModel> toggleServiceStatus(ServiceModel service) async {
     final String userId = _requireUserId();
 
+    if (service.isArchived) {
+      throw StateError('Restore this service before activating it.');
+    }
     final bool newStatus = !service.isActive;
 
     final response = await _supabase
@@ -214,6 +218,23 @@ class ServiceRepository {
         .select(_serviceSelect)
         .single();
 
+    return ServiceModel.fromMap(Map<String, dynamic>.from(response));
+  }
+
+  Future<ServiceModel> setArchived(ServiceModel service, bool archived) async {
+    final userId = _requireUserId();
+    final response = await _supabase
+        .from('services')
+        .update({
+          'is_archived': archived,
+          // Restoring never republishes a service without an explicit activation.
+          'is_active': false,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', service.id)
+        .eq('vendor_id', userId)
+        .select(_serviceSelect)
+        .single();
     return ServiceModel.fromMap(Map<String, dynamic>.from(response));
   }
 

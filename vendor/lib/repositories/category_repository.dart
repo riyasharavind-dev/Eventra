@@ -18,9 +18,7 @@ class CategoryRepository {
 
     return (data as List)
         .map(
-          (item) => CategoryNodeModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
+          (item) => CategoryNodeModel.fromMap(Map<String, dynamic>.from(item)),
         )
         .toList();
   }
@@ -29,9 +27,7 @@ class CategoryRepository {
   // GET CHILDREN OF A CATEGORY
   // ============================================================
 
-  Future<List<CategoryNodeModel>> getChildren(
-    String parentId,
-  ) async {
+  Future<List<CategoryNodeModel>> getChildren(String parentId) async {
     final data = await _supabase
         .from('category_nodes')
         .select()
@@ -40,9 +36,7 @@ class CategoryRepository {
 
     return (data as List)
         .map(
-          (item) => CategoryNodeModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
+          (item) => CategoryNodeModel.fromMap(Map<String, dynamic>.from(item)),
         )
         .toList();
   }
@@ -51,9 +45,7 @@ class CategoryRepository {
   // GET CATEGORY BY ID
   // ============================================================
 
-  Future<CategoryNodeModel?> getCategoryById(
-    String categoryId,
-  ) async {
+  Future<CategoryNodeModel?> getCategoryById(String categoryId) async {
     final data = await _supabase
         .from('category_nodes')
         .select()

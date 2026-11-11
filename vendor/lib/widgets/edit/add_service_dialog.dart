@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../common/app_shimmer.dart';
@@ -512,7 +513,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
           borderRadius: BorderRadius.circular(12),
         ),
 
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
@@ -525,7 +526,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
             SizedBox(width: 10),
 
-            Text('Loading event types...'),
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.loading_event_types.8d6bfd2f",
+              ),
+            ),
           ],
         ),
       );
@@ -559,9 +565,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
                 const SizedBox(width: 8),
 
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Failed to load event types.',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.failed_to_load_event_types.384fecf6",
+                    ),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -587,7 +596,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
               icon: const Icon(Icons.refresh),
 
-              label: const Text('Retry'),
+              label: Text(
+                AppSettingsScope.translate(context, "vendor.retry.942087cc"),
+              ),
             ),
           ],
         ),
@@ -618,8 +629,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
             const SizedBox(width: 8),
 
-            const Expanded(
-              child: Text('No event types found in the database.'),
+            Expanded(
+              child: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.no_event_types_found_in_the_database.fe938ad1",
+                ),
+              ),
             ),
           ],
         ),
@@ -778,7 +794,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
           children: [
             Text(
-              'Unable to load categories.',
+              AppSettingsScope.translate(
+                context,
+                "vendor.unable_to_load_categories.f4d85a61",
+              ),
 
               style: TextStyle(
                 color: Colors.red.shade700,
@@ -806,7 +825,9 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
               icon: const Icon(Icons.refresh),
 
-              label: const Text('Retry'),
+              label: Text(
+                AppSettingsScope.translate(context, "vendor.retry.942087cc"),
+              ),
             ),
           ],
         ),
@@ -831,7 +852,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
           borderRadius: BorderRadius.circular(8),
         ),
 
-        child: const Text('No categories found in category_nodes.'),
+        child: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.no_categories_found_in_category_nodes.adc9bad7",
+          ),
+        ),
       );
     }
 
@@ -844,8 +870,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
       isExpanded: true,
 
-      decoration: const InputDecoration(
-        hintText: 'Select category',
+      decoration: InputDecoration(
+        hintText: AppSettingsScope.translate(
+          context,
+          "vendor.select_category.e26788c5",
+        ),
 
         prefixIcon: Icon(Icons.category_outlined),
 
@@ -937,9 +966,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Add Service',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.add_service.62e79d2a",
+                      ),
 
                       style: TextStyle(
                         fontSize: 21,
@@ -979,7 +1011,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // SERVICE NAME
                     // ==========================================
 
-                    _buildLabel('Service Name'),
+                    _buildLabel(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.service_name.2133ed9a",
+                      ),
+                    ),
 
                     const SizedBox(height: 7),
 
@@ -990,8 +1027,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
                       textInputAction: TextInputAction.next,
 
-                      decoration: const InputDecoration(
-                        hintText: 'Enter service name',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_service_name.717bf07a",
+                        ),
 
                         border: OutlineInputBorder(),
                       ),
@@ -1002,7 +1042,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // CATEGORY
                     // ==========================================
-                    _buildLabel('Category'),
+                    _buildLabel(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.category.292c06f0",
+                      ),
+                    ),
 
                     const SizedBox(height: 7),
 
@@ -1013,12 +1058,20 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // EVENT TYPE
                     // ==========================================
-                    _buildLabel('Event Type'),
+                    _buildLabel(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.event_type.9c85b75f",
+                      ),
+                    ),
 
                     const SizedBox(height: 5),
 
                     Text(
-                      'Select the event this service is suitable for',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.select_the_event_this_service_is_suitable_for.fbfcc888",
+                      ),
 
                       style: TextStyle(
                         fontSize: 12,
@@ -1036,7 +1089,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // DESCRIPTION
                     // ==========================================
-                    _buildLabel('Description'),
+                    _buildLabel(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.description.526e0087",
+                      ),
+                    ),
 
                     const SizedBox(height: 7),
 
@@ -1047,8 +1105,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
                       maxLines: 3,
 
-                      decoration: const InputDecoration(
-                        hintText: 'Describe your service',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.describe_your_service.0f4d39c0",
+                        ),
 
                         border: OutlineInputBorder(),
                       ),
@@ -1059,7 +1120,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // PRICE
                     // ==========================================
-                    _buildLabel('Price'),
+                    _buildLabel(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.price.93c91c85",
+                      ),
+                    ),
 
                     const SizedBox(height: 7),
 
@@ -1077,10 +1143,13 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                         decimal: true,
                       ),
 
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         prefixText: '₹ ',
 
-                        hintText: 'Enter price',
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_price.cec17a55",
+                        ),
 
                         border: OutlineInputBorder(),
                       ),

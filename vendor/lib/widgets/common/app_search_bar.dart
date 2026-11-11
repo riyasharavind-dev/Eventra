@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:flutter/material.dart';
 
 class AppSearchBar extends StatelessWidget {
@@ -29,7 +30,10 @@ class AppSearchBar extends StatelessWidget {
         prefixIcon: const Icon(Icons.search),
         suffixIcon: hasText
             ? IconButton(
-                tooltip: 'Clear',
+                tooltip: AppSettingsScope.translate(
+                  context,
+                  "vendor.clear.83b12c22",
+                ),
                 onPressed: () {
                   controller.clear();
                   onClear?.call();
@@ -51,9 +55,7 @@ class AppSearchBar extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
         ),
       ),
     );

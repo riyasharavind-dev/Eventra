@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../common/app_shimmer.dart';
 
 import 'dart:io';
@@ -105,7 +107,9 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
         // OPEN CROPPER
         // ------------------------------------------------------
 
+        if (!mounted) return;
         final File? croppedFile = await ImageCropperWidget.crop(
+          context: context,
           image: originalFile,
           ratioX: widget.cropRatioX,
           ratioY: widget.cropRatioY,
@@ -164,6 +168,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   // ============================================================
 
   Future<void> _recropImage(int index) async {
+    final l10n = AppSettingsScope.localizationOf(context);
     if (_isPicking) {
       return;
     }
@@ -181,16 +186,18 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isPicking = true;
     });
 
     try {
       final File? cropped = await ImageCropperWidget.crop(
+        context: context,
         image: file,
         ratioX: widget.cropRatioX,
         ratioY: widget.cropRatioY,
-        title: 'Adjust Image',
+        title: l10n.tr("vendor.adjust_image.ae6a40a5"),
       );
 
       if (!mounted) {
@@ -307,7 +314,10 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                 const SizedBox(height: 4),
 
                 Text(
-                  'Images will be cropped to 16:9',
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.images_will_be_cropped_to_16_9.13cfd25b",
+                  ),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
@@ -323,9 +333,12 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
 
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Selected Images',
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.selected_images.8ab45f3d",
+                  ),
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -360,7 +373,12 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
             OutlinedButton.icon(
               onPressed: _isPicking ? null : _pickImages,
               icon: const Icon(Icons.add),
-              label: const Text('Add More Images'),
+              label: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.add_more_images.55f27bc4",
+                ),
+              ),
             ),
         ],
       ],
@@ -410,7 +428,11 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
               children: [
                 Expanded(
                   child: Text(
-                    'Image ${index + 1}',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.image_value0.de1628d5",
+                      args: {"value0": index + 1},
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -421,7 +443,10 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
 
                 _imageActionButton(
                   icon: Icons.crop,
-                  tooltip: 'Crop again',
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "vendor.crop_again.b4f7ea66",
+                  ),
                   onTap: _isPicking
                       ? null
                       : () {
@@ -433,7 +458,10 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
 
                 _imageActionButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Remove',
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "vendor.remove.c3812fc4",
+                  ),
                   onTap: _isPicking
                       ? null
                       : () {

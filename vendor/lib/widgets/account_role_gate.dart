@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -109,7 +110,12 @@ class _AccountRoleGateState extends State<AccountRoleGate>
                         _check = AuthRepository().validateAccountRole();
                       });
                     },
-                    child: const Text('Try again'),
+                    child: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.try_again.d8b8392e",
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
@@ -119,7 +125,12 @@ class _AccountRoleGateState extends State<AccountRoleGate>
                     onPressed: () async {
                       await AuthRepository().signOut();
                     },
-                    child: const Text('Back to sign in'),
+                    child: Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.back_to_sign_in.71fe31cc",
+                      ),
+                    ),
                   ),
                 ],
               ),

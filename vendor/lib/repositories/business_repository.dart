@@ -9,9 +9,7 @@ class BusinessRepository {
   // GET ALL BUSINESSES OF A VENDOR
   // ============================================================
 
-  Future<List<BusinessModel>> getBusinessesByVendor(
-    String vendorId,
-  ) async {
+  Future<List<BusinessModel>> getBusinessesByVendor(String vendorId) async {
     final data = await _supabase
         .from('businesses')
         .select()
@@ -20,11 +18,7 @@ class BusinessRepository {
         .order('created_at');
 
     return (data as List)
-        .map(
-          (item) => BusinessModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
-        )
+        .map((item) => BusinessModel.fromMap(Map<String, dynamic>.from(item)))
         .toList();
   }
 
@@ -46,9 +40,7 @@ class BusinessRepository {
   // GET BUSINESS BY ID
   // ============================================================
 
-  Future<BusinessModel?> getBusinessById(
-    String businessId,
-  ) async {
+  Future<BusinessModel?> getBusinessById(String businessId) async {
     final data = await _supabase
         .from('businesses')
         .select()
@@ -169,9 +161,7 @@ class BusinessRepository {
   // DEACTIVATE BUSINESS
   // ============================================================
 
-  Future<void> deactivateBusiness(
-    String businessId,
-  ) async {
+  Future<void> deactivateBusiness(String businessId) async {
     await _supabase
         .from('businesses')
         .update({
@@ -185,18 +175,14 @@ class BusinessRepository {
   // GET BUSINESS AREA IDS
   // ============================================================
 
-  Future<List<String>> getBusinessCategoryIds(
-    String businessId,
-  ) async {
+  Future<List<String>> getBusinessCategoryIds(String businessId) async {
     final data = await _supabase
         .from('business_category_nodes')
         .select('category_node_id')
         .eq('business_id', businessId);
 
     return (data as List)
-        .map(
-          (item) => item['category_node_id'] as String,
-        )
+        .map((item) => item['category_node_id'] as String)
         .toList();
   }
 
@@ -255,8 +241,6 @@ class BusinessRepository {
         )
         .toList();
 
-    await _supabase
-        .from('business_category_nodes')
-        .insert(rows);
+    await _supabase.from('business_category_nodes').insert(rows);
   }
 }

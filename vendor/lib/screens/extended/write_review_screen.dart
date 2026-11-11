@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../../widgets/vendor_page_scaffold.dart';
 import '../../widgets/common/app_shimmer.dart';
 
@@ -25,8 +27,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Object? error;
   bool loading = true, saving = false;
   int rating = 0;
-  String t(String en, String ta) =>
-      Localizations.localeOf(context).languageCode == 'ta' ? ta : en;
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void initState() {
     super.initState();
@@ -74,9 +75,9 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            t(
-              'Choose a star rating.',
-              'நட்சத்திர மதிப்பீட்டைத் தேர்வு செய்யவும்.',
+            AppSettingsScope.translate(
+              context,
+              "vendor.choose_a_star_rating.6a7b59e9",
             ),
           ),
         ),
@@ -114,22 +115,29 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       context: context,
       builder: (c) => AlertDialog(
         title: Text(
-          t('Reload saved review?', 'சேமித்த விமர்சனத்தை மீண்டும் ஏற்றவா?'),
+          AppSettingsScope.translate(
+            context,
+            "vendor.reload_saved_review.217e6c8e",
+          ),
         ),
         content: Text(
-          t(
-            'Unsaved changes will be replaced.',
-            'சேமிக்காத மாற்றங்கள் மாற்றப்படும்.',
+          AppSettingsScope.translate(
+            context,
+            "vendor.unsaved_changes_will_be_replaced.26ae3020",
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: Text(t('Cancel', 'ரத்து செய்')),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.cancel.19766ed6"),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(c, true),
-            child: Text(t('Reload', 'மீண்டும் ஏற்று')),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.reload.bdc090ec"),
+            ),
           ),
         ],
       ),
@@ -150,8 +158,14 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           surfaceTintColor: Colors.transparent,
           title: Text(
             data?.review == null
-                ? t('Write a Review', 'விமர்சனம் எழுது')
-                : t('Edit Review', 'விமர்சனத்தைத் திருத்து'),
+                ? AppSettingsScope.translate(
+                    context,
+                    "vendor.write_a_review.95627b89",
+                  )
+                : AppSettingsScope.translate(
+                    context,
+                    "vendor.edit_review.dc6ae842",
+                  ),
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
           ),
         ),
@@ -167,16 +181,22 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        t(
-                          'Unable to load your booking.',
-                          'உங்கள் முன்பதிவை ஏற்ற முடியவில்லை.',
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.unable_to_load_your_booking.d565667d",
                         ),
                       ),
                       TextButton(
                         onPressed: load,
                         child: Text(
-                          t('Retry', 'மீண்டும் முயற்சி'),
-                          style: const TextStyle(color: Color(0xFF80152C), fontWeight: FontWeight.w700),
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.retry.942087cc",
+                          ),
+                          style: const TextStyle(
+                            color: Color(0xFF80152C),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -196,7 +216,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                         border: Border.all(color: const Color(0xFFF0EDF0)),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF80152C).withValues(alpha: 0.05),
+                            color: const Color(0xFF80152C)
+                                .withValues(alpha: 0.05),
                             blurRadius: 16,
                             offset: const Offset(0, 5),
                           ),
@@ -222,22 +243,27 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                t(
-                                  'Only the customer of a completed booking can review this service.',
-                                  'முடிந்த முன்பதிவின் வாடிக்கையாளர் மட்டுமே இந்த சேவையை மதிப்பிட முடியும்.',
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.only_the_customer_of_a_completed_booking_can_.7dbb0611",
                                 ),
-                                style: const TextStyle(color: Color(0xFFE65100)),
+                                style: const TextStyle(
+                                  color: Color(0xFFE65100),
+                                ),
                               ),
                             )
                           else ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE8F5E9),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                '✓ ${t('Verified completed booking', 'சரிபார்க்கப்பட்ட முடிந்த முன்பதிவு')}',
+                                '✓ ${AppSettingsScope.translate(context, "vendor.verified_completed_booking.9c6d6a2c")}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -249,16 +275,22 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 14),
                                 child: Text(
-                                  t(
-                                    'This review is hidden by moderation. Editing does not publish it again.',
-                                    'இந்த விமர்சனம் நிர்வாகத்தால் மறைக்கப்பட்டுள்ளது. திருத்துவதால் மீண்டும் வெளியிடப்படாது.',
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.this_review_is_hidden_by_moderation_editing_d.8ed8441d",
                                   ),
-                                  style: const TextStyle(color: Color(0xFFC62828), fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Color(0xFFC62828),
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             const SizedBox(height: 24),
                             Text(
-                              t('How was the service?', 'சேவை எப்படி இருந்தது?'),
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.how_was_the_service.04742df9",
+                              ),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -273,7 +305,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                                   tooltip: '${i + 1} / 5',
                                   padding: const EdgeInsets.only(right: 6),
                                   constraints: const BoxConstraints(),
-                                  onPressed: () => setState(() => rating = i + 1),
+                                  onPressed: () =>
+                                      setState(() => rating = i + 1),
                                   icon: Icon(
                                     i < rating
                                         ? Icons.star_rounded
@@ -286,7 +319,12 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              rating > 0 ? '$rating / 5 ★' : t('Tap a star to rate', 'மதிப்பிட தட்டவும்'),
+                              rating > 0
+                                  ? '$rating / 5 ★'
+                                  : AppSettingsScope.translate(
+                                      context,
+                                      "vendor.tap_a_star_to_rate.1f083de3",
+                                    ),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
@@ -299,31 +337,38 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                               maxLines: 5,
                               maxLength: 2000,
                               decoration: InputDecoration(
-                                labelText: t(
-                                  'Your experience (optional)',
-                                  'உங்கள் அனுபவம் (விருப்பம்)',
+                                labelText: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.your_experience_optional.358d4c63",
                                 ),
                                 filled: true,
                                 fillColor: const Color(0xFFFBF9FA),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFFE8E5E8)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8E5E8),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFFE8E5E8)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8E5E8),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF80152C),
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              t(
-                                'Your name, rating and review will be public. Avoid sharing phone numbers or private booking details.',
-                                'உங்கள் பெயர், மதிப்பீடு மற்றும் விமர்சனம் பொதுவாகக் காட்டப்படும். தொலைபேசி எண் அல்லது தனிப்பட்ட முன்பதிவு விவரங்களைப் பகிர வேண்டாம்.',
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.your_name_rating_and_review_will_be_public_av.f260b089",
                               ),
                               style: const TextStyle(
                                 fontSize: 12,
@@ -343,13 +388,20 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   elevation: 2,
-                                  shadowColor: const Color(0xFF80152C).withValues(alpha: 0.3),
+                                  shadowColor: const Color(0xFF80152C)
+                                      .withValues(alpha: 0.3),
                                 ),
                                 onPressed: save,
                                 child: Text(
                                   saving
-                                      ? t('Saving…', 'சேமிக்கிறது…')
-                                      : t('Save review', 'விமர்சனத்தைச் சேமி'),
+                                      ? AppSettingsScope.translate(
+                                          context,
+                                          "vendor.saving.23e39291",
+                                        )
+                                      : AppSettingsScope.translate(
+                                          context,
+                                          "vendor.save_review.e5a490bf",
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -362,11 +414,13 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                               child: TextButton(
                                 onPressed: reload,
                                 child: Text(
-                                  t(
-                                    'Reload saved review',
-                                    'சேமித்த விமர்சனத்தை மீண்டும் ஏற்று',
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.reload_saved_review.1cfe2eeb",
                                   ),
-                                  style: const TextStyle(color: Color(0xFF73737D)),
+                                  style: const TextStyle(
+                                    color: Color(0xFF73737D),
+                                  ),
                                 ),
                               ),
                             ),

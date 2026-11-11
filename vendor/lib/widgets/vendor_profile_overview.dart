@@ -211,10 +211,7 @@ class VendorProfileOverview extends StatelessWidget {
                       children: [
                         Text(
                           vendor.name.trim().isEmpty
-                              ? settings.text(
-                                  'Eventor Vendor',
-                                  'Eventor விற்பனையாளர்',
-                                )
+                              ? settings.tr("vendor.eventor_vendor.cde326aa")
                               : vendor.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -229,9 +226,8 @@ class VendorProfileOverview extends StatelessWidget {
                           onTap: about.isEmpty ? onEdit : null,
                           child: Text(
                             about.isEmpty
-                                ? settings.text(
-                                    'Add a short introduction',
-                                    'சிறு அறிமுகத்தைச் சேர்க்கவும்',
+                                ? settings.tr(
+                                    "vendor.add_a_short_introduction.ed266484",
                                   )
                                 : about,
                             style: TextStyle(
@@ -262,7 +258,7 @@ class VendorProfileOverview extends StatelessWidget {
               children: [
                 stat(
                   loading ? '…' : statistics?.completedEvents.toString() ?? '—',
-                  settings.text('Events', 'நிகழ்வுகள்'),
+                  settings.tr("vendor.events.8d14f6e7"),
                   onEvents,
                 ),
                 VerticalDivider(
@@ -273,7 +269,7 @@ class VendorProfileOverview extends StatelessWidget {
                 ),
                 stat(
                   loading ? '…' : rating,
-                  settings.text('Rating', 'மதிப்பீடு'),
+                  settings.tr("vendor.rating.9f295304"),
                   onReviews,
                 ),
                 VerticalDivider(
@@ -284,7 +280,7 @@ class VendorProfileOverview extends StatelessWidget {
                 ),
                 stat(
                   loading ? '…' : statistics?.reviewCount.toString() ?? '—',
-                  settings.text('Reviews', 'விமர்சனங்கள்'),
+                  settings.tr("vendor.reviews.84cb7871"),
                   onReviews,
                 ),
               ],
@@ -298,10 +294,7 @@ class VendorProfileOverview extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 16),
               label: Text(
-                settings.text(
-                  'Unable to load statistics · Retry',
-                  'புள்ளிவிவரங்களை ஏற்ற முடியவில்லை · மீண்டும் முயற்சி',
-                ),
+                settings.tr("vendor.unable_to_load_statistics_retry.906947ec"),
               ),
             ),
 
@@ -311,7 +304,7 @@ class VendorProfileOverview extends StatelessWidget {
           Row(
             children: [
               actionButton(
-                label: settings.text('Edit Profile', 'சுயவிவரம் திருத்து'),
+                label: settings.tr("vendor.edit_profile.fec2ac0f"),
                 icon: Icons.edit_outlined,
                 background: wine,
                 foreground: Colors.white,
@@ -319,7 +312,7 @@ class VendorProfileOverview extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               actionButton(
-                label: settings.text('My Business', 'எனது வணிகம்'),
+                label: settings.tr("vendor.my_business.f25771e5"),
                 icon: Icons.storefront_outlined,
                 background: gold,
                 foreground: Colors.white,

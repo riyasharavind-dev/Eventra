@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../../services/app_live_data.dart';
 import '../common/app_shimmer.dart';
 
@@ -50,8 +52,7 @@ class _ReviewRatingCardState extends State<ReviewRatingCard>
   late ReviewRepository repo;
   late Future<ReviewSummary> loading;
   bool opening = false;
-  String t(String en, String ta) =>
-      Localizations.localeOf(context).languageCode == 'ta' ? ta : en;
+  String t(String en) => AppSettingsScope.source(context, en);
   Future<ReviewSummary> fetch() => repo.summary(
     serviceId: widget.serviceId,
     businessId: widget.businessId,
@@ -128,19 +129,34 @@ class _ReviewRatingCardState extends State<ReviewRatingCard>
             data != null && data.count > 0 && data.average != null;
         final score = hasRating
             ? '${data.average!.toStringAsFixed(1)} / 5'
-            : t('No reviews yet', 'இன்னும் விமர்சனங்கள் இல்லை');
+            : AppSettingsScope.translate(
+                context,
+                "vendor.no_reviews_yet.8b670b7e",
+              );
         final title = widget.vendorId != null
-            ? t('Vendor rating', 'விற்பனையாளர் மதிப்பீடு')
+            ? AppSettingsScope.translate(
+                context,
+                "vendor.vendor_rating.d0d46386",
+              )
             : widget.businessId != null
-            ? t('Business rating', 'வணிக மதிப்பீடு')
-            : t('Service rating', 'சேவை மதிப்பீடு');
+            ? AppSettingsScope.translate(
+                context,
+                "vendor.business_rating.fd9c780b",
+              )
+            : AppSettingsScope.translate(
+                context,
+                "vendor.service_rating.bfe26f63",
+              );
         final message = failed
-            ? t(
-                'Rating unavailable · tap to retry',
-                'மதிப்பீடு கிடைக்கவில்லை · மீண்டும் முயற்சி',
+            ? AppSettingsScope.translate(
+                context,
+                "vendor.rating_unavailable_tap_to_retry.8ac9a956",
               )
             : waiting
-            ? t('Loading rating…', 'மதிப்பீடு ஏற்றுகிறது…')
+            ? AppSettingsScope.translate(
+                context,
+                "vendor.loading_rating.d198722a",
+              )
             : score;
         final canOpen = widget.vendorId == null || widget.vendorMode;
         final VoidCallback? tap = waiting || opening
@@ -176,7 +192,7 @@ class _ReviewRatingCardState extends State<ReviewRatingCard>
                     ),
                     if (!failed && !waiting && hasRating)
                       Text(
-                        '· ${data.count} ${t('reviews', 'விமர்சனங்கள்')}',
+                        '· ${data.count} ${AppSettingsScope.translate(context, "vendor.reviews.54641051")}',
                         style: TextStyle(
                           fontSize: 11,
                           color: colors.onSurfaceVariant,
@@ -223,7 +239,7 @@ class _ReviewRatingCardState extends State<ReviewRatingCard>
                               if (!failed && !waiting && data != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${data.count} ${t('public reviews', 'பொது விமர்சனங்கள்')}',
+                                  '${data.count} ${AppSettingsScope.translate(context, "vendor.public_reviews.56233001")}',
                                   style: TextStyle(
                                     color: colors.onSurfaceVariant,
                                   ),
@@ -239,13 +255,13 @@ class _ReviewRatingCardState extends State<ReviewRatingCard>
                       const SizedBox(height: 12),
                       Text(
                         widget.vendorId != null
-                            ? t(
-                                'Based on visible customer reviews across all your businesses and services.',
-                                'உங்கள் அனைத்து வணிகங்கள் மற்றும் சேவைகளின் தெரியும் வாடிக்கையாளர் விமர்சனங்களின் அடிப்படையில்.',
+                            ? AppSettingsScope.translate(
+                                context,
+                                "vendor.based_on_visible_customer_reviews_across_all_.2b368c8c",
                               )
-                            : t(
-                                'Based on visible customer reviews for this business or service.',
-                                'இந்த வணிகம் அல்லது சேவையின் தெரியும் வாடிக்கையாளர் விமர்சனங்களின் அடிப்படையில்.',
+                            : AppSettingsScope.translate(
+                                context,
+                                "vendor.based_on_visible_customer_reviews_for_this_bu.75a1e071",
                               ),
                         style: TextStyle(
                           fontSize: 11,

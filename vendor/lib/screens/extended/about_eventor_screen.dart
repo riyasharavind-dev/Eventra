@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -158,15 +159,18 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text(
-          'About Eventor',
+        title: Text(
+          AppSettingsScope.translate(context, "vendor.about_eventor.3495d1b2"),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: const Color(0xFFF8F8FA),
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Refresh About Eventor',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "vendor.refresh_about_eventor.7beabf98",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -237,8 +241,12 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                             ),
                           ],
                           const SizedBox(height: 10),
-                          const Text(
-                            'Version $_version · Build $_build',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.version_value0_build_value1.767d3045",
+                              args: {"value0": _version, "value1": _build},
+                            ),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
@@ -281,8 +289,11 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                             ),
                           ),
                           const SizedBox(height: 24),
-                          const Text(
-                            'Policies',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.policies.d3ad1f1f",
+                            ),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -314,7 +325,12 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                                     Icons.description_outlined,
                                     color: AppIconColors.standard,
                                   ),
-                                  title: const Text('Terms & Conditions'),
+                                  title: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.terms_conditions.173f5f9f",
+                                    ),
+                                  ),
                                   trailing: const Icon(
                                     Icons.chevron_right_rounded,
                                   ),
@@ -330,7 +346,12 @@ class _AboutEventorScreenState extends State<AboutEventorScreen>
                                     Icons.privacy_tip_outlined,
                                     color: AppIconColors.standard,
                                   ),
-                                  title: const Text('Privacy Policy'),
+                                  title: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.privacy_policy.506ff394",
+                                    ),
+                                  ),
                                   trailing: const Icon(
                                     Icons.chevron_right_rounded,
                                   ),

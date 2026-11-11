@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../common/app_shimmer.dart';
@@ -432,9 +433,12 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
               padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Edit Service',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.edit_service.c7c19d6f",
+                      ),
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -468,8 +472,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // NAME
                     // ==========================================
 
-                    const Text(
-                      'Service Name',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.service_name.2133ed9a",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -479,8 +486,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                       controller: _nameController,
                       enabled: !_isSaving,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter service name',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_service_name.717bf07a",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -490,8 +500,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // ==========================================
                     // CATEGORY
                     // ==========================================
-                    const Text(
-                      'Category',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.category.292c06f0",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -504,8 +517,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // ==========================================
                     // DESCRIPTION
                     // ==========================================
-                    const Text(
-                      'Description',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.description.526e0087",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -515,8 +531,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                       controller: _descriptionController,
                       enabled: !_isSaving,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Describe your service',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.describe_your_service.0f4d39c0",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -526,8 +545,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // ==========================================
                     // PRICE
                     // ==========================================
-                    const Text(
-                      'Price',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.price.93c91c85",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -544,9 +566,12 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         prefixText: '₹ ',
-                        hintText: 'Enter price',
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_price.cec17a55",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -556,8 +581,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // ==========================================
                     // CURRENT IMAGES
                     // ==========================================
-                    const Text(
-                      'Current Images',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.current_images.1d0a441f",
+                      ),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -585,8 +613,11 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     // ==========================================
                     // NEW IMAGES
                     // ==========================================
-                    const Text(
-                      'Add New Images',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.add_new_images.aaa28548",
+                      ),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -596,7 +627,10 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                     const SizedBox(height: 6),
 
                     Text(
-                      'New images will be cropped to 16:9.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.new_images_will_be_cropped_to_16_9.dc0ceafb",
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -651,7 +685,12 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
                           : () {
                               Navigator.of(context).pop();
                             },
-                      child: const Text('Cancel'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.cancel.19766ed6",
+                        ),
+                      ),
                     ),
                   ),
 
@@ -719,9 +758,12 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
     return DropdownButtonFormField<String>(
       initialValue: categoryExists ? _selectedCategoryId : null,
       isExpanded: true,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         border: OutlineInputBorder(),
-        hintText: 'Select category',
+        hintText: AppSettingsScope.translate(
+          context,
+          "vendor.select_category.e26788c5",
+        ),
       ),
       items: _categories.map((Map<String, dynamic> category) {
         final String id = category['id']?.toString() ?? '';
@@ -766,7 +808,10 @@ class _EditServiceDialogState extends State<EditServiceDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No current images',
+              AppSettingsScope.translate(
+                context,
+                "vendor.no_current_images.9dadfabb",
+              ),
               style: TextStyle(color: Colors.grey.shade600),
             ),
           ],

@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import 'dart:io';
@@ -22,7 +23,7 @@ class ServiceGalleryPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (images.isEmpty) {
-      return _buildEmptyPicker();
+      return _buildEmptyPicker(context);
     }
 
     return _buildImageGrid();
@@ -32,7 +33,7 @@ class ServiceGalleryPicker extends StatelessWidget {
   // EMPTY PICKER
   // ============================================================
 
-  Widget _buildEmptyPicker() {
+  Widget _buildEmptyPicker(BuildContext context) {
     return GestureDetector(
       onTap: enabled ? onAddImages : null,
       child: Container(
@@ -42,7 +43,7 @@ class ServiceGalleryPicker extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
@@ -52,7 +53,10 @@ class ServiceGalleryPicker extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Add service images',
+              AppSettingsScope.translate(
+                context,
+                "vendor.add_service_images.8c3e5df3",
+              ),
               style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
             ),
           ],

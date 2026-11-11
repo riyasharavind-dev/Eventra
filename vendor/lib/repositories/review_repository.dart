@@ -81,17 +81,6 @@ class ReviewRepository {
       ) as Map,
     ),
   );
-  Future<void> reply(ServiceReviewModel review, String text) async {
-    await db.rpc(
-      'reply_service_review',
-      params: {
-        'p_review_id': review.id,
-        'p_reply': text.trim(),
-        'p_expected_version': review.replyVersion,
-      },
-    );
-  }
-
   Future<void> report(ServiceReviewModel review, String reason) async {
     await db.rpc(
       'report_service_review',

@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -291,9 +292,12 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
                   else
                     const SizedBox(width: 48),
 
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Select Category',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.select_category.f9309f31",
+                      ),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -325,7 +329,10 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search categories...',
+                  hintText: AppSettingsScope.translate(
+                    context,
+                    "vendor.search_categories.8a800ebb",
+                  ),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchQuery.isEmpty
                       ? null
@@ -415,7 +422,7 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
 
   Widget _buildCategoryList(List<Map<String, dynamic>> categories) {
     if (categories.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(30),
           child: Column(
@@ -428,7 +435,10 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
               ),
               SizedBox(height: 12),
               Text(
-                'No categories found.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.no_categories_found.2ed9c371",
+                ),
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ],
@@ -562,7 +572,7 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
 
   Widget _buildSearchResults(List<Map<String, dynamic>> results) {
     if (results.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(30),
           child: Column(
@@ -571,12 +581,18 @@ class _CategoryExplorerState extends State<CategoryExplorer> {
               Icon(Icons.search_off, size: 55, color: AppIconColors.standard),
               SizedBox(height: 12),
               Text(
-                'No matching categories',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.no_matching_categories.15269886",
+                ),
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 6),
               Text(
-                'Try another category name.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.try_another_category_name.26f854ee",
+                ),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey),
               ),

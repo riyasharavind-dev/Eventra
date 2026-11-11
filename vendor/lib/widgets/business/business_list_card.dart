@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -131,7 +132,10 @@ class BusinessListCard extends StatelessWidget {
                       height: 40,
                       child: IconButton(
                         onPressed: onOpen,
-                        tooltip: 'View business',
+                        tooltip: AppSettingsScope.translate(
+                          context,
+                          "vendor.view_business.71b97e44",
+                        ),
                         padding: EdgeInsets.zero,
                         icon: const Icon(
                           Icons.chevron_right_rounded,

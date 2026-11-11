@@ -1,3 +1,8 @@
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
+import '../../services/vendor_tour_controller.dart';
+
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -66,7 +71,7 @@ class _ListingsScreenState extends State<ListingsScreen>
   bool hasActiveBusiness = false;
   bool get needsBusiness =>
       !loading && error == null && businessError == null && !hasActiveBusiness;
-  String t(String en, String ta) => listingText(context, en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void initState() {
     super.initState();
@@ -86,7 +91,12 @@ class _ListingsScreenState extends State<ListingsScreen>
     }
     final uid = db.auth.currentUser?.id;
     if (uid == null) {
-      throw StateError(t('Please sign in again.', 'மீண்டும் உள்நுழையவும்.'));
+      throw StateError(
+        AppSettingsScope.translate(
+          context,
+          "vendor.please_sign_in_again.2e1d1833",
+        ),
+      );
     }
     return List<Map<String, dynamic>>.from(
       await db
@@ -185,18 +195,32 @@ class _ListingsScreenState extends State<ListingsScreen>
     sort: sort,
   );
   Map<String, String> get businessOptions => {
-    'all': t('All businesses', 'அனைத்து வணிகங்கள்'),
+    'all': AppSettingsScope.translate(
+      context,
+      "vendor.all_businesses.13312b22",
+    ),
     ...businessNames,
     for (final s in services)
       if (s.businessId != null && !businessNames.containsKey(s.businessId))
-        s.businessId!: t('Business', 'வணிகம்'),
+        s.businessId!: AppSettingsScope.translate(
+          context,
+          "vendor.business.76f68a75",
+        ),
     if (services.any((s) => s.businessId == null))
-      'unassigned': t('Unassigned', 'ஒதுக்கப்படாதவை'),
+      'unassigned': AppSettingsScope.translate(
+        context,
+        "vendor.unassigned.14d33bd0",
+      ),
   };
   Map<String, String> get categoryOptions => {
-    'all': t('All categories', 'அனைத்து வகைகள்'),
+    'all': AppSettingsScope.translate(
+      context,
+      "vendor.all_categories.9d5097a8",
+    ),
     for (final s in services)
-      s.categoryNodeId: s.categoryName ?? t('Category', 'வகை'),
+      s.categoryNodeId:
+          s.categoryName ??
+          AppSettingsScope.translate(context, "vendor.category.292c06f0"),
   };
   Future<void> filters() async {
     final selection = await showListingFilterSheet(
@@ -220,13 +244,18 @@ class _ListingsScreenState extends State<ListingsScreen>
   }
 
   String _statusLabel(String value) => switch (value) {
-    'active' => t('Active', 'செயலில்'),
-    'inactive' => t('Inactive', 'செயலற்றவை'),
-    _ => t('All', 'அனைத்தும்'),
+    'archived' => AppSettingsScope.translate(context, 'listing.archived'),
+    'active' => AppSettingsScope.translate(context, "vendor.active.92340695"),
+    'inactive' => AppSettingsScope.translate(
+      context,
+      "vendor.inactive.ac7c949f",
+    ),
+    _ => AppSettingsScope.translate(context, "vendor.all.a52ace42"),
   };
 
   Future<void> addBusiness() async {
     if (adding) return;
+    VendorTourController.instance.businessOpened();
     setState(() => adding = true);
     try {
       final result = await Navigator.push<BusinessModel>(
@@ -288,6 +317,7 @@ class _ListingsScreenState extends State<ListingsScreen>
   }
 
   Future<void> action(ServiceModel s, String target) async {
+    final l10n = AppSettingsScope.localizationOf(context);
     if (busyIds.contains(s.id)) {
       return;
     }
@@ -297,9 +327,8 @@ class _ListingsScreenState extends State<ListingsScreen>
         final fresh = await repo.getServiceById(s.id);
         if (fresh == null) {
           throw StateError(
-            t(
-              'Service no longer exists. Refresh the list.',
-              'சேவை இல்லை. பட்டியலைப் புதுப்பிக்கவும்.',
+            l10n.tr(
+              "vendor.service_no_longer_exists_refresh_the_list.28f90eb5",
             ),
           );
         }
@@ -319,6 +348,27 @@ class _ListingsScreenState extends State<ListingsScreen>
         if (saved == true) {
           await load();
         }
+      } else if (target == 'archive' || target == 'restore') {
+        final fresh = await repo.getServiceById(s.id);
+        if (fresh == null) throw StateError('Service no longer exists.');
+        final updated = await repo.setArchived(fresh, target == 'archive');
+        if (!mounted) return;
+        setState(() {
+          services = services
+              .map((item) => item.id == updated.id ? updated : item)
+              .toList();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.tr(
+                updated.isArchived
+                    ? 'listing.archived_message'
+                    : 'listing.restored_message',
+              ),
+            ),
+          ),
+        );
       } else if (target == 'toggle') {
         final fresh = await repo.getServiceById(s.id);
         if (fresh == null) throw StateError('Service no longer exists.');
@@ -335,8 +385,8 @@ class _ListingsScreenState extends State<ListingsScreen>
           SnackBar(
             content: Text(
               updated.isActive
-                  ? t('Service activated.', 'சேவை செயல்படுத்தப்பட்டது.')
-                  : t('Service is inactive.', 'சேவை செயலற்ற நிலையில் உள்ளது.'),
+                  ? l10n.tr("vendor.service_activated.2b110df1")
+                  : l10n.tr("vendor.service_is_inactive.0f3ea731"),
             ),
           ),
         );
@@ -344,14 +394,14 @@ class _ListingsScreenState extends State<ListingsScreen>
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (c) => AlertDialog(
-            title: Text(t('Delete Service?', 'சேவையை நீக்கவா?')),
+            title: Text(l10n.tr("vendor.delete_service.ad8681fb")),
             content: Text(
-              '${s.name}\n\n${t('This permanently deletes the service. Existing database rules may also delete linked bookings. This cannot be undone.', 'இது சேவையை நிரந்தரமாக நீக்கும். தற்போதைய தரவுத்தள விதிகளின்படி இணைந்த முன்பதிவுகளும் நீக்கப்படலாம். இதை மீட்டெடுக்க முடியாது.')}',
+              '${s.name}\n\n${l10n.tr("vendor.this_permanently_deletes_the_service_existing.cf128fba")}',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(c, false),
-                child: Text(t('Cancel', 'ரத்து செய்')),
+                child: Text(l10n.tr("vendor.cancel.19766ed6")),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
@@ -359,7 +409,7 @@ class _ListingsScreenState extends State<ListingsScreen>
                   foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
                 onPressed: () => Navigator.pop(c, true),
-                child: Text(t('Delete', 'நீக்கு')),
+                child: Text(l10n.tr("vendor.delete.e2d0a549")),
               ),
             ],
           ),
@@ -373,7 +423,7 @@ class _ListingsScreenState extends State<ListingsScreen>
         }
         setState(() => services.removeWhere((item) => item.id == s.id));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t('Service deleted.', 'சேவை நீக்கப்பட்டது.'))),
+          SnackBar(content: Text(l10n.tr("vendor.service_deleted.4329f8ee"))),
         );
       }
     } catch (e) {
@@ -452,7 +502,9 @@ class _ListingsScreenState extends State<ListingsScreen>
               TextButton(
                 onPressed: load,
                 style: TextButton.styleFrom(foregroundColor: wine),
-                child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                child: Text(
+                  AppSettingsScope.translate(context, "vendor.retry.942087cc"),
+                ),
               ),
           ],
         ),
@@ -480,15 +532,25 @@ class _ListingsScreenState extends State<ListingsScreen>
                 key: const ValueKey('add-service-fab'),
                 color: wine,
                 busy: adding,
-                tooltip: t('Add', 'சேர்'),
+                tooltip: AppSettingsScope.translate(
+                  context,
+                  "vendor.add.9fd728c6",
+                ),
                 actions: [
                   FloatingMenuAction(
-                    label: t('Add a business', 'வணிகம் சேர்'),
+                    label: AppSettingsScope.translate(
+                      context,
+                      "vendor.add_a_business.258ffae0",
+                    ),
+                    tourId: TourTargets.business,
                     icon: Icons.storefront_outlined,
                     onSelected: addBusiness,
                   ),
                   FloatingMenuAction(
-                    label: t('Add a service', 'சேவை சேர்'),
+                    label: AppSettingsScope.translate(
+                      context,
+                      "vendor.add_a_service.066ae41e",
+                    ),
                     icon: Icons.add_business_outlined,
                     onSelected: add,
                   ),
@@ -510,7 +572,10 @@ class _ListingsScreenState extends State<ListingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        t('Listings', 'சேவைகள்'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.listings.5009238d",
+                        ),
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
@@ -524,19 +589,22 @@ class _ListingsScreenState extends State<ListingsScreen>
                             child: GlobalSearchBar(
                               controller: search,
                               onChanged: (_) => setState(() {}),
-                              hintText: t(
-                                'Search services...',
-                                'சேவைகளைத் தேடு...',
+                              hintText: AppSettingsScope.translate(
+                                context,
+                                "vendor.search_services.d0c1184b",
                               ),
-                              clearLabel: t('Clear search', 'தேடலை அழி'),
+                              clearLabel: AppSettingsScope.translate(
+                                context,
+                                "vendor.clear_search.3b7ea517",
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           VendorFilterButton(
                             onPressed: filters,
-                            tooltip: t(
-                              'Filter & Sort',
-                              'வடிகட்டி வரிசைப்படுத்து',
+                            tooltip: AppSettingsScope.translate(
+                              context,
+                              "vendor.filter_sort.8d76c3b1",
                             ),
                             active: activeFilters,
                           ),
@@ -547,7 +615,12 @@ class _ListingsScreenState extends State<ListingsScreen>
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            for (final v in ['all', 'active', 'inactive'])
+                            for (final v in [
+                              'all',
+                              'active',
+                              'inactive',
+                              'archived',
+                            ])
                               Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: ChoiceChip(
@@ -578,7 +651,7 @@ class _ListingsScreenState extends State<ListingsScreen>
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        '${_statusLabel(v)} (${v == 'all' ? base.length : base.where((s) => s.isActive == (v == 'active')).length})',
+                                        '${_statusLabel(v)} (${v == 'all' ? base.length : filtered(chosenStatus: v).length})',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
@@ -605,7 +678,12 @@ class _ListingsScreenState extends State<ListingsScreen>
                               status = 'all';
                             }),
                             icon: const Icon(Icons.close, size: 15),
-                            label: Text(t('Clear filters', 'வடிகட்டல்களை அழி')),
+                            label: Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.clear_filters.7179ea00",
+                              ),
+                            ),
                           ),
                         ),
                       if (error != null && services.isNotEmpty)
@@ -613,9 +691,9 @@ class _ListingsScreenState extends State<ListingsScreen>
                           onPressed: load,
                           icon: const Icon(Icons.refresh),
                           label: Text(
-                            t(
-                              'Unable to refresh. Showing saved listings. Retry',
-                              'புதுப்பிக்க முடியவில்லை. முந்தைய சேவைகள் காட்டப்படுகின்றன. மீண்டும் முயற்சி',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.unable_to_refresh_showing_saved_listings_retr.da36c157",
                             ),
                           ),
                         ),
@@ -623,9 +701,9 @@ class _ListingsScreenState extends State<ListingsScreen>
                         TextButton(
                           onPressed: load,
                           child: Text(
-                            t(
-                              'Could not load business names. Retry',
-                              'வணிகப் பெயர்களை ஏற்ற முடியவில்லை. மீண்டும் முயற்சி',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.could_not_load_business_names_retry.3bc61c13",
                             ),
                           ),
                         ),
@@ -646,8 +724,14 @@ class _ListingsScreenState extends State<ListingsScreen>
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: message(
-                    t('Could not load services', 'சேவைகளை ஏற்ற முடியவில்லை'),
-                    t('Please try again.', 'மீண்டும் முயற்சிக்கவும்.'),
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.could_not_load_services.d4edaa10",
+                    ),
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.please_try_again.eea4fb33",
+                    ),
                     retry: true,
                   ),
                 )
@@ -655,11 +739,14 @@ class _ListingsScreenState extends State<ListingsScreen>
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: message(
-                    t(
-                      'Could not load businesses',
-                      'வணிகங்களை ஏற்ற முடியவில்லை',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.could_not_load_businesses.0596cc0e",
                     ),
-                    t('Please try again.', 'மீண்டும் முயற்சிக்கவும்.'),
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.please_try_again.eea4fb33",
+                    ),
                     retry: true,
                   ),
                 )
@@ -667,16 +754,19 @@ class _ListingsScreenState extends State<ListingsScreen>
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: message(
-                    t(
-                      'Add a business to get started',
-                      'தொடங்க ஒரு வணிகத்தைச் சேர்க்கவும்',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.add_a_business_to_get_started.b11971fb",
                     ),
-                    t(
-                      'You need an active business before you can add services.',
-                      'சேவைகளைச் சேர்க்க செயலில் உள்ள வணிகம் தேவை.',
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.you_need_an_active_business_before_you_can_ad.fd481827",
                     ),
                     icon: Icons.storefront_outlined,
-                    actionLabel: t('Add a business', 'வணிகத்தைச் சேர்'),
+                    actionLabel: AppSettingsScope.translate(
+                      context,
+                      "vendor.add_a_business.258ffae0",
+                    ),
                     onAction: addBusiness,
                   ),
                 )
@@ -685,35 +775,50 @@ class _ListingsScreenState extends State<ListingsScreen>
                   hasScrollBody: false,
                   child: message(
                     services.isEmpty
-                        ? t('No services yet', 'இன்னும் சேவைகள் இல்லை')
-                        : t('No matching services', 'பொருத்தமான சேவைகள் இல்லை'),
+                        ? AppSettingsScope.translate(
+                            context,
+                            "vendor.no_services_yet.0e523254",
+                          )
+                        : AppSettingsScope.translate(
+                            context,
+                            "vendor.no_matching_services.4b5a3176",
+                          ),
                     services.isEmpty
                         ? ''
-                        : t(
-                            'Try a different search or clear your filters.',
-                            'வேறு தேடலை முயற்சிக்கவும் அல்லது வடிகட்டல்களை அழிக்கவும்.',
+                        : AppSettingsScope.translate(
+                            context,
+                            "vendor.try_a_different_search_or_clear_your_filters.88d56d0d",
                           ),
                   ),
                 )
               else
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 130),
-                  sliver: SliverList.builder(
-                    itemCount: rows.length,
-                    itemBuilder: (context, i) {
-                      final s = rows[i],
-                          metrics = listingMetrics[rows[i].id] as Map?;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: ListingCard(
-                          service: s,
-                          businessName: businessNames[s.businessId],
-                          bookingCount: (metrics?['bookings'] as num?)?.toInt(),
-                          rating: (metrics?['rating'] as num?)?.toDouble(),
-                          busy: busyIds.contains(s.id),
-                          onOpen: () => open(s),
-                          onAction: (value) => action(s, value),
-                        ),
+                  sliver: SliverLayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = (constraints.crossAxisExtent / 180)
+                          .floor()
+                          .clamp(2, 5);
+                      return SliverMasonryGrid.count(
+                        crossAxisCount: columns,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 12,
+                        childCount: rows.length,
+                        itemBuilder: (context, i) {
+                          final service = rows[i];
+                          final metrics = listingMetrics[service.id] as Map?;
+                          return ListingCard(
+                            key: ValueKey(service.id),
+                            service: service,
+                            photoAspectRatio: const [0.72, 1.12, 0.9][i % 3],
+                            bookingCount: (metrics?['bookings'] as num?)
+                                ?.toInt(),
+                            rating: (metrics?['rating'] as num?)?.toDouble(),
+                            busy: busyIds.contains(service.id),
+                            onOpen: () => open(service),
+                            onAction: (value) => action(service, value),
+                          );
+                        },
                       );
                     },
                   ),

@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../common/app_shimmer.dart';
@@ -35,10 +36,9 @@ class VendorBookingCard extends StatelessWidget {
         ? '${bookingDate(context, b.eventDate)} – ${bookingDate(context, b.eventEndDate)}'
         : bookingDate(context, b.eventDate);
     final time = start.isEmpty
-        ? bookingText(
+        ? AppSettingsScope.translate(
             context,
-            'Time not specified',
-            'நேரம் குறிப்பிடப்படவில்லை',
+            "vendor.time_not_specified.34713273",
           )
         : '$start${end.isEmpty ? '' : ' – $end'}';
     final price = b.price.toStringAsFixed(2).split('.');
@@ -126,10 +126,9 @@ class VendorBookingCard extends StatelessWidget {
                             detail(
                               Icons.location_on_outlined,
                               b.location.trim().isEmpty
-                                  ? bookingText(
+                                  ? AppSettingsScope.translate(
                                       context,
-                                      'Location not specified',
-                                      'இடம் குறிப்பிடப்படவில்லை',
+                                      "vendor.location_not_specified.847dcf42",
                                     )
                                   : b.location,
                             ),
@@ -150,10 +149,9 @@ class VendorBookingCard extends StatelessWidget {
                         height: 48,
                         child: IconButton(
                           padding: EdgeInsets.zero,
-                          tooltip: bookingText(
+                          tooltip: AppSettingsScope.translate(
                             context,
-                            'Open booking',
-                            'முன்பதிவைத் திற',
+                            "vendor.open_booking.5f3c8922",
                           ),
                           onPressed: busy ? null : onOpen,
                           icon: const Icon(
@@ -185,7 +183,10 @@ class VendorBookingCard extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            bookingText(context, 'Reject', 'நிராகரி'),
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.reject.ab604a36",
+                            ),
                           ),
                         ),
                       ),
@@ -201,7 +202,10 @@ class VendorBookingCard extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            bookingText(context, 'Accept', 'ஏற்கவும்'),
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.accept.89713b9c",
+                            ),
                           ),
                         ),
                       ),
@@ -214,7 +218,7 @@ class VendorBookingCard extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: onComplete,
+                      onPressed: b.awaitingCompletion ? null : onComplete,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: wine,
                         side: const BorderSide(color: wine),
@@ -224,11 +228,12 @@ class VendorBookingCard extends StatelessWidget {
                       ),
                       icon: const Icon(Icons.task_alt, size: 18),
                       label: Text(
-                        bookingText(
-                          context,
-                          'Mark as Completed',
-                          'முடிந்ததாகக் குறி',
-                        ),
+                        b.awaitingCompletion
+                            ? 'Awaiting customer confirmation'
+                            : AppSettingsScope.translate(
+                                context,
+                                "vendor.mark_as_completed.bb33aaa1",
+                              ),
                       ),
                     ),
                   ),

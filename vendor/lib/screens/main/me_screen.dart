@@ -1,3 +1,4 @@
+import '../../services/vendor_tour_controller.dart';
 import '../trial/vendor_trial_screen.dart';
 
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
@@ -101,16 +102,28 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    VendorTourController.instance.addListener(_prepareTour);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prepareTour());
+  }
+
+  void _prepareTour() {
+    if (!mounted ||
+        !VendorTourController.instance.active ||
+        VendorTourController.instance.step != 5) {
+      return;
+    }
+    if (_searchQuery.isNotEmpty) {
+      _searchController.clear();
+      setState(() => _searchQuery = '');
+    }
   }
 
   @override
   void dispose() {
+    VendorTourController.instance.removeListener(_prepareTour);
     _searchController.dispose();
     super.dispose();
   }
-
-  String _text(String english, String tamil) =>
-      AppSettingsScope.of(context).text(english, tamil);
 
   Future<void> _loadStatistics() async {
     final id = _vendor?.id;
@@ -119,7 +132,7 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
     final generation = ++_statisticsGeneration;
 
     setState(() {
-      _statisticsLoading = _statistics == null;
+      _statisticsLoading = _loading && _statistics == null;
       _statisticsFailed = false;
     });
 
@@ -148,13 +161,13 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool showLoading = false}) async {
     if (!mounted) return;
 
     final generation = ++_loadGeneration;
 
     setState(() {
-      if (!liveRefreshing) _loading = _vendor == null;
+      _loading = showLoading || _loading;
     });
 
     try {
@@ -169,7 +182,6 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
 
       setState(() {
         _vendor = vendor;
-        _loading = false;
       });
 
       final statisticsRefresh = _loadStatistics();
@@ -183,10 +195,11 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       setState(() {
         _vendor = vendor;
         _businesses = businesses;
-        _loading = false;
       });
 
       await statisticsRefresh;
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() => _loading = false);
     } catch (error) {
       debugPrint('Unable to load Me screen: $error');
 
@@ -239,7 +252,10 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _text('About Me', 'என்னைப் பற்றி'),
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.about_me.0bf7f38a",
+                  ),
                   style: Theme.of(sheet).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
@@ -269,13 +285,19 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (_) => ConfirmationDialog(
-          title: _text('Logout?', 'வெளியேற வேண்டுமா?'),
-          message: _text(
-            'Are you sure you want to log out of Eventor?',
-            'Eventor கணக்கிலிருந்து வெளியேற விரும்புகிறீர்களா?',
+          title: AppSettingsScope.translate(context, "vendor.logout.53b2ce73"),
+          message: AppSettingsScope.translate(
+            context,
+            "vendor.are_you_sure_you_want_to_log_out_of_eventor.c93c270b",
           ),
-          confirmLabel: _text('Logout', 'வெளியேறு'),
-          cancelLabel: _text('Cancel', 'ரத்து செய்'),
+          confirmLabel: AppSettingsScope.translate(
+            context,
+            "vendor.logout.d0527e4b",
+          ),
+          cancelLabel: AppSettingsScope.translate(
+            context,
+            "vendor.cancel.19766ed6",
+          ),
         ),
       );
 
@@ -301,9 +323,9 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _text(
-              'Unable to log out. Please try again.',
-              'வெளியேற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+            AppSettingsScope.translate(
+              context,
+              "vendor.unable_to_log_out_please_try_again.9fae72f9",
             ),
           ),
         ),
@@ -426,7 +448,7 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
               Icon(icon, size: 42, color: AppIconColors.standard),
               const SizedBox(height: 14),
               Text(
-                message,
+                AppSettingsScope.source(context, message),
                 textAlign: TextAlign.center,
                 style: TextStyle(height: 1.6, color: colors.onSurfaceVariant),
               ),
@@ -438,27 +460,16 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
   }
 
   Widget _profileHeader() {
-    if (_loading && _vendor == null) {
-      return const SizedBox(
-        height: 330,
-        child: Center(
-          child: AppContentSkeleton(
-            layout: SkeletonLayout.profile,
-            rows: 0,
-            bottomPadding: 16,
-          ),
-        ),
-      );
-    }
+    if (_loading && _vendor == null) return const SizedBox.shrink();
 
     if (_vendor == null) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: _headerMessage(
           Icons.refresh_rounded,
-          _text(
-            'Unable to load profile.\nTap to retry.',
-            'சுயவிவரத்தை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+          AppSettingsScope.translate(
+            context,
+            "vendor.unable_to_load_profile_tap_to_retry.c4e4a7a0",
           ),
         ),
       );
@@ -529,7 +540,7 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
                   ),
                 )
               : Text(
-                  _text('Logout', 'வெளியேறு'),
+                  AppSettingsScope.translate(context, "vendor.logout.d0527e4b"),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 13,
@@ -545,18 +556,16 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
     String id,
     IconData icon,
     String title,
-    String tamilTitle,
     String subtitle,
-    String tamilSubtitle,
     VoidCallback onTap, {
     List<String> keywords = const [],
   }) => SettingsSearchItem(
     id: id,
     icon: icon,
-    title: _text(title, tamilTitle),
-    subtitle: _text(subtitle, tamilSubtitle),
+    title: title,
+    subtitle: subtitle,
     onTap: onTap,
-    keywords: [title, tamilTitle, subtitle, tamilSubtitle, ...keywords],
+    keywords: [title, subtitle, ...keywords],
   );
 
   void _revealSection(GlobalKey key) {
@@ -589,48 +598,44 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = AppSettingsScope.of(context);
-
     final businessSubtitle = _businesses.isEmpty
-        ? _text('Add your business', 'உங்கள் வணிகத்தைச் சேர்க்கவும்')
-        : settings.tamil
-        ? '${_businesses.length} வணிகங்கள்'
-        : '${_businesses.length} business${_businesses.length == 1 ? '' : 'es'}';
+        ? AppSettingsScope.translate(
+            context,
+            "vendor.add_your_business.eb580491",
+          )
+        : AppSettingsScope.localizationOf(context)
+              .plural('common.business_count', _businesses.length);
 
     final profile = [
       _setting(
         'profile',
         Icons.person_outline_rounded,
-        'My Profile',
-        'எனது சுயவிவரம்',
-        'Manage your personal information',
-        'உங்கள் தனிப்பட்ட விவரங்களை நிர்வகிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.my_profile.991bfa01"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.manage_your_personal_information.070d5375",
+        ),
         () => _open(const MyProfileScreen(), reload: true),
-        keywords: ['photo avatar dp name about personal சுயவிவரம்'],
+        keywords: ['photo avatar dp name about personal '],
       ),
       _setting(
         'business',
         Icons.storefront_outlined,
-        'Business Details',
-        'வணிக விவரங்கள்',
-        businessSubtitle,
+        AppSettingsScope.translate(context, "vendor.business_details.502d1ed8"),
         businessSubtitle,
         _openBusinessDetails,
-        keywords: [
-          'shop address location map logo banner business வணிகம் கடை முகவரி',
-        ],
+        keywords: ['shop address location map logo banner business   '],
       ),
       _setting(
         'customer-reviews',
         Icons.rate_review_outlined,
-        'Customer Reviews',
-        'வாடிக்கையாளர் விமர்சனங்கள்',
-        'Read and reply to reviews across your businesses',
-        'உங்கள் வணிகங்களின் விமர்சனங்களைப் பார்த்து பதிலளிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.customer_reviews.8f8b1729"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.read_and_reply_to_reviews_across_your_busines.001ace06",
+        ),
         () => _open(const CustomerReviewsScreen(), reload: true),
-        keywords: [
-          'customer reviews ratings feedback replies விமர்சனங்கள் மதிப்பீடு',
-        ],
+        keywords: ['customer reviews ratings feedback replies  '],
       ),
     ];
 
@@ -638,22 +643,21 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       _setting(
         'notifications',
         Icons.notifications_outlined,
-        'Notifications',
-        'அறிவிப்புகள்',
-        'Booking and account push notifications',
-        'முன்பதிவு மற்றும் கணக்கு அறிவிப்புகள்',
+        AppSettingsScope.translate(context, "vendor.notifications.78801183"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.booking_and_account_push_notifications.74a88167",
+        ),
         () => _revealSection(_settingsKey),
-        keywords: ['push alerts notification settings அறிவிப்பு'],
+        keywords: ['push alerts notification settings '],
       ),
       _setting(
         'language',
         Icons.language,
-        'Language',
-        'மொழி',
-        'English / Tamil',
-        'ஆங்கிலம் / தமிழ்',
+        AppSettingsScope.translate(context, "vendor.language.a4fe6526"),
+        AppSettingsScope.translate(context, "vendor.english_tamil.7f10956b"),
         () => _open(const LanguageScreen()),
-        keywords: ['english tamil language settings மொழி தமிழ் ஆங்கிலம்'],
+        keywords: ['english tamil language settings   '],
       ),
     ];
 
@@ -661,42 +665,46 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       _setting(
         'password',
         Icons.lock_outline_rounded,
-        'Change Password',
-        'கடவுச்சொல்லை மாற்று',
-        'Update your sign-in password',
-        'உள்நுழைவுக் கடவுச்சொல்லைப் புதுப்பிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.change_password.a949f462"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.update_your_sign_in_password.0aca1913",
+        ),
         () => _accountAction(AccountSecurityAction.password),
-        keywords: ['account security login password கடவுச்சொல்'],
+        keywords: ['account security login password '],
       ),
       _setting(
         'email',
         Icons.mail_outline_rounded,
-        'Change Email',
-        'மின்னஞ்சலை மாற்று',
-        'Update your account email',
-        'உங்கள் கணக்கு மின்னஞ்சலைப் புதுப்பிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.change_email.18c3f2d5"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.update_your_account_email.cb6f1c35",
+        ),
         () => _accountAction(AccountSecurityAction.email),
-        keywords: ['account security mail மின்னஞ்சல்'],
+        keywords: ['account security mail '],
       ),
       _setting(
         'phone',
         Icons.phone_outlined,
-        'Phone Number',
-        'தொலைபேசி எண்',
-        'Manage your contact number',
-        'உங்கள் தொடர்பு எண்ணை நிர்வகிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.phone_number.72dba9ae"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.manage_your_contact_number.2a2b01c9",
+        ),
         () => _accountAction(AccountSecurityAction.phone),
-        keywords: ['account security mobile contact தொலைபேசி'],
+        keywords: ['account security mobile contact '],
       ),
       _setting(
         'delete',
         Icons.person_remove_outlined,
-        'Delete Account',
-        'கணக்கை நீக்கு',
-        'Request account deletion for admin review',
-        'கணக்கை நீக்க நிர்வாகியிடம் கோரிக்கை அனுப்பவும்',
+        AppSettingsScope.translate(context, "vendor.delete_account.c031bf99"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.request_account_deletion_for_admin_review.e62fb6ef",
+        ),
         () => _accountAction(AccountSecurityAction.deleteAccount),
-        keywords: ['account security remove deletion close கணக்கு நீக்கு'],
+        keywords: ['account security remove deletion close  '],
       ),
     ];
 
@@ -704,54 +712,60 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       _setting(
         'app-guide',
         Icons.school_outlined,
-        'App Guide / Restart Tour',
-        'செயலி வழிகாட்டி / மீண்டும் பயிற்சி',
-        'Learn the app and practice a sample booking',
-        'செயலியை அறிந்து மாதிரி முன்பதிவில் பயிற்சி செய்யுங்கள்',
+        AppSettingsScope.translate(
+          context,
+          "vendor.app_guide_restart_tour.a7a9e5bf",
+        ),
+        AppSettingsScope.translate(
+          context,
+          "vendor.learn_the_app_and_practice_a_sample_booking.6cb715a0",
+        ),
         () => VendorTrialScreen.open(context, restart: true),
-        keywords: [
-          'tutorial onboarding trial tour practice guide help வழிகாட்டி பயிற்சி',
-        ],
+        keywords: ['tutorial onboarding trial tour practice guide help  '],
       ),
       _setting(
         'support',
         Icons.help_outline_rounded,
-        'Help & Support',
-        'உதவி மற்றும் ஆதரவு',
-        'FAQs, contact support and track requests',
-        'கேள்விகள், ஆதரவு மற்றும் கோரிக்கைகள்',
+        AppSettingsScope.translate(context, "vendor.help_support.1f8ecc24"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.faqs_contact_support_and_track_requests.f8c8dc7b",
+        ),
         () => _open(const HelpSupportScreen()),
-        keywords: ['help information faq ticket contact support உதவி'],
+        keywords: ['help information faq ticket contact support '],
       ),
       _setting(
         'about',
         Icons.info_outline_rounded,
-        'About Eventor',
-        'Eventor பற்றி',
-        'Learn about Eventor Vendor',
-        'Eventor Vendor பற்றித் தெரிந்துகொள்ளவும்',
+        AppSettingsScope.translate(context, "vendor.about_eventor.3495d1b2"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.learn_about_eventor_vendor.339f91f5",
+        ),
         () => _open(const AboutEventorScreen()),
-        keywords: ['help information company about பற்றி'],
+        keywords: ['help information company about '],
       ),
       _setting(
         'privacy',
         Icons.privacy_tip_outlined,
-        'Privacy Policy',
-        'தனியுரிமைக் கொள்கை',
-        'How Eventor handles your information',
-        'உங்கள் தகவல்கள் எவ்வாறு கையாளப்படுகின்றன',
+        AppSettingsScope.translate(context, "vendor.privacy_policy.506ff394"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.how_eventor_handles_your_information.ce218968",
+        ),
         () => _open(const PrivacyPolicyScreen()),
-        keywords: ['help information legal privacy data தனியுரிமை'],
+        keywords: ['help information legal privacy data '],
       ),
       _setting(
         'terms',
         Icons.description_outlined,
-        'Terms & Conditions',
-        'விதிமுறைகள் மற்றும் நிபந்தனைகள்',
-        'Read the latest Eventor vendor terms',
-        'சமீபத்திய விற்பனையாளர் விதிமுறைகளைப் படிக்கவும்',
+        AppSettingsScope.translate(context, "vendor.terms_conditions.173f5f9f"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.read_the_latest_eventor_vendor_terms.8846c775",
+        ),
         () => _open(const TermsAndConditionsScreen()),
-        keywords: ['help information legal terms conditions விதிமுறைகள்'],
+        keywords: ['help information legal terms conditions '],
       ),
     ];
 
@@ -759,24 +773,26 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       _setting(
         'follow',
         Icons.public,
-        'Follow Us',
-        'எங்களைப் பின்தொடருங்கள்',
-        'Eventor social links',
-        'Eventor சமூக இணைப்புகள்',
+        AppSettingsScope.translate(context, "vendor.follow_us.e2514497"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.eventor_social_links.cd63b32b",
+        ),
         () => _revealSection(_followKey),
         keywords: [
-          'social instagram whatsapp facebook youtube telegram linkedin twitter community சமூகம்',
+          'social instagram whatsapp facebook youtube telegram linkedin twitter community ',
         ],
       ),
       _setting(
         'logout',
         Icons.logout,
-        'Logout',
-        'வெளியேறு',
-        'Sign out of your account',
-        'உங்கள் கணக்கிலிருந்து வெளியேறவும்',
+        AppSettingsScope.translate(context, "vendor.logout.d0527e4b"),
+        AppSettingsScope.translate(
+          context,
+          "vendor.sign_out_of_your_account.1083b824",
+        ),
         _confirmLogout,
-        keywords: ['log out sign out exit வெளியேறு'],
+        keywords: ['log out sign out exit '],
       ),
     ];
 
@@ -794,7 +810,9 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
       backgroundColor: _background,
       body: SafeArea(
         child: AppShimmerRefreshIndicator(
-          onRefresh: _loadData,
+          onRefresh: () => _loadData(showLoading: true),
+          loading: _loading,
+          skeletonLayout: SkeletonLayout.profile,
           color: _wine,
           child: ListView(
             key: const PageStorageKey('me-settings-list'),
@@ -808,7 +826,7 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
                   children: [
                     // ME HEADING: BLACK
                     Text(
-                      _text('Me', 'எனது கணக்கு'),
+                      AppSettingsScope.translate(context, "vendor.me.d30af076"),
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -820,11 +838,14 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
                       controller: _searchController,
                       onChanged: (value) =>
                           setState(() => _searchQuery = value),
-                      hintText: _text(
-                        'Search settings, help and more',
-                        'அமைப்புகள், உதவி மற்றும் பலவற்றைத் தேடுங்கள்',
+                      hintText: AppSettingsScope.translate(
+                        context,
+                        "vendor.search_settings_help_and_more.d6ae2d99",
                       ),
-                      clearLabel: _text('Clear search', 'தேடலை அழி'),
+                      clearLabel: AppSettingsScope.translate(
+                        context,
+                        "vendor.clear_search.3b7ea517",
+                      ),
                     ),
                   ],
                 ),
@@ -838,14 +859,19 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (searching) ...[
-                      _heading(_text('Search results', 'தேடல் முடிவுகள்')),
+                      _heading(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.search_results.e978b00d",
+                        ),
+                      ),
                       if (results.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Text(
-                            _text(
-                              'No matching settings. Try another word.',
-                              'பொருந்தும் அமைப்புகள் இல்லை. வேறு சொல்லை முயற்சிக்கவும்.',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.no_matching_settings_try_another_word.9ae141ea",
                             ),
                           ),
                         )
@@ -853,7 +879,10 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
                         _menuGroup(results.map(_searchResult).toList()),
                     ] else ...[
                       _heading(
-                        _text('Profile & Business', 'சுயவிவரம் மற்றும் வணிகம்'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.profile_business.2f075b38",
+                        ),
                       ),
                       _menuGroup(profile.map(_searchResult).toList()),
                       const SizedBox(height: 24),
@@ -865,16 +894,19 @@ class _MeScreenState extends State<MeScreen> with LiveDataState<MeScreen> {
 
                       const SizedBox(height: 28),
                       _heading(
-                        _text(
-                          'Account & Security',
-                          'கணக்கு மற்றும் பாதுகாப்பு',
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.account_security.4fc94a35",
                         ),
                       ),
                       _menuGroup(account.map(_searchResult).toList()),
                       const SizedBox(height: 24),
 
                       _heading(
-                        _text('Help & Information', 'உதவி மற்றும் தகவல்கள்'),
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.help_information.bab7d064",
+                        ),
                       ),
                       _menuGroup(help.map(_searchResult).toList()),
                       const SizedBox(height: 24),

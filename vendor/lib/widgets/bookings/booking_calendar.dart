@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/booking_model.dart';
@@ -40,7 +41,7 @@ class BookingCalendar extends StatelessWidget {
       ),
       const SizedBox(height: 6),
       Text(
-        '${bookingsOnDay(bookings, selectedDay).length} ${bookingText(context, 'bookings', 'முன்பதிவுகள்')}',
+        '${bookingsOnDay(bookings, selectedDay).length} ${AppSettingsScope.translate(context, "vendor.bookings.5cc6c019")}',
       ),
       const SizedBox(height: 12),
     ],

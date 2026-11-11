@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import '../common/app_shimmer.dart';
 import '../../models/service_pricing.dart';
 import '../../widgets/services/service_pricing_fields.dart';
@@ -391,9 +393,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
               padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Add Service',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.add_service.62e79d2a",
+                      ),
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -427,8 +432,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // NAME
                     // ==========================================
 
-                    const Text(
-                      'Service Name',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.service_name.2133ed9a",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -437,8 +445,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     TextField(
                       controller: _nameController,
                       enabled: !_isCreating,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter service name',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_service_name.717bf07a",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -448,8 +459,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // CATEGORY
                     // ==========================================
-                    const Text(
-                      'Category',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.category.292c06f0",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -462,8 +476,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // DESCRIPTION
                     // ==========================================
-                    const Text(
-                      'Description',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.description.526e0087",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -473,8 +490,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                       controller: _descriptionController,
                       enabled: !_isCreating,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Describe your service',
+                      decoration: InputDecoration(
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.describe_your_service.0f4d39c0",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -484,8 +504,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // PRICE
                     // ==========================================
-                    const Text(
-                      'Price',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.price.93c91c85",
+                      ),
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
 
@@ -502,9 +525,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         prefixText: '₹ ',
-                        hintText: 'Enter price',
+                        hintText: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_price.cec17a55",
+                        ),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -514,8 +540,11 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     // ==========================================
                     // IMAGES
                     // ==========================================
-                    const Text(
-                      'Service Images',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.service_images.3f04b445",
+                      ),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -525,9 +554,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                     const SizedBox(height: 6),
 
                     Text(
-                      'Select one or more images. '
-                      'Each image will open in the '
-                      '16:9 crop screen.',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.select_one_or_more_images_each_image_will_ope.0925a105",
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -580,7 +610,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                           : () {
                               Navigator.of(context).pop();
                             },
-                      child: const Text('Cancel'),
+                      child: Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.cancel.19766ed6",
+                        ),
+                      ),
                     ),
                   ),
 
@@ -651,9 +686,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
           ? _selectedCategoryId
           : null,
       isExpanded: true,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         border: OutlineInputBorder(),
-        hintText: 'Select category',
+        hintText: AppSettingsScope.translate(
+          context,
+          "vendor.select_category.e26788c5",
+        ),
       ),
       items: _categories.map((Map<String, dynamic> category) {
         final String id = category['id']?.toString() ?? '';

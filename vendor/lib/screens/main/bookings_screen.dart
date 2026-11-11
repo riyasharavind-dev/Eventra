@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+import 'package:eventor_vendor/services/vendor_tour_controller.dart';
+import 'package:eventor_vendor/widgets/trial/tour_anchor.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -72,7 +75,7 @@ class _BookingsScreenState extends State<BookingsScreen>
 
   DateTimeRange? range;
 
-  String t(String en, String ta) => bookingText(context, en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
 
   static const Color _wine = Color(0xFF80152C);
   static const Color _pageBg = Color(0xFFF8F8FA);
@@ -162,35 +165,54 @@ class _BookingsScreenState extends State<BookingsScreen>
   }
 
   Map<String, String> get businesses => {
-    'all': t('All businesses', 'அனைத்து வணிகங்கள்'),
+    'all': AppSettingsScope.translate(
+      context,
+      "vendor.all_businesses.13312b22",
+    ),
     for (final b in bookings)
       if (b.businessId != null)
         b.businessId!:
-            b.businessName ?? t('Unnamed business', 'பெயரிடப்படாத வணிகம்'),
+            b.businessName ??
+            AppSettingsScope.translate(
+              context,
+              "vendor.unnamed_business.7ce58cbf",
+            ),
     if (bookings.any((b) => b.businessId == null))
-      'unassigned': t('Unassigned business', 'வணிகம் ஒதுக்கப்படவில்லை'),
+      'unassigned': AppSettingsScope.translate(
+        context,
+        "vendor.unassigned_business.2e6ea6db",
+      ),
   };
 
   Map<String, String> get periods => {
-    'all': t('All events', 'அனைத்து நிகழ்வுகள்'),
-    'upcoming': t('Upcoming / ongoing', 'வரவிருக்கும் / நடைபெறும்'),
-    'past': t('Past events', 'கடந்த நிகழ்வுகள்'),
+    'all': AppSettingsScope.translate(context, "vendor.all_events.20b8487b"),
+    'upcoming': AppSettingsScope.translate(
+      context,
+      "vendor.upcoming_ongoing.9acdfb37",
+    ),
+    'past': AppSettingsScope.translate(context, "vendor.past_events.196a267b"),
   };
 
   Map<String, String> get dateOptions => {
-    'all': t('Any date', 'அனைத்து தேதிகள்'),
-    'today': t('Today', 'இன்று'),
-    'week': t('Next 7 days', 'அடுத்த 7 நாட்கள்'),
-    'month': t('This month', 'இந்த மாதம்'),
-    'custom': t('Custom dates', 'தேதிகளைத் தேர்வு செய்'),
+    'all': AppSettingsScope.translate(context, "vendor.any_date.a4717b65"),
+    'today': AppSettingsScope.translate(context, "vendor.today.2b065c7c"),
+    'week': AppSettingsScope.translate(context, "vendor.next_7_days.52a7da46"),
+    'month': AppSettingsScope.translate(context, "vendor.this_month.fd787ef3"),
+    'custom': AppSettingsScope.translate(
+      context,
+      "vendor.custom_dates.9c855cef",
+    ),
   };
 
   Map<String, String> get sorts => {
-    'event': t(
-      'Event date · nearest first',
-      'நிகழ்வு தேதி · அருகிலுள்ளவை முதலில்',
+    'event': AppSettingsScope.translate(
+      context,
+      "vendor.event_date_nearest_first.3a6158be",
     ),
-    'newest': t('Newest requests first', 'புதிய கோரிக்கைகள் முதலில்'),
+    'newest': AppSettingsScope.translate(
+      context,
+      "vendor.newest_requests_first.75d21729",
+    ),
   };
 
   int get filterCount =>
@@ -200,6 +222,7 @@ class _BookingsScreenState extends State<BookingsScreen>
       (sort != 'newest' ? 1 : 0);
 
   Future<void> openCalendar() async {
+    VendorTourController.instance.calendarOpenedNow();
     FocusScope.of(context).unfocus();
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
@@ -277,7 +300,9 @@ class _BookingsScreenState extends State<BookingsScreen>
             if (error != null)
               TextButton(
                 onPressed: load,
-                child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                child: Text(
+                  AppSettingsScope.translate(context, "vendor.retry.942087cc"),
+                ),
               ),
           ],
         ),
@@ -330,7 +355,10 @@ class _BookingsScreenState extends State<BookingsScreen>
                       children: [
                         // Heading only — reload icon removed completely.
                         Text(
-                          t('Bookings', 'முன்பதிவுகள்'),
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.bookings.4e5f81ad",
+                          ),
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 26,
@@ -346,32 +374,40 @@ class _BookingsScreenState extends State<BookingsScreen>
                               child: GlobalSearchBar(
                                 controller: search,
                                 onChanged: (_) => setState(() {}),
-                                hintText: t(
-                                  'Search customer, service or location...',
-                                  'வாடிக்கையாளர், சேவை அல்லது இடம் தேடு...',
+                                hintText: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.search_customer_service_or_location.265a390a",
                                 ),
-                                clearLabel: t('Clear search', 'தேடலை அழி'),
+                                clearLabel: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.clear_search.3b7ea517",
+                                ),
                               ),
                             ),
                             const SizedBox(width: 9),
                             SizedBox(
                               width: 49,
                               height: 49,
-                              child: IconButton(
-                                tooltip: t(
-                                  'Open booking calendar',
-                                  'முன்பதிவு நாட்காட்டியைத் திற',
-                                ),
-                                onPressed: openCalendar,
-                                style: IconButton.styleFrom(
-                                  foregroundColor: AppIconColors.standard,
-                                  backgroundColor: Colors.transparent,
-                                  side: BorderSide.none,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                              child: TourAnchor(
+                                id: TourTargets.calendar,
+                                child: IconButton(
+                                  tooltip: AppSettingsScope.translate(
+                                    context,
+                                    "vendor.open_booking_calendar.2e4dcb30",
+                                  ),
+                                  onPressed: openCalendar,
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: AppIconColors.standard,
+                                    backgroundColor: Colors.transparent,
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.calendar_month_outlined,
                                   ),
                                 ),
-                                icon: const Icon(Icons.calendar_month_outlined),
                               ),
                             ),
                           ],
@@ -383,7 +419,11 @@ class _BookingsScreenState extends State<BookingsScreen>
                           children: [
                             Expanded(
                               child: Text(
-                                '${rows.length} ${t('bookings', 'முன்பதிவுகள்')}',
+                                AppSettingsScope.of(context).localization
+                                    .plural(
+                                      'common.booking_count',
+                                      rows.length,
+                                    ),
                                 style: const TextStyle(
                                   color: _ink,
                                   fontSize: 16,
@@ -403,7 +443,10 @@ class _BookingsScreenState extends State<BookingsScreen>
                                   });
                                 },
                                 child: Text(
-                                  t('Clear filters', 'வடிகட்டல்களை நீக்கு'),
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.clear_filters.7179ea00",
+                                  ),
                                   style: const TextStyle(color: _wine),
                                 ),
                               ),
@@ -434,7 +477,7 @@ class _BookingsScreenState extends State<BookingsScreen>
                                     padding: const EdgeInsets.only(right: 8),
                                     child: ChoiceChip(
                                       label: Text(
-                                        '${s == 'all' ? t('All', 'அனைத்தும்') : bookingStatus(context, s)} ($count)',
+                                        '${s == 'all' ? AppSettingsScope.translate(context, "vendor.all.a52ace42") : bookingStatus(context, s)} ($count)',
                                       ),
                                       selected: selected,
                                       showCheckmark: false,
@@ -469,7 +512,10 @@ class _BookingsScreenState extends State<BookingsScreen>
                                 Chip(
                                   label: Text(
                                     businesses[business] ??
-                                        t('Business', 'வணிகம்'),
+                                        AppSettingsScope.translate(
+                                          context,
+                                          "vendor.business.76f68a75",
+                                        ),
                                   ),
                                 ),
                               if (period != 'all')
@@ -503,14 +549,17 @@ class _BookingsScreenState extends State<BookingsScreen>
                             child: ListTile(
                               dense: true,
                               title: Text(
-                                t(
-                                  'Refresh failed. Showing previously loaded bookings.',
-                                  'புதுப்பிக்க முடியவில்லை. ஏற்கனவே ஏற்றப்பட்ட முன்பதிவுகள் காட்டப்படுகின்றன.',
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.refresh_failed_showing_previously_loaded_book.378e0bbe",
                                 ),
                               ),
                               trailing: IconButton(
                                 onPressed: load,
-                                tooltip: t('Retry', 'மீண்டும் முயற்சி'),
+                                tooltip: AppSettingsScope.translate(
+                                  context,
+                                  "vendor.retry.942087cc",
+                                ),
                                 icon: const Icon(
                                   Icons.refresh,
                                   color: AppIconColors.standard,
@@ -536,9 +585,9 @@ class _BookingsScreenState extends State<BookingsScreen>
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: message(
-                      t(
-                        'Unable to load bookings',
-                        'முன்பதிவுகளை ஏற்ற முடியவில்லை',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.unable_to_load_bookings.39b0d6a0",
                       ),
                     ),
                   )
@@ -547,19 +596,22 @@ class _BookingsScreenState extends State<BookingsScreen>
                     hasScrollBody: false,
                     child: message(
                       bookings.isEmpty
-                          ? t('No bookings yet', 'இன்னும் முன்பதிவுகள் இல்லை')
-                          : t(
-                              'No matching bookings',
-                              'பொருத்தமான முன்பதிவுகள் இல்லை',
+                          ? AppSettingsScope.translate(
+                              context,
+                              "vendor.no_bookings_yet.455be733",
+                            )
+                          : AppSettingsScope.translate(
+                              context,
+                              "vendor.no_matching_bookings.7f30d3a8",
                             ),
                       detail: bookings.isEmpty
-                          ? t(
-                              'New customer requests will appear here.',
-                              'புதிய வாடிக்கையாளர் கோரிக்கைகள் இங்கே தோன்றும்.',
+                          ? AppSettingsScope.translate(
+                              context,
+                              "vendor.new_customer_requests_will_appear_here.ea56c37e",
                             )
-                          : t(
-                              'Try another search or change the filters.',
-                              'வேறு தேடல் அல்லது வடிகட்டலை முயற்சிக்கவும்.',
+                          : AppSettingsScope.translate(
+                              context,
+                              "vendor.try_another_search_or_change_the_filters.f68ef174",
                             ),
                     ),
                   )
@@ -584,9 +636,9 @@ class _BookingsScreenState extends State<BookingsScreen>
                           final eventDate = item.eventDate;
 
                           if (eventDate == null) {
-                            return t(
-                              'Date not specified',
-                              'தேதி குறிப்பிடப்படவில்லை',
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.date_not_specified.078e4119",
                             );
                           }
 
@@ -600,16 +652,22 @@ class _BookingsScreenState extends State<BookingsScreen>
                           );
 
                           if (day == today) {
-                            return t('Today', 'இன்று');
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.today.2b065c7c",
+                            );
                           }
 
                           if (day.isBefore(today)) {
-                            return t('Past bookings', 'கடந்த முன்பதிவுகள்');
+                            return AppSettingsScope.translate(
+                              context,
+                              "vendor.past_bookings.31409582",
+                            );
                           }
 
-                          return t(
-                            'Upcoming bookings',
-                            'வரவிருக்கும் முன்பதிவுகள்',
+                          return AppSettingsScope.translate(
+                            context,
+                            "vendor.upcoming_bookings.a7dced7d",
                           );
                         }
 

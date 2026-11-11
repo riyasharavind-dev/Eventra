@@ -49,33 +49,30 @@ class _VendorMainScreenState extends State<VendorMainScreen>
           ModalRoute.of(context)?.isCurrent != true) {
         return;
       }
-      final settings = AppSettingsScope.of(context);
-      String t(String en, String ta) => settings.text(en, ta);
+
+      String t(String en) => AppSettingsScope.source(context, en);
       final start = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(t('A quick tour?', 'ஒரு சிறிய அறிமுகம்?')),
+          title: Text(
+            AppSettingsScope.translate(context, "vendor.a_quick_tour.aeb88d6c"),
+          ),
           content: Text(
-            t(
-              'Learn where to tap and practice a sample booking. About 1 minute, with no real changes.',
-              'எதைத் தொடுவது என்று அறிந்து, மாதிரி முன்பதிவில் பயிற்சி செய்யுங்கள். சுமார் 1 நிமிடம்; உண்மையான மாற்றங்கள் இல்லை.',
+            AppSettingsScope.translate(
+              context,
+              "vendor.follow_the_real_buttons_and_screens_with_quic.9f4d1491",
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text(t('Later', 'பிறகு')),
+              child: Text(
+                AppSettingsScope.translate(context, "vendor.later.73b6e48a"),
+              ),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                t(
-                  progress.step > 0 ? 'Resume tour' : 'Start tour',
-                  progress.step > 0
-                      ? 'பயிற்சியைத் தொடரவும்'
-                      : 'பயிற்சியைத் தொடங்கு',
-                ),
-              ),
+              child: Text(t(progress.step > 0 ? 'Resume tour' : 'Start tour')),
             ),
           ],
         ),

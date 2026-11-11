@@ -1,3 +1,5 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
 import 'minimal_booking_calendar.dart';
 
 import 'package:flutter/material.dart';
@@ -47,7 +49,7 @@ class BookingMonthCalendar extends StatelessWidget {
     final cells = ((offset + last.day) / 7).ceil() * 7;
     final start = DateTime(first.year, first.month, 1 - offset);
     final today = calendarDay(DateTime.now());
-    String t(String en, String ta) => bookingText(context, en, ta);
+
     Future<void> jump() async {
       final picked = await showDatePicker(
         context: context,
@@ -74,7 +76,10 @@ class BookingMonthCalendar extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  tooltip: t('Previous month', 'முந்தைய மாதம்'),
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "vendor.previous_month.6a276950",
+                  ),
                   onPressed: first.year <= 1900 && first.month == 1
                       ? null
                       : () => onMonthChanged(
@@ -93,7 +98,10 @@ class BookingMonthCalendar extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: t('Next month', 'அடுத்த மாதம்'),
+                  tooltip: AppSettingsScope.translate(
+                    context,
+                    "vendor.next_month.74e53211",
+                  ),
                   onPressed: first.year >= 2200 && first.month == 12
                       ? null
                       : () => onMonthChanged(
@@ -147,7 +155,7 @@ class BookingMonthCalendar extends StatelessWidget {
                       padding: const EdgeInsets.all(2),
                       child: Semantics(
                         label:
-                            '${locale.formatFullDate(day)}, ${rows.length} ${t('bookings', 'முன்பதிவுகள்')}, $accepted ${t('accepted commitments', 'ஏற்கப்பட்ட நிகழ்வுகள்')}',
+                            '${locale.formatFullDate(day)}, ${rows.length} ${AppSettingsScope.translate(context, "vendor.bookings.5cc6c019")}, $accepted ${AppSettingsScope.translate(context, "vendor.accepted_commitments.06d4e341")}',
                         selected: selected,
                         button: day.year >= 1900 && day.year <= 2200,
                         child: Material(

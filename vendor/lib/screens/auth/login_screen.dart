@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../widgets/common/app_shimmer.dart';
@@ -6,6 +7,7 @@ import '../../utils/auth_error_message.dart';
 import 'package:flutter/material.dart';
 
 import '../../repositories/auth_repository.dart';
+import 'password_recovery_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -112,7 +114,14 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed. Please try again.')),
+        SnackBar(
+          content: Text(
+            AppSettingsScope.translate(
+              context,
+              "vendor.login_failed_please_try_again.c95b4875",
+            ),
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
@@ -131,6 +140,26 @@ class _LoginScreenState extends State<LoginScreen> {
   // ==========================================
   // OPEN SIGNUP
   // ==========================================
+
+  Future<void> _openPasswordRecovery() async {
+    FocusScope.of(context).unfocus();
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            PasswordRecoveryScreen(initialEmail: _emailController.text.trim()),
+      ),
+    );
+    if (!mounted || changed != true) return;
+    _passwordController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppSettingsScope.of(context)
+              .text('Password updated. Sign in with your new password.'),
+        ),
+      ),
+    );
+  }
 
   void _openSignup() {
     Navigator.push(
@@ -161,49 +190,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
 
                     // ==================================
-                    // BRAND BADGE
-                    // ==================================
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5E8EC),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.storefront_rounded,
-                              size: 16,
-                              color: AppIconColors.standard,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'EVENTOR VENDOR',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: _wine,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // ==================================
                     // HEADING
                     // ==================================
-                    const Text(
-                      'Welcome back',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.welcome_back.66212495",
+                      ),
                       style: TextStyle(
                         fontSize: 29,
                         height: 1.2,
@@ -215,8 +208,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
-                      'Sign in to continue to your account.',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.sign_in_to_continue_to_your_account.52fa0f48",
+                      ),
                       style: TextStyle(
                         fontSize: 14,
                         height: 1.5,
@@ -229,8 +225,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ==================================
                     // EMAIL
                     // ==================================
-                    const Text(
-                      'Email address',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.email_address.f2488fd4",
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -246,19 +245,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       textInputAction: TextInputAction.next,
                       autocorrect: false,
                       decoration: _inputDecoration(
-                        hint: 'Enter your email',
+                        hint: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_your_email.2837f6fa",
+                        ),
                         icon: Icons.mail_outline_rounded,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email';
+                          return AppSettingsScope.translate(
+                            context,
+                            "vendor.please_enter_your_email.15edb313",
+                          );
                         }
 
                         final email = value.trim();
 
                         if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                             .hasMatch(email)) {
-                          return 'Please enter a valid email';
+                          return AppSettingsScope.translate(
+                            context,
+                            "vendor.please_enter_a_valid_email.845babfe",
+                          );
                         }
 
                         return null;
@@ -270,8 +278,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ==================================
                     // PASSWORD
                     // ==================================
-                    const Text(
-                      'Password',
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.password.e7cf3ef4",
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -287,7 +298,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _signIn(),
                       decoration: _inputDecoration(
-                        hint: 'Enter your password',
+                        hint: AppSettingsScope.translate(
+                          context,
+                          "vendor.enter_your_password.c06bf967",
+                        ),
                         icon: Icons.lock_outline_rounded,
                         suffixIcon: IconButton(
                           tooltip: _obscurePassword
@@ -309,14 +323,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return AppSettingsScope.translate(
+                            context,
+                            "vendor.please_enter_your_password.f7eab111",
+                          );
                         }
 
                         return null;
                       },
                     ),
 
-                    const SizedBox(height: 28),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _isLoading ? null : _openPasswordRecovery,
+                        style: TextButton.styleFrom(foregroundColor: _wine),
+                        child: Text(
+                          AppSettingsScope.of(context).text('Forgot password?'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
 
                     // ==================================
                     // SIGN IN BUTTON
@@ -355,11 +382,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'Sign in',
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.sign_in.bfd402b2",
+                                    ),
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
@@ -380,9 +410,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Flexible(
+                        Flexible(
                           child: Text(
-                            "Don't have an account? ",
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.don_t_have_an_account.cb6f6b83",
+                            ),
                             style: TextStyle(fontSize: 13, color: _hintColor),
                           ),
                         ),
@@ -397,8 +430,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Create account',
+                          child: Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.create_account.798ca2ce",
+                            ),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

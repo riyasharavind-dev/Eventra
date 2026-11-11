@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -137,15 +138,21 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen>
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text(
-          'Terms & Conditions',
+        title: Text(
+          AppSettingsScope.translate(
+            context,
+            "vendor.terms_conditions.173f5f9f",
+          ),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: const Color(0xFFF8F8FA),
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Refresh terms',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "vendor.refresh_terms.e415ee12",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -172,8 +179,11 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'EVENTOR VENDOR',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.eventor_vendor.d853c81f",
+                            ),
                             style: TextStyle(
                               color: _red,
                               fontWeight: FontWeight.w700,

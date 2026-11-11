@@ -1,3 +1,4 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -136,15 +137,18 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
     return VendorPageScaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       appBar: AppBar(
-        title: const Text(
-          'Privacy Policy',
+        title: Text(
+          AppSettingsScope.translate(context, "vendor.privacy_policy.506ff394"),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: const Color(0xFFF8F8FA),
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Refresh privacy policy',
+            tooltip: AppSettingsScope.translate(
+              context,
+              "vendor.refresh_privacy_policy.017d223e",
+            ),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -171,8 +175,11 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'EVENTOR VENDOR',
+                          Text(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.eventor_vendor.d853c81f",
+                            ),
                             style: TextStyle(
                               color: _red,
                               fontWeight: FontWeight.w700,

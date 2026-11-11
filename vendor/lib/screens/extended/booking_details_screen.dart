@@ -1,3 +1,6 @@
+import '../../widgets/bookings/booking_workflow.dart';
+
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -47,7 +50,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
   List<Map<String, dynamic>> history = [];
   bool loading = true, busy = false;
   Object? error;
-  String t(String en, String ta) => bookingText(context, en, ta);
+  String t(String en) => AppSettingsScope.source(context, en);
   @override
   void initState() {
     super.initState();
@@ -115,7 +118,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
     if (notes.text.length > 3000) {
       bookingError(
         context,
-        t('Maximum 3000 characters.', 'அதிகபட்சம் 3000 எழுத்துகள்.'),
+        AppSettingsScope.translate(
+          context,
+          "vendor.maximum_3000_characters.2ea26a94",
+        ),
       );
       return;
     }
@@ -132,9 +138,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              t(
-                'Private notes saved.',
-                'தனிப்பட்ட குறிப்புகள் சேமிக்கப்பட்டன.',
+              AppSettingsScope.translate(
+                context,
+                "vendor.private_notes_saved.4ff704fa",
               ),
             ),
           ),
@@ -159,22 +165,29 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
       context: context,
       builder: (c) => AlertDialog(
         title: Text(
-          t('Reload saved notes?', 'சேமித்த குறிப்புகளை மீண்டும் ஏற்றவா?'),
+          AppSettingsScope.translate(
+            context,
+            "vendor.reload_saved_notes.2bdd54cf",
+          ),
         ),
         content: Text(
-          t(
-            'Unsaved edits will be replaced with the latest saved notes.',
-            'சேமிக்காத மாற்றங்களுக்குப் பதிலாக சமீபத்தில் சேமித்த குறிப்புகள் ஏற்றப்படும்.',
+          AppSettingsScope.translate(
+            context,
+            "vendor.unsaved_edits_will_be_replaced_with_the_lates.6d2d9b81",
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: Text(t('Back', 'பின்செல்')),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.back.76900f1b"),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(c, true),
-            child: Text(t('Reload', 'மீண்டும் ஏற்று')),
+            child: Text(
+              AppSettingsScope.translate(context, "vendor.reload.bdc090ec"),
+            ),
           ),
         ],
       ),
@@ -193,11 +206,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
   }
 
   Future<void> launch(Uri uri) async {
+    final l10n = AppSettingsScope.localizationOf(context);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw StateError(
-          t('Unable to open this link.', 'இணைப்பைத் திறக்க முடியவில்லை.'),
-        );
+        throw StateError(l10n.tr("vendor.unable_to_open_this_link.be059945"));
       }
     } catch (e) {
       if (mounted) {
@@ -276,7 +288,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
         backgroundColor: const Color(0xFFF8F8FA),
         appBar: AppBar(
           title: Text(
-            t('Booking Details', 'முன்பதிவு விவரங்கள்'),
+            AppSettingsScope.translate(
+              context,
+              "vendor.booking_details.a55a9692",
+            ),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           leading: BackButton(
@@ -303,14 +318,19 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  t(
-                                    'Could not refresh booking details. Retry before making changes.',
-                                    'விவரங்களைப் புதுப்பிக்க முடியவில்லை. மாற்றும் முன் மீண்டும் முயற்சிக்கவும்.',
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.could_not_refresh_booking_details_retry_befor.40815c5b",
                                   ),
                                 ),
                                 TextButton(
                                   onPressed: busy ? null : () => load(),
-                                  child: Text(t('Retry', 'மீண்டும் முயற்சி')),
+                                  child: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.retry.942087cc",
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -391,148 +411,264 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                         ],
                       ),
                       const SizedBox(height: 20),
-                      section(t('Service & business', 'சேவை மற்றும் வணிகம்'), [
-                        info(
-                          t('Business', 'வணிகம்'),
-                          b.businessName ??
-                              t(
-                                'Unassigned business',
-                                'வணிகம் ஒதுக்கப்படவில்லை',
-                              ),
+                      section(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.service_business.4987282f",
                         ),
-                        info(t('Service', 'சேவை'), b.serviceName),
-                        info(t('Event type', 'நிகழ்வு வகை'), b.eventTypeName),
-                        info(
-                          t('Booking amount', 'முன்பதிவுத் தொகை'),
-                          '₹${b.price.toStringAsFixed(2)}',
+                        [
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.business.76f68a75",
+                            ),
+                            b.businessName ??
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.unassigned_business.2e6ea6db",
+                                ),
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.service.d677190e",
+                            ),
+                            b.serviceName,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.event_type.70d81703",
+                            ),
+                            b.eventTypeName,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.booking_amount.cd0bd2f0",
+                            ),
+                            '₹${b.price.toStringAsFixed(2)}',
+                          ),
+                        ],
+                      ),
+                      section(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.customer.bf376338",
                         ),
-                      ]),
-                      section(t('Customer', 'வாடிக்கையாளர்'), [
-                        info(t('Name', 'பெயர்'), b.customerName),
-                        info(t('Email', 'மின்னஞ்சல்'), b.customerEmail),
-                        info(t('Phone', 'தொலைபேசி'), b.customerPhone),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            OutlinedButton.icon(
-                              onPressed: canCall
-                                  ? () => launch(
-                                      Uri(scheme: 'tel', path: b.customerPhone),
-                                    )
-                                  : null,
-                              icon: const Icon(Icons.call_outlined, size: 18),
-                              label: Text(t('Call', 'அழைப்பு')),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF80152C),
-                                side: const BorderSide(
-                                  color: Color(0xFF80152C),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                        [
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.name.dcd1d522",
                             ),
-                            OutlinedButton.icon(
-                              onPressed: canWhatsApp
-                                  ? () => launch(Uri.https('wa.me', '/$digits'))
-                                  : null,
-                              icon: const Icon(Icons.chat_outlined, size: 18),
-                              label: const Text('WhatsApp'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF25D366),
-                                side: const BorderSide(
-                                  color: Color(0xFF25D366),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                            b.customerName,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.email.969ccbd3",
                             ),
-                            if (b.customerEmail.isNotEmpty)
+                            b.customerEmail,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.phone.63dceb88",
+                            ),
+                            b.customerPhone,
+                          ),
+                          if (b.customerAddress?.trim().isNotEmpty == true)
+                            info('Customer Address', b.customerAddress),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
                               OutlinedButton.icon(
-                                onPressed: () => launch(
-                                  Uri(scheme: 'mailto', path: b.customerEmail),
+                                onPressed: canCall
+                                    ? () => launch(
+                                        Uri(
+                                          scheme: 'tel',
+                                          path: b.customerPhone,
+                                        ),
+                                      )
+                                    : null,
+                                icon: const Icon(Icons.call_outlined, size: 18),
+                                label: Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.call.d6e645b7",
+                                  ),
                                 ),
-                                icon: const Icon(
-                                  Icons.email_outlined,
-                                  size: 18,
-                                ),
-                                label: Text(t('Email', 'மின்னஞ்சல்')),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF17171B),
+                                  foregroundColor: const Color(0xFF80152C),
                                   side: const BorderSide(
-                                    color: Color(0xFFE8E5E8),
+                                    color: Color(0xFF80152C),
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                        if (canCall && !canWhatsApp)
-                          Text(
-                            t(
-                              'WhatsApp requires a phone number with country code.',
-                              'WhatsApp-க்கு நாட்டுக் குறியீட்டுடன் தொலைபேசி எண் தேவை.',
-                            ),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.onSurfaceVariant,
-                            ),
+                              OutlinedButton.icon(
+                                onPressed: canWhatsApp
+                                    ? () =>
+                                          launch(Uri.https('wa.me', '/$digits'))
+                                    : null,
+                                icon: const Icon(Icons.chat_outlined, size: 18),
+                                label: Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.whatsapp.6a40edf1",
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF25D366),
+                                  side: const BorderSide(
+                                    color: Color(0xFF25D366),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                              if (b.customerEmail.isNotEmpty)
+                                OutlinedButton.icon(
+                                  onPressed: () => launch(
+                                    Uri(
+                                      scheme: 'mailto',
+                                      path: b.customerEmail,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.email_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.email.969ccbd3",
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF17171B),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE8E5E8),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                      ]),
-                      section(t('Event details', 'நிகழ்வு விவரங்கள்'), [
-                        info(
-                          t('Schedule', 'நிகழ்வு நேரம்'),
-                          bookingSchedule(context, b),
-                        ),
-                        if (b.eventStartTime == null)
-                          Text(
-                            t(
-                              'Exact event time has not been provided.',
-                              'சரியான நிகழ்வு நேரம் வழங்கப்படவில்லை.',
+                          if (canCall && !canWhatsApp)
+                            Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.whatsapp_requires_a_phone_number_with_country.e24824c7",
+                              ),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        const SizedBox(height: 8),
-                        info(
-                          t('Guests', 'விருந்தினர்கள்'),
-                          b.guestCount?.toString(),
-                        ),
-                        info(t('Location', 'இடம்'), b.location),
-                        if (hasCoordinates || b.location.trim().isNotEmpty)
-                          TextButton.icon(
-                            onPressed: () => launch(
-                              Uri.https('www.google.com', '/maps/search/', {
-                                'api': '1',
-                                'query': hasCoordinates
-                                    ? '${b.latitude},${b.longitude}'
-                                    : b.location,
-                              }),
-                            ),
-                            icon: const Icon(Icons.map_outlined),
-                            label: Text(t('Open Maps', 'வரைபடம் திற')),
-                          ),
-                        info(t('Requirements', 'தேவைகள்'), b.requirement),
-                        info(t('Reason', 'காரணம்'), b.statusReason),
-                        info(t('Full booking ID', 'முழு முன்பதிவு எண்'), b.id),
-                        if (b.createdAt != null)
-                          info(
-                            t('Requested on', 'கோரிக்கை தேதி'),
-                            '${bookingDate(context, b.createdAt!.toLocal())} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(b.createdAt!.toLocal()))}',
-                          ),
-                      ]),
+                        ],
+                      ),
                       section(
-                        t(
-                          'Private preparation notes',
-                          'தனிப்பட்ட தயாரிப்புக் குறிப்புகள்',
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.event_details.f9c7f3d8",
+                        ),
+                        [
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.schedule.f4830a1d",
+                            ),
+                            bookingSchedule(context, b),
+                          ),
+                          if (b.eventStartTime == null)
+                            Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.exact_event_time_has_not_been_provided.3169f851",
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.guests.3c8e0fde",
+                            ),
+                            b.guestCount?.toString(),
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.location.15b61974",
+                            ),
+                            b.location,
+                          ),
+                          if (hasCoordinates || b.location.trim().isNotEmpty)
+                            TextButton.icon(
+                              onPressed: () => launch(
+                                Uri.https('www.google.com', '/maps/search/', {
+                                  'api': '1',
+                                  'query': hasCoordinates
+                                      ? '${b.latitude},${b.longitude}'
+                                      : b.location,
+                                }),
+                              ),
+                              icon: const Icon(Icons.map_outlined),
+                              label: Text(
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.open_maps.4fae8f1c",
+                                ),
+                              ),
+                            ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.requirements.e0cdd07f",
+                            ),
+                            b.requirement,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.reason.f81ab834",
+                            ),
+                            b.statusReason,
+                          ),
+                          info(
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.full_booking_id.c5159e27",
+                            ),
+                            b.id,
+                          ),
+                          if (b.createdAt != null)
+                            info(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.requested_on.0ec52c00",
+                              ),
+                              '${bookingDate(context, b.createdAt!.toLocal())} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(b.createdAt!.toLocal()))}',
+                            ),
+                        ],
+                      ),
+                      section(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.private_preparation_notes.fe272e4d",
                         ),
                         [
                           Text(
-                            t(
-                              'Only your vendor account can read these notes. Save before closing.',
-                              'உங்கள் விற்பனையாளர் கணக்கில் மட்டுமே இவற்றைப் பார்க்க முடியும். மூடும் முன் சேமிக்கவும்.',
+                            AppSettingsScope.translate(
+                              context,
+                              "vendor.only_your_vendor_account_can_read_these_notes.1c7995c7",
                             ),
                             style: TextStyle(
                               fontSize: 12,
@@ -567,9 +703,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                   width: 1.5,
                                 ),
                               ),
-                              hintText: t(
-                                'Team, equipment and preparation notes…',
-                                'குழு, உபகரணங்கள் மற்றும் தயாரிப்புக் குறிப்புகள்…',
+                              hintText: AppSettingsScope.translate(
+                                context,
+                                "vendor.team_equipment_and_preparation_notes.b432cc84",
                               ),
                             ),
                           ),
@@ -588,7 +724,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                   : saveNotes,
                               icon: const Icon(Icons.save_outlined, size: 18),
                               label: Text(
-                                t('Save notes', 'குறிப்புகளைச் சேமி'),
+                                AppSettingsScope.translate(
+                                  context,
+                                  "vendor.save_notes.eb76a6cc",
+                                ),
                               ),
                             ),
                           ),
@@ -599,106 +738,128 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                             onPressed: busy || loading ? null : reloadNotes,
                             icon: const Icon(Icons.refresh, size: 18),
                             label: Text(
-                              t(
-                                'Reload saved notes',
-                                'சேமித்த குறிப்புகளை மீண்டும் ஏற்று',
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.reload_saved_notes.b9731050",
                               ),
                             ),
                           ),
                         ],
                       ),
-                      section(t('Booking timeline', 'முன்பதிவு வரலாறு'), [
-                        if (history.isEmpty && !loading)
-                          Text(t('No history available.', 'வரலாறு இல்லை.')),
-                        ...history.map((h) {
-                          final when = DateTime.tryParse(
-                            h['occurred_at'].toString(),
-                          )?.toLocal();
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFBF9FA),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: const Color(0xFFF0EDF0),
+                      section(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.booking_timeline.68c7ef54",
+                        ),
+                        [
+                          if (history.isEmpty && !loading)
+                            Text(
+                              AppSettingsScope.translate(
+                                context,
+                                "vendor.no_history_available.6a83ad0c",
                               ),
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5E8EC),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.history,
-                                    color: AppIconColors.standard,
-                                    size: 20,
-                                  ),
+                          ...history.map((h) {
+                            final when = DateTime.tryParse(
+                              h['occurred_at'].toString(),
+                            )?.toLocal();
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFBF9FA),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFF0EDF0),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        h['entry_kind'] == 'snapshot'
-                                            ? t(
-                                                'Existing status recorded',
-                                                'முந்தைய நிலை பதிவு செய்யப்பட்டது',
-                                              )
-                                            : bookingStatus(
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF5E8EC),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.history,
+                                      color: AppIconColors.standard,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          h['entry_kind'] == 'snapshot'
+                                              ? AppSettingsScope.translate(
+                                                  context,
+                                                  "vendor.existing_status_recorded.3bfcb441",
+                                                )
+                                              : bookingStatus(
+                                                  context,
+                                                  h['status'].toString(),
+                                                ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: Color(0xFF17171B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          [
+                                            if (h['entry_kind'] == 'snapshot')
+                                              bookingStatus(
                                                 context,
                                                 h['status'].toString(),
                                               ),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                          color: Color(0xFF17171B),
+                                            if (when != null)
+                                              '${bookingDate(context, when)} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(when))}',
+                                            switch (h['actor_kind']) {
+                                              'vendor' =>
+                                                AppSettingsScope.translate(
+                                                  context,
+                                                  "vendor.vendor.f8aa82b4",
+                                                ),
+                                              'customer' =>
+                                                AppSettingsScope.translate(
+                                                  context,
+                                                  "vendor.customer.bf376338",
+                                                ),
+                                              _ => AppSettingsScope.translate(
+                                                context,
+                                                "vendor.system.6725e7bb",
+                                              ),
+                                            },
+                                            if (h['reason'] != null)
+                                              h['reason'].toString(),
+                                          ].join(' · '),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF73737D),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        [
-                                          if (h['entry_kind'] == 'snapshot')
-                                            bookingStatus(
-                                              context,
-                                              h['status'].toString(),
-                                            ),
-                                          if (when != null)
-                                            '${bookingDate(context, when)} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(when))}',
-                                          switch (h['actor_kind']) {
-                                            'vendor' => t(
-                                              'Vendor',
-                                              'விற்பனையாளர்',
-                                            ),
-                                            'customer' => t(
-                                              'Customer',
-                                              'வாடிக்கையாளர்',
-                                            ),
-                                            _ => t('System', 'செயலி'),
-                                          },
-                                          if (h['reason'] != null)
-                                            h['reason'].toString(),
-                                        ].join(' · '),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF73737D),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ]),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                      if (!loading && error == null)
+                        BookingWorkflow(
+                          booking: b,
+                          vendor: true,
+                          onChanged: () => load(),
+                        ),
                       if (!loading && error == null)
                         Wrap(
                           spacing: 12,
@@ -724,7 +885,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                     ? null
                                     : () => action('accepted'),
                                 child: Text(
-                                  t('Accept', 'ஏற்கவும்'),
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.accept.89713b9c",
+                                  ),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -748,7 +912,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                     ? null
                                     : () => action('rejected'),
                                 child: Text(
-                                  t('Reject', 'நிராகரி'),
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.reject.ab604a36",
+                                  ),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -771,11 +938,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                   shadowColor: const Color(0xFF00A86B)
                                       .withValues(alpha: 0.3),
                                 ),
-                                onPressed: busy
+                                onPressed: busy || b.awaitingCompletion
                                     ? null
                                     : () => action('completed'),
                                 child: Text(
-                                  t('Mark as Completed', 'முடிந்ததாகக் குறி'),
+                                  b.awaitingCompletion
+                                      ? 'Awaiting customer confirmation'
+                                      : AppSettingsScope.translate(
+                                          context,
+                                          "vendor.mark_as_completed.bb33aaa1",
+                                        ),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -794,7 +966,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                     ? null
                                     : () => action('cancelled'),
                                 child: Text(
-                                  t('Cancel booking', 'முன்பதிவை ரத்து செய்'),
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.cancel_booking.cb33063e",
+                                  ),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                   ),

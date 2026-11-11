@@ -1,11 +1,11 @@
 enum ServicePricingType {
-  fixed('fixed', 'Fixed price', 'நிலையான விலை'),
-  startingFrom('starting_from', 'Starting from', 'ஆரம்ப விலை'),
-  perUnit('per_unit', 'Per unit', 'அலகு விலை'),
-  perDuration('per_duration', 'Per duration', 'கால அளவு விலை');
+  fixed('fixed', 'Fixed price'),
+  startingFrom('starting_from', 'Starting from'),
+  perUnit('per_unit', 'Per unit'),
+  perDuration('per_duration', 'Per duration');
 
-  const ServicePricingType(this.value, this.label, this.tamilLabel);
-  final String value, label, tamilLabel;
+  const ServicePricingType(this.value, this.label);
+  final String value, label;
   static ServicePricingType parse(dynamic value) =>
       values.firstWhere((type) => type.value == value, orElse: () => fixed);
 }
@@ -40,12 +40,22 @@ class ServicePricing {
     }
   }
 
-  String format(double price, {bool tamil = false}) {
+  String format(
+    double price, {
+    bool tamil = false,
+    String Function(String)? translate,
+  }) {
+    final text = translate ?? (String value) => value;
     final amount =
         '₹${price.toStringAsFixed(price == price.roundToDouble() ? 0 : 2)}';
-    final suffix = needsUnit ? ' / ${unit ?? (tamil ? 'அலகு' : 'unit')}' : '';
+    final unitLabel = unit == null
+        ? text('unit')
+        : type == ServicePricingType.perDuration
+        ? text(unit!)
+        : unit!;
+    final suffix = needsUnit ? ' / $unitLabel' : '';
     return type == ServicePricingType.startingFrom
-        ? '${tamil ? 'ஆரம்ப விலை' : 'Starting from'} $amount'
+        ? '${text('Starting from')} $amount'
         : '$amount$suffix';
   }
 }

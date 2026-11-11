@@ -1,3 +1,6 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+import 'package:eventor_vendor/services/vendor_tour_controller.dart';
+import 'package:eventor_vendor/widgets/trial/tour_anchor.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 
 import '../../services/app_live_data.dart';
@@ -121,8 +124,8 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
   Widget build(BuildContext context) => VendorPageScaffold(
     backgroundColor: const Color(0xFFF8F8FA),
     appBar: AppBar(
-      title: const Text(
-        'My Businesses',
+      title: Text(
+        AppSettingsScope.translate(context, "vendor.my_businesses.126e368c"),
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
       ),
     ),
@@ -132,8 +135,8 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       icon: const Icon(Icons.add),
-      label: const Text(
-        'Add business',
+      label: Text(
+        AppSettingsScope.translate(context, "vendor.add_business.3bdd110b"),
         style: TextStyle(fontWeight: FontWeight.w700),
       ),
     ),
@@ -145,13 +148,23 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Could not load businesses.'),
+                Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.could_not_load_businesses.9f0d74a9",
+                  ),
+                ),
                 TextButton(
                   onPressed: refresh,
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF80152C),
                   ),
-                  child: const Text('Retry'),
+                  child: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.retry.942087cc",
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -171,8 +184,11 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              const Text(
-                'One vendor. All your businesses.',
+              Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.one_vendor_all_your_businesses.a6a6ddd2",
+                ),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -180,8 +196,11 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Manage each business with its own categories, services, contact details and shop location.',
+              Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.manage_each_business_with_its_own_categories_.7ff7e3c9",
+                ),
                 style: TextStyle(
                   fontSize: 13,
                   color: Color(0xFF73737D),
@@ -213,8 +232,11 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen>
                         ),
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'Add your first business to get started.',
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.add_your_first_business_to_get_started.caeaee0c",
+                        ),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
@@ -383,24 +405,39 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
       validator: (raw) {
         final v = raw?.trim() ?? '';
         if (required && v.length < 2) {
-          return 'Enter at least 2 characters';
+          return AppSettingsScope.translate(
+            context,
+            "vendor.enter_at_least_2_characters.373e6931",
+          );
         }
         if (key == 'address' && v.length < 5) {
-          return 'Enter your full shop address';
+          return AppSettingsScope.translate(
+            context,
+            "vendor.enter_your_full_shop_address.18404c05",
+          );
         }
         if (v.isEmpty) {
           return null;
         }
         if (key == 'email' &&
             !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v)) {
-          return 'Enter a valid email';
+          return AppSettingsScope.translate(
+            context,
+            "vendor.enter_a_valid_email.c6e81fdf",
+          );
         }
         if (['website_url', 'instagram_url'].contains(key) && !webUrl(v)) {
-          return 'Enter a full https:// link';
+          return AppSettingsScope.translate(
+            context,
+            "vendor.enter_a_full_https_link.211c0d22",
+          );
         }
         if (['phone', 'whatsapp'].contains(key) &&
             !RegExp(r'^\+?[0-9 ()-]{7,20}$').hasMatch(v)) {
-          return 'Enter a valid number with country code';
+          return AppSettingsScope.translate(
+            context,
+            "vendor.enter_a_valid_number_with_country_code.00277c23",
+          );
         }
         if (key == 'started_year') {
           final y = int.tryParse(v);
@@ -661,7 +698,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
           ? Center(
               child: TextButton(
                 onPressed: load,
-                child: const Text('Could not load categories. Retry'),
+                child: Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.could_not_load_categories_retry.410c44bf",
+                  ),
+                ),
               ),
             )
           : AbsorbPointer(
@@ -671,9 +713,28 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    heading('Business identity'),
-                    field('name', 'Business name', required: true),
-                    field('description', 'About this business', lines: 4),
+                    heading(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.business_identity.6f104bec",
+                      ),
+                    ),
+                    field(
+                      'name',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.business_name.a921756e",
+                      ),
+                      required: true,
+                    ),
+                    field(
+                      'description',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.about_this_business.fb47aebd",
+                      ),
+                      lines: 4,
+                    ),
                     Row(
                       children: [
                         Expanded(
@@ -683,12 +744,22 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                               TextButton.icon(
                                 onPressed: () => image('logo'),
                                 icon: const Icon(Icons.image_outlined),
-                                label: const Text('Logo'),
+                                label: Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.logo.d707dc2f",
+                                  ),
+                                ),
                               ),
                               if (logo != null)
                                 TextButton(
                                   onPressed: () => setState(() => logo = null),
-                                  child: const Text('Remove'),
+                                  child: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.remove.c3812fc4",
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
@@ -701,65 +772,120 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                               TextButton.icon(
                                 onPressed: () => image('banner'),
                                 icon: const Icon(Icons.panorama_outlined),
-                                label: const Text('Banner'),
+                                label: Text(
+                                  AppSettingsScope.translate(
+                                    context,
+                                    "vendor.banner.b7f4d98f",
+                                  ),
+                                ),
                               ),
                               if (banner != null)
                                 TextButton(
                                   onPressed: () =>
                                       setState(() => banner = null),
-                                  child: const Text('Remove'),
+                                  child: Text(
+                                    AppSettingsScope.translate(
+                                      context,
+                                      "vendor.remove.c3812fc4",
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    heading('Category'),
-                    const Text(
-                      'Choose one main category for this business. Subcategories are chosen when adding services.',
+                    heading(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.category.292c06f0",
+                      ),
+                    ),
+                    Text(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.choose_one_main_category_for_this_business_su.bb63f4f6",
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey('business-category-$primary'),
-                      initialValue: primary,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Business category',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: categories
-                          .map(
-                            (c) => DropdownMenuItem(
-                              value: c['id'] as String,
-                              child: Text(
-                                categoryLabel(c),
-                                overflow: TextOverflow.ellipsis,
+                    TourAnchor(
+                      id: TourTargets.category,
+                      child: DropdownButtonFormField<String>(
+                        key: ValueKey('business-category-$primary'),
+                        initialValue: primary,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: AppSettingsScope.translate(
+                            context,
+                            "vendor.business_category.1674badc",
+                          ),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: categories
+                            .map(
+                              (c) => DropdownMenuItem(
+                                value: c['id'] as String,
+                                child: Text(
+                                  categoryLabel(c),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                      validator: (v) =>
-                          v == null ? 'Select one business category' : null,
-                      onChanged: (v) => setState(() => primary = v),
+                            )
+                            .toList(),
+                        validator: (v) => v == null
+                            ? AppSettingsScope.translate(
+                                context,
+                                "vendor.select_one_business_category.2e45b13b",
+                              )
+                            : null,
+                        onChanged: (v) => setState(() => primary = v),
+                      ),
                     ),
-                    heading('Contact details'),
+                    heading(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.contact_details.9681395d",
+                      ),
+                    ),
                     field(
                       'phone',
-                      'Business phone',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.business_phone.471f6f94",
+                      ),
                       keyboard: TextInputType.phone,
                     ),
                     field(
                       'whatsapp',
-                      'WhatsApp (include country code)',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.whatsapp_include_country_code.22ed7c06",
+                      ),
                       keyboard: TextInputType.phone,
                     ),
                     field(
                       'email',
-                      'Business email',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.business_email.e9afc27f",
+                      ),
                       keyboard: TextInputType.emailAddress,
                     ),
-                    heading('Shop location'),
-                    field('address', 'Shop address', lines: 3, required: true),
+                    heading(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.shop_location.0ff027f5",
+                      ),
+                    ),
+                    field(
+                      'address',
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.shop_address.4a61a6c4",
+                      ),
+                      lines: 3,
+                      required: true,
+                    ),
                     SizedBox(
                       height: 4,
                       child: regionsLoading ? const ShimmerLoadingBar() : null,
@@ -768,7 +894,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                       key: const ValueKey('shop-state'),
                       child: ListTile(
                         leading: const Icon(Icons.public),
-                        title: const Text('State'),
+                        title: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.state.a3b50c47",
+                          ),
+                        ),
                         subtitle: Text(
                           states
                                   .where((r) => r.id == stateId)
@@ -784,7 +915,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                       key: const ValueKey('shop-district'),
                       child: ListTile(
                         leading: const Icon(Icons.location_city_outlined),
-                        title: const Text('District'),
+                        title: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.district.50f1878d",
+                          ),
+                        ),
                         subtitle: Text(
                           districts
                                   .where((r) => r.id == districtId)
@@ -800,7 +936,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                       key: const ValueKey('shop-subdistrict'),
                       child: ListTile(
                         leading: const Icon(Icons.place_outlined),
-                        title: const Text('Sub-district'),
+                        title: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.sub_district.ad6093e8",
+                          ),
+                        ),
                         subtitle: Text(
                           subdistricts
                                   .where((r) => r.id == subdistrictId)
@@ -815,7 +956,12 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                     Card(
                       child: ListTile(
                         leading: const Icon(Icons.map_outlined),
-                        title: const Text('Shop on map'),
+                        title: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.shop_on_map.94fa8707",
+                          ),
+                        ),
                         subtitle: Text(
                           value('latitude').isEmpty
                               ? 'Mark your exact shop location'
@@ -825,10 +971,13 @@ class _AddBusinessScreenState extends State<AddBusinessScreen> {
                         onTap: selectShopLocation,
                       ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Text(
-                        'Your shop pin is used to show nearby businesses and distance. You can accept bookings from any area.',
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.your_shop_pin_is_used_to_show_nearby_business.0fced8bd",
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1021,7 +1170,10 @@ class _BusinessSingleDetailsScreenState
       title: Text(business.name),
       actions: [
         IconButton(
-          tooltip: 'Edit business',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "vendor.edit_business.93a35820",
+          ),
           onPressed: busy ? null : edit,
           icon: const Icon(Icons.edit_outlined),
         ),
@@ -1035,8 +1187,21 @@ class _BusinessSingleDetailsScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Could not load business details.'),
-                TextButton(onPressed: refresh, child: const Text('Retry')),
+                Text(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.could_not_load_business_details.e785e0aa",
+                  ),
+                ),
+                TextButton(
+                  onPressed: refresh,
+                  child: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.retry.942087cc",
+                    ),
+                  ),
+                ),
               ],
             ),
           );
@@ -1098,161 +1263,225 @@ class _BusinessSingleDetailsScreenState
                   refreshKey: loading,
                 ),
                 const SizedBox(height: 16),
-                section('About this business', [
-                  if (b.description?.isNotEmpty == true)
-                    Text(
-                      b.description!,
-                      style: const TextStyle(
-                        height: 1.5,
-                        color: Color(0xFF17171B),
+                section(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.about_this_business.fb47aebd",
+                  ),
+                  [
+                    if (b.description?.isNotEmpty == true)
+                      Text(
+                        b.description!,
+                        style: const TextStyle(
+                          height: 1.5,
+                          color: Color(0xFF17171B),
+                        ),
                       ),
-                    ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: categories
-                        .where(
-                          (c) =>
-                              c['parent_id'] == null &&
-                              displayCategoryIds.contains(c['id']),
-                        )
-                        .map((c) {
-                          final isPrimary = c['id'] == displayPrimaryCategoryId;
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isPrimary
-                                  ? const Color(0xFFFFCB48)
-                                        .withValues(alpha: 0.2)
-                                  : const Color(0xFFF5E8EC),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: categories
+                          .where(
+                            (c) =>
+                                c['parent_id'] == null &&
+                                displayCategoryIds.contains(c['id']),
+                          )
+                          .map((c) {
+                            final isPrimary =
+                                c['id'] == displayPrimaryCategoryId;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
                                 color: isPrimary
                                     ? const Color(0xFFFFCB48)
-                                    : const Color(0xFF80152C)
-                                          .withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (isPrimary) ...[
-                                  const Icon(
-                                    Icons.star_rounded,
-                                    size: 15,
-                                    color: Color(0xFF8A6200),
-                                  ),
-                                  const SizedBox(width: 4),
-                                ],
-                                Text(
-                                  c['name'].toString(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: isPrimary
-                                        ? const Color(0xFF8A6200)
-                                        : const Color(0xFF80152C),
-                                  ),
+                                          .withValues(alpha: 0.2)
+                                    : const Color(0xFFF5E8EC),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isPrimary
+                                      ? const Color(0xFFFFCB48)
+                                      : const Color(0xFF80152C)
+                                            .withValues(alpha: 0.15),
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isPrimary) ...[
+                                    const Icon(
+                                      Icons.star_rounded,
+                                      size: 15,
+                                      color: Color(0xFF8A6200),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    c['name'].toString(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isPrimary
+                                          ? const Color(0xFF8A6200)
+                                          : const Color(0xFF80152C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          })
+                          .toList(),
+                    ),
+                    if (ids.isEmpty)
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.edit_this_business_to_choose_its_categories.3cad23d2",
+                        ),
+                      ),
+                  ],
+                ),
+                section(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.contact_shop_location.2227e162",
+                  ),
+                  [
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.phone.63dceb88",
+                      ),
+                      b.phone,
+                      onTap: b.phone == null
+                          ? null
+                          : () => link('tel:${b.phone}'),
+                    ),
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.whatsapp.6a40edf1",
+                      ),
+                      b.whatsapp,
+                      onTap: b.whatsapp == null
+                          ? null
+                          : () => link(
+                              'https://wa.me/${b.whatsapp!.replaceAll(RegExp(r'\D'), '')}',
                             ),
-                          );
-                        })
-                        .toList(),
-                  ),
-                  if (ids.isEmpty)
-                    const Text('Edit this business to choose its categories.'),
-                ]),
-                section('Contact & shop location', [
-                  info(
-                    'Phone',
-                    b.phone,
-                    onTap: b.phone == null
-                        ? null
-                        : () => link('tel:${b.phone}'),
-                  ),
-                  info(
-                    'WhatsApp',
-                    b.whatsapp,
-                    onTap: b.whatsapp == null
-                        ? null
-                        : () => link(
-                            'https://wa.me/${b.whatsapp!.replaceAll(RegExp(r'\D'), '')}',
-                          ),
-                  ),
-                  info(
-                    'Email',
-                    b.email,
-                    onTap: b.email == null
-                        ? null
-                        : () => link(
-                            Uri(scheme: 'mailto', path: b.email).toString(),
-                          ),
-                  ),
-                  info('Shop address', b.shopAddress ?? b.address),
-                  info(
-                    'State',
-                    locationRegions
-                        .where((r) => r.id == b.shopStateId)
-                        .firstOrNull
-                        ?.name,
-                  ),
-                  info(
-                    'District',
-                    locationRegions
-                        .where((r) => r.id == b.shopDistrictId)
-                        .firstOrNull
-                        ?.name,
-                  ),
-                  info(
-                    'Sub-district',
-                    locationRegions
-                        .where((r) => r.id == b.shopSubdistrictId)
-                        .firstOrNull
-                        ?.name,
-                  ),
-                  if (b.latitude != null && b.longitude != null)
-                    TextButton.icon(
-                      onPressed: () => link(
-                        'https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}',
+                    ),
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.email.969ccbd3",
                       ),
-                      icon: const Icon(Icons.map_outlined),
-                      label: const Text('View location'),
+                      b.email,
+                      onTap: b.email == null
+                          ? null
+                          : () => link(
+                              Uri(scheme: 'mailto', path: b.email).toString(),
+                            ),
                     ),
-                ]),
-                section('Services (${services.length})', [
-                  if (b.availabilityStatus != 'archived')
-                    OutlinedButton.icon(
-                      onPressed: () => service(),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add service'),
-                    ),
-                  if (services.isEmpty)
-                    const Text('No services added to this business yet.'),
-                  ...services.map(
-                    (s) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(s['name'].toString()),
-                      subtitle: Text(
-                        '${ServicePricing.fromMap(s).format((s['price'] as num).toDouble())} · ${s['is_active'] == true
-                            ? 'Visible'
-                            : s['vendor_enabled'] == true
-                            ? 'Hidden by business availability'
-                            : 'Disabled'}',
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.shop_address.4a61a6c4",
                       ),
-                      trailing: b.availabilityStatus == 'archived'
-                          ? null
-                          : const Icon(Icons.edit_outlined),
-                      onTap: b.availabilityStatus == 'archived'
-                          ? null
-                          : () => service(s),
+                      b.shopAddress ?? b.address,
                     ),
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.state.a3b50c47",
+                      ),
+                      locationRegions
+                          .where((r) => r.id == b.shopStateId)
+                          .firstOrNull
+                          ?.name,
+                    ),
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.district.50f1878d",
+                      ),
+                      locationRegions
+                          .where((r) => r.id == b.shopDistrictId)
+                          .firstOrNull
+                          ?.name,
+                    ),
+                    info(
+                      AppSettingsScope.translate(
+                        context,
+                        "vendor.sub_district.ad6093e8",
+                      ),
+                      locationRegions
+                          .where((r) => r.id == b.shopSubdistrictId)
+                          .firstOrNull
+                          ?.name,
+                    ),
+                    if (b.latitude != null && b.longitude != null)
+                      TextButton.icon(
+                        onPressed: () => link(
+                          'https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}',
+                        ),
+                        icon: const Icon(Icons.map_outlined),
+                        label: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.view_location.1cab3648",
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                section(
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.services_value0.8c0bb97d",
+                    args: {"value0": services.length},
                   ),
-                ]),
+                  [
+                    if (b.availabilityStatus != 'archived')
+                      OutlinedButton.icon(
+                        onPressed: () => service(),
+                        icon: const Icon(Icons.add),
+                        label: Text(
+                          AppSettingsScope.translate(
+                            context,
+                            "vendor.add_service.7d9366fd",
+                          ),
+                        ),
+                      ),
+                    if (services.isEmpty)
+                      Text(
+                        AppSettingsScope.translate(
+                          context,
+                          "vendor.no_services_added_to_this_business_yet.b64199af",
+                        ),
+                      ),
+                    ...services.map(
+                      (s) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(s['name'].toString()),
+                        subtitle: Text(
+                          '${ServicePricing.fromMap(s).format((s['price'] as num).toDouble())} · ${s['is_active'] == true
+                              ? 'Visible'
+                              : s['vendor_enabled'] == true
+                              ? 'Hidden by business availability'
+                              : 'Disabled'}',
+                        ),
+                        trailing: b.availabilityStatus == 'archived'
+                            ? null
+                            : const Icon(Icons.edit_outlined),
+                        onTap: b.availabilityStatus == 'archived'
+                            ? null
+                            : () => service(s),
+                      ),
+                    ),
+                  ],
+                ),
 
                 if (busy) const Center(child: AppShimmerIndicator()),
               ],

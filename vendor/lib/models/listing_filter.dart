@@ -11,7 +11,8 @@ List<ServiceModel> filterListings(
   final search = query.trim().toLowerCase();
   final rows = services.where((s) {
     if (status == 'active' && !s.isActive ||
-        status == 'inactive' && s.isActive) {
+        status == 'inactive' && (s.isActive || s.isArchived) ||
+        status == 'archived' && !s.isArchived) {
       return false;
     }
     if (business != 'all' &&

@@ -1,3 +1,8 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
+
+import '../../widgets/reviews/recent_review_card.dart';
+import '../../models/service_review_model.dart';
+import '../../widgets/bookings/vendor_booking_card.dart';
 import '../../widgets/trial/vendor_setup_checklist.dart';
 
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
@@ -15,8 +20,6 @@ import '../../repositories/vendor_notifications_repository.dart';
 import '../extended/notifications_screen.dart';
 
 import 'package:flutter/material.dart';
-
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/booking_model.dart';
 import '../../models/calendar_bookings.dart';
@@ -122,7 +125,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   final Set<String> _busyIds = {};
   List<BusinessModel> _allBusinesses = [];
   List<BookingModel> _allBookings = [];
-  String _text(String en, String ta) => bookingText(context, en, ta);
 
   String _vendorName = 'Vendor';
   String? _profileImageUrl;
@@ -326,15 +328,20 @@ class _DashboardScreenState extends State<DashboardScreen>
           if (_errorMessage != null) ...[
             MaterialBanner(
               content: Text(
-                _text(
-                  'Unable to refresh. Showing saved dashboard data.',
-                  'புதுப்பிக்க முடியவில்லை. முந்தைய தகவல்கள் காட்டப்படுகின்றன.',
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.unable_to_refresh_showing_saved_dashboard_dat.1355f36e",
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: _loadDashboard,
-                  child: Text(_text('Retry', 'மீண்டும் முயற்சி')),
+                  child: Text(
+                    AppSettingsScope.translate(
+                      context,
+                      "vendor.retry.942087cc",
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -347,12 +354,20 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 18),
           _buildBookingOverview(),
           const SizedBox(height: 28),
-          _buildSectionHeader(title: 'Quick Actions'),
+          _buildSectionHeader(
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.quick_actions.2cc2b6f7",
+            ),
+          ),
           const SizedBox(height: 12),
           _buildQuickActions(),
           const SizedBox(height: 28),
           _buildSectionHeader(
-            title: 'My Businesses',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.my_businesses.126e368c",
+            ),
             showAction: _businesses.isNotEmpty,
             actionText: 'See All',
             onAction: _openBusinesses,
@@ -361,7 +376,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildBusinesses(),
           const SizedBox(height: 28),
           _buildSectionHeader(
-            title: 'Recent Booking Requests',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.recent_booking_requests.455116f3",
+            ),
             showAction: _bookings.isNotEmpty,
             actionText: 'See All',
             onAction: _openBookings,
@@ -396,10 +414,19 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Text(
                 DateTime.now().hour < 12
-                    ? _text('Good morning,', 'Good morning,')
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.good_morning.dd5f018b",
+                      )
                     : DateTime.now().hour < 17
-                    ? _text('Good afternoon,', 'Good afternoon,')
-                    : _text('Good evening,', 'Good evening,'),
+                    ? AppSettingsScope.translate(
+                        context,
+                        "vendor.good_afternoon.ff60c405",
+                      )
+                    : AppSettingsScope.translate(
+                        context,
+                        "vendor.good_evening.ae140162",
+                      ),
                 style: TextStyle(fontSize: 14, color: greyText),
               ),
               const SizedBox(height: 4),
@@ -418,14 +445,17 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
         const SizedBox(width: 12),
         VendorFilterButton(
-          tooltip: _text('Filter & Sort', 'வடிகட்டி வரிசைப்படுத்து'),
+          tooltip: AppSettingsScope.translate(
+            context,
+            "vendor.filter_sort.8d76c3b1",
+          ),
           onPressed: _chooseBusiness,
           active: _selectedBusiness != 'all' || _bookingSort != 'newest',
         ),
         IconButton(
-          tooltip: _text(
-            'Activity & alerts',
-            'செயல்பாடுகள் மற்றும் அறிவிப்புகள்',
+          tooltip: AppSettingsScope.translate(
+            context,
+            "vendor.activity_alerts.9cb32fb9",
           ),
           onPressed: _showAlerts,
           icon: Badge.count(
@@ -454,11 +484,9 @@ class _DashboardScreenState extends State<DashboardScreen>
         ? 'V'
         : name.substring(0, 1).toUpperCase();
 
-    return Container(
+    return SizedBox(
       width: 52,
       height: 52,
-      padding: const EdgeInsets.all(2.5),
-      decoration: const BoxDecoration(color: gold, shape: BoxShape.circle),
       child: ClipOval(
         child: hasImage
             ? Image.network(
@@ -499,7 +527,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildStatCard(
             icon: Icons.storefront_outlined,
-            title: 'My Businesses',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.my_businesses.126e368c",
+            ),
             value: _businesses.length.toString(),
           ),
         ),
@@ -507,7 +538,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildStatCard(
             icon: Icons.miscellaneous_services_outlined,
-            title: 'Active Services',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.active_services.efed7326",
+            ),
             value: _activeServices.toString(),
           ),
         ),
@@ -601,9 +635,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Booking Overview',
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.booking_overview.1b70a5d6",
+                  ),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -621,7 +658,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${_bookings.length} total',
+                  AppSettingsScope.translate(
+                    context,
+                    "vendor.value0_total.1c384e00",
+                    args: {"value0": _bookings.length},
+                  ),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -636,25 +677,37 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Expanded(
                 child: _buildBookingStat(
-                  label: 'Pending',
+                  label: AppSettingsScope.translate(
+                    context,
+                    "vendor.pending.331551b0",
+                  ),
                   value: _pendingBookings,
                 ),
               ),
               Expanded(
                 child: _buildBookingStat(
-                  label: 'Accepted',
+                  label: AppSettingsScope.translate(
+                    context,
+                    "vendor.accepted.a00fb0c5",
+                  ),
                   value: _acceptedBookings,
                 ),
               ),
               Expanded(
                 child: _buildBookingStat(
-                  label: 'Completed',
+                  label: AppSettingsScope.translate(
+                    context,
+                    "vendor.completed.22a970d2",
+                  ),
                   value: _completedBookings,
                 ),
               ),
               Expanded(
                 child: _buildBookingStat(
-                  label: 'Cancelled',
+                  label: AppSettingsScope.translate(
+                    context,
+                    "vendor.cancelled.d353a99e",
+                  ),
                   value: _cancelledBookings,
                 ),
               ),
@@ -677,7 +730,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_overview?.upcoming ?? 0} ${_text('upcoming events', 'upcoming events')}',
+                  '${_overview?.upcoming ?? 0} ${AppSettingsScope.translate(context, "vendor.upcoming_events.deac9e2b")}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -696,7 +749,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${_overview?.rejected ?? 0} ${_text('rejected', 'rejected')}',
+                    '${_overview?.rejected ?? 0} ${AppSettingsScope.translate(context, "vendor.rejected.20cd938a")}',
                     style: const TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                 ),
@@ -714,8 +767,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                   child: Text(
                     _overview?.rating.count == 0
-                        ? _text('No reviews yet', 'No reviews yet')
-                        : '★ ${_overview?.rating.average?.toStringAsFixed(1)} · ${_overview?.rating.count} ${_text('reviews', 'reviews')}',
+                        ? AppSettingsScope.translate(
+                            context,
+                            "vendor.no_reviews_yet.8b670b7e",
+                          )
+                        : '★ ${_overview?.rating.average?.toStringAsFixed(1)} · ${_overview?.rating.count} ${AppSettingsScope.translate(context, "vendor.reviews.54641051")}',
                     style: const TextStyle(
                       color: gold,
                       fontSize: 11,
@@ -802,7 +858,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildQuickAction(
             icon: Icons.add_business_outlined,
-            title: 'Add Business',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.add_business.af9cb72a",
+            ),
             onTap: _openAddBusiness,
           ),
         ),
@@ -810,7 +869,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildQuickAction(
             icon: Icons.add_box_outlined,
-            title: 'Add Service',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.add_service.62e79d2a",
+            ),
             onTap: _openListings,
           ),
         ),
@@ -818,7 +880,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildQuickAction(
             icon: Icons.calendar_month_outlined,
-            title: 'Calendar',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.calendar.d5d0a30b",
+            ),
             onTap: _openCalendar,
           ),
         ),
@@ -826,7 +891,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _buildQuickAction(
             icon: Icons.receipt_long_outlined,
-            title: 'Bookings',
+            title: AppSettingsScope.translate(
+              context,
+              "vendor.bookings.4e5f81ad",
+            ),
             onTap: _openBookings,
           ),
         ),
@@ -895,137 +963,113 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (_businesses.isEmpty) {
       return _buildEmptyCard(
         icon: Icons.storefront_outlined,
-        title: 'No businesses yet',
-        subtitle: 'Add your first business to start creating services.',
-        buttonText: 'Add Business',
+        title: AppSettingsScope.translate(
+          context,
+          "vendor.no_businesses_yet.c0adaaf0",
+        ),
+        subtitle: AppSettingsScope.translate(
+          context,
+          "vendor.add_your_first_business_to_start_creating_ser.6da6e539",
+        ),
+        buttonText: AppSettingsScope.translate(
+          context,
+          "vendor.add_business.af9cb72a",
+        ),
         onPressed: _openAddBusiness,
       );
     }
 
     final List<BusinessModel> visibleBusinesses = _businesses.take(3).toList();
 
-    return Column(
-      children: visibleBusinesses.map((BusinessModel business) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildBusinessCard(business),
-        );
-      }).toList(),
+    final cardSize = MediaQuery.textScalerOf(context).scale(14) > 21
+        ? 220.0
+        : 180.0;
+    return SizedBox(
+      height: cardSize,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        primary: false,
+        padding: EdgeInsets.zero,
+        itemCount: visibleBusinesses.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, index) => SizedBox(
+          width: cardSize,
+          child: _buildBusinessCard(visibleBusinesses[index]),
+        ),
+      ),
     );
   }
 
   Widget _buildBusinessCard(BusinessModel business) {
-    final String logoUrl = business.logoUrl?.trim() ?? '';
-    final bool hasImage = logoUrl.isNotEmpty;
-
+    final logoUrl = business.logoUrl?.trim() ?? '';
+    final address = business.address?.trim() ?? '';
+    const placeholder = Icon(
+      Icons.storefront_outlined,
+      color: AppIconColors.standard,
+      size: 32,
+    );
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      elevation: 0,
-      shadowColor: primaryRed.withValues(alpha: 0.06),
-      child: InkWell(
-        onTap: () {
-          _openBusiness(business);
-        },
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF0EDF0)),
-            boxShadow: [
-              BoxShadow(
-                color: primaryRed.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
+        side: const BorderSide(color: Color(0xFFF0EDF0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openBusiness(business),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  border: hasImage
-                      ? Border.all(color: const Color(0xFFF0EDF0))
-                      : null,
-                ),
+              Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: hasImage
-                      ? Image.network(
+                  borderRadius: BorderRadius.circular(12),
+                  child: logoUrl.isEmpty
+                      ? const Center(child: placeholder)
+                      : Image.network(
                           logoUrl,
                           fit: BoxFit.cover,
                           gaplessPlayback: true,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.storefront_outlined,
-                              color: AppIconColors.standard,
-                              size: 28,
-                            );
-                          },
-                        )
-                      : const Icon(
-                          Icons.storefront_outlined,
-                          color: AppIconColors.standard,
-                          size: 28,
+                          errorBuilder: (_, _, _) =>
+                              const Center(child: placeholder),
                         ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      business.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    if (business.address != null &&
-                        business.address!.trim().isNotEmpty)
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 13,
-                            color: AppIconColors.standard,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              business.address!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: greyText,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      const Text(
-                        'Business location not added',
-                        style: TextStyle(fontSize: 11, color: greyText),
-                      ),
-                  ],
+              const SizedBox(height: 10),
+              Text(
+                business.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: darkText,
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppIconColors.standard,
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 13,
+                    color: AppIconColors.standard,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      address.isEmpty ? 'Business location not added' : address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: greyText),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: AppIconColors.standard,
+                  ),
+                ],
               ),
             ],
           ),
@@ -1038,25 +1082,60 @@ class _DashboardScreenState extends State<DashboardScreen>
   // RECENT BOOKINGS
   // ============================================================
 
+  Widget _buildRecentReviews() {
+    final reviews = List<ServiceReviewModel>.of(_overview?.recentReviews ?? [])
+      ..sort((a, b) {
+        final byDate = b.createdAt.compareTo(a.createdAt);
+        return byDate != 0 ? byDate : b.id.compareTo(a.id);
+      });
+    final recent = reviews.take(5).toList();
+    final side = MediaQuery.textScalerOf(context).scale(12) > 18
+        ? 220.0
+        : 180.0;
+    return SizedBox(
+      height: side,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        primary: false,
+        padding: EdgeInsets.zero,
+        itemCount: recent.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, index) => SizedBox(
+          width: side,
+          child: RecentReviewCard(
+            review: recent[index],
+            onOpen: () => _openReviews(serviceId: recent[index].serviceId),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecentBookings() {
     final List<BookingModel> bookings = _recentBookings;
 
     if (bookings.isEmpty) {
       return _buildEmptyCard(
         icon: Icons.event_available_outlined,
-        title: 'No booking requests yet',
-        subtitle: 'Customer booking requests will appear here.',
-        buttonText: 'View Bookings',
+        title: AppSettingsScope.translate(
+          context,
+          "vendor.no_booking_requests_yet.cf042c05",
+        ),
+        subtitle: AppSettingsScope.translate(
+          context,
+          "vendor.customer_booking_requests_will_appear_here.031b956f",
+        ),
+        buttonText: AppSettingsScope.translate(
+          context,
+          "vendor.view_bookings.e578b0f8",
+        ),
         onPressed: _openBookings,
       );
     }
 
     return Column(
       children: bookings.map((BookingModel booking) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildBookingCard(booking),
-        );
+        return _buildBookingCard(booking);
       }).toList(),
     );
   }
@@ -1065,263 +1144,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   // BOOKING CARD
   // ============================================================
 
-  Widget _buildBookingCard(BookingModel booking) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      elevation: 0,
-      shadowColor: primaryRed.withValues(alpha: 0.06),
-      child: InkWell(
-        onTap: _busyIds.contains(booking.id)
-            ? null
-            : () => _showBooking(booking),
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF0EDF0)),
-            boxShadow: [
-              BoxShadow(
-                color: primaryRed.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          booking.serviceName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: darkText,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          booking.customerName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: greyText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildStatusBadge(booking.status),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 14,
-                    color: AppIconColors.standard,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatDate(booking.eventDate),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: darkText,
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 14,
-                    color: AppIconColors.standard,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      booking.location,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: greyText),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F8FA),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Booking Price',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: greyText,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '₹${booking.price.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: primaryRed,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (booking.businessName != null) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    booking.businessName!,
-                    style: const TextStyle(fontSize: 11, color: greyText),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  booking.eventStartTime == null
-                      ? _text('Time not specified', 'Time not specified')
-                      : bookingSchedule(context, booking),
-                  style: const TextStyle(fontSize: 11, color: greyText),
-                ),
-              ),
-              if (booking.status == 'accepted' &&
-                  (booking.location.isNotEmpty || booking.latitude != null))
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: _busyIds.contains(booking.id)
-                        ? null
-                        : () => _openBookingMap(booking),
-                    icon: const Icon(
-                      Icons.map_outlined,
-                      size: 17,
-                      color: AppIconColors.standard,
-                    ),
-                    label: Text(
-                      _text('Open Maps', 'Open Maps'),
-                      style: const TextStyle(
-                        color: primaryRed,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              if (_busyIds.contains(booking.id)) ...[
-                const SizedBox(height: 10),
-                const ShimmerLoadingBar(),
-              ] else if (booking.status == 'pending') ...[
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => _changeBooking(booking, 'accepted'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: primaryRed,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(_text('Accept', 'Accept')),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _changeBooking(booking, 'rejected'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF6F6F7A),
-                          side: const BorderSide(color: Color(0xFFD6D6DF)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(_text('Reject', 'Reject')),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildBookingCard(BookingModel booking) => VendorBookingCard(
+    booking: booking,
+    busy: _busyIds.contains(booking.id),
+    onOpen: () => _showBooking(booking),
+    onAccept: () => _changeBooking(booking, 'accepted'),
+    onReject: () => _changeBooking(booking, 'rejected'),
+    onComplete: () => _changeBooking(booking, 'completed'),
+  );
 
   // ============================================================
   // STATUS BADGE
   // ============================================================
-
-  Widget _buildStatusBadge(String status) {
-    final String normalized = status.toLowerCase();
-
-    Color color;
-
-    switch (normalized) {
-      case 'accepted':
-        color = const Color(0xFF00A86B);
-        break;
-      case 'rejected':
-        color = const Color(0xFFD92D20);
-        break;
-      case 'completed':
-        color = const Color(0xFF1570EF);
-        break;
-      case 'cancelled':
-        color = const Color(0xFF6F6F7A);
-        break;
-      default:
-        color = const Color(0xFFF79009);
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        normalized.toUpperCase(),
-        style: TextStyle(
-          color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
 
   // ============================================================
   // EMPTY CARD
@@ -1406,8 +1240,11 @@ class _DashboardScreenState extends State<DashboardScreen>
               color: AppIconColors.standard,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Unable to load dashboard',
+            Text(
+              AppSettingsScope.translate(
+                context,
+                "vendor.unable_to_load_dashboard.e44f7d30",
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 19,
@@ -1428,7 +1265,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Icons.refresh_rounded,
                 color: AppIconColors.standard,
               ),
-              label: const Text('Try Again'),
+              label: Text(
+                AppSettingsScope.translate(
+                  context,
+                  "vendor.try_again.df0fe9e0",
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryRed,
                 foregroundColor: Colors.white,
@@ -1514,16 +1356,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   // DATE FORMAT
   // ============================================================
 
-  String _formatDate(DateTime? date) {
-    if (date == null) {
-      return 'Not specified';
-    }
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
-
   Future<void> _openFilteredBookings({
     String status = 'all',
     String period = 'all',
@@ -1556,10 +1388,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           sort: _bookingSort,
         ),
         businessOptions: {
-          'all': _text('All businesses', 'அனைத்து வணிகங்களும்'),
-          'unassigned': _text(
-            'Unassigned bookings',
-            'வணிகம் ஒதுக்கப்படாத பதிவுகள்',
+          'all': AppSettingsScope.translate(
+            context,
+            "vendor.all_businesses.13312b22",
+          ),
+          'unassigned': AppSettingsScope.translate(
+            context,
+            "vendor.unassigned_bookings.79b7084c",
           ),
           for (final business in _allBusinesses) business.id: business.name,
         },
@@ -1567,22 +1402,25 @@ class _DashboardScreenState extends State<DashboardScreen>
         showCategory: false,
         showStatus: false,
         sortOptions: {
-          'newest': _text(
-            'Newest bookings first',
-            'புதிய முன்பதிவுகள் முதலில்',
+          'newest': AppSettingsScope.translate(
+            context,
+            "vendor.newest_bookings_first.0f2da6dd",
           ),
-          'oldest': _text('Oldest bookings first', 'பழைய முன்பதிவுகள் முதலில்'),
-          'event_date': _text(
-            'Event date · earliest first',
-            'நிகழ்வு தேதி · முதலில் வருபவை',
+          'oldest': AppSettingsScope.translate(
+            context,
+            "vendor.oldest_bookings_first.14070228",
           ),
-          'price_low': _text(
-            'Amount · low to high',
-            'தொகை · குறைவிலிருந்து அதிகம்',
+          'event_date': AppSettingsScope.translate(
+            context,
+            "vendor.event_date_earliest_first.d8410e02",
           ),
-          'price_high': _text(
-            'Amount · high to low',
-            'தொகை · அதிகத்திலிருந்து குறைவு',
+          'price_low': AppSettingsScope.translate(
+            context,
+            "vendor.amount_low_to_high.9822e914",
+          ),
+          'price_high': AppSettingsScope.translate(
+            context,
+            "vendor.amount_high_to_low.656aaa31",
           ),
         },
       ),
@@ -1658,34 +1496,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  Future<void> _openBookingMap(BookingModel booking) async {
-    final valid =
-        booking.latitude != null &&
-        booking.longitude != null &&
-        booking.latitude!.isFinite &&
-        booking.longitude!.isFinite &&
-        booking.latitude!.abs() <= 90 &&
-        booking.longitude!.abs() <= 180;
-    final query = valid
-        ? '${booking.latitude},${booking.longitude}'
-        : booking.location;
-    try {
-      if (!await launchUrl(
-        Uri.https('www.google.com', '/maps/search/', {
-          'api': '1',
-          'query': query,
-        }),
-        mode: LaunchMode.externalApplication,
-      )) {
-        throw StateError('Could not open Maps.');
-      }
-    } catch (e) {
-      if (mounted) {
-        bookingError(context, e);
-      }
-    }
-  }
-
   List<Widget> _buildUpgradeSections() {
     final pending = _bookings.where((b) => b.status == 'pending').toList();
     final upcoming = upcomingCommitments(_bookings);
@@ -1693,7 +1503,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (pending.isNotEmpty) ...[
         const SizedBox(height: 28),
         _buildSectionHeader(
-          title: _text('Needs Your Attention', 'Needs Your Attention'),
+          title: AppSettingsScope.translate(
+            context,
+            "vendor.needs_your_attention.8655e327",
+          ),
           showAction: true,
           onAction: () => _openFilteredBookings(status: 'pending'),
         ),
@@ -1708,17 +1521,28 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
       ],
       const SizedBox(height: 28),
-      _buildSectionHeader(title: _text('Next Event', 'Next Event')),
+      _buildSectionHeader(
+        title: AppSettingsScope.translate(
+          context,
+          "vendor.next_event.9fc6b07c",
+        ),
+      ),
       const SizedBox(height: 12),
       if (upcoming.isEmpty)
         _buildEmptyCard(
           icon: Icons.event_available_outlined,
-          title: _text('No upcoming events', 'No upcoming events'),
-          subtitle: _text(
-            'Accepted events will appear here.',
-            'Accepted events will appear here.',
+          title: AppSettingsScope.translate(
+            context,
+            "vendor.no_upcoming_events.ff785ccc",
           ),
-          buttonText: _text('View Bookings', 'View Bookings'),
+          subtitle: AppSettingsScope.translate(
+            context,
+            "vendor.accepted_events_will_appear_here.b92b4bd6",
+          ),
+          buttonText: AppSettingsScope.translate(
+            context,
+            "vendor.view_bookings.e578b0f8",
+          ),
           onPressed: _openBookings,
         )
       else
@@ -1726,7 +1550,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (upcoming.length > 1) ...[
         const SizedBox(height: 28),
         _buildSectionHeader(
-          title: _text('Upcoming Events', 'Upcoming Events'),
+          title: AppSettingsScope.translate(
+            context,
+            "vendor.upcoming_events.e938bbbb",
+          ),
           showAction: true,
           onAction: () =>
               _openFilteredBookings(status: 'accepted', period: 'upcoming'),
@@ -1744,7 +1571,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       ],
       const SizedBox(height: 28),
       _buildSectionHeader(
-        title: _text('Recent Reviews', 'Recent Reviews'),
+        title: AppSettingsScope.translate(
+          context,
+          "vendor.recent_reviews.77e534db",
+        ),
         showAction: true,
         onAction: _openReviews,
       ),
@@ -1752,114 +1582,21 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (_overview?.recentReviews.isEmpty ?? true)
         _buildEmptyCard(
           icon: Icons.star_border_rounded,
-          title: _text('No reviews yet', 'No reviews yet'),
-          subtitle: _text(
-            'Completed booking reviews will appear here.',
-            'Completed booking reviews will appear here.',
+          title: AppSettingsScope.translate(
+            context,
+            "vendor.no_reviews_yet.8b670b7e",
           ),
-          buttonText: _text('View Reviews', 'View Reviews'),
+          subtitle: AppSettingsScope.translate(
+            context,
+            "vendor.completed_booking_reviews_will_appear_here.ce136df0",
+          ),
+          buttonText: AppSettingsScope.translate(
+            context,
+            "vendor.view_reviews.dead5662",
+          ),
           onPressed: _openReviews,
         ),
-      ...(_overview?.recentReviews ?? []).map(
-        (r) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF0EDF0)),
-            boxShadow: [
-              BoxShadow(
-                color: primaryRed.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      r.customerName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: darkText,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: gold.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: Color(0xFFB58000),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${r.rating}/5',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                            color: Color(0xFF8A6200),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Text(
-                r.serviceName,
-                style: const TextStyle(
-                  color: greyText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (r.text.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  r.text,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: darkText, height: 1.4),
-                ),
-              ],
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => _openReviews(serviceId: r.serviceId),
-                  style: TextButton.styleFrom(
-                    foregroundColor: primaryRed,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  child: Text(
-                    r.vendorReply == null
-                        ? _text('Reply', 'Reply')
-                        : _text('View reply', 'View reply'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      if (_overview?.recentReviews.isNotEmpty == true) _buildRecentReviews(),
     ];
   }
 }

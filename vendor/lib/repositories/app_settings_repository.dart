@@ -10,9 +10,14 @@ class AppSettingsRepository {
 
   Future<AppSettingsModel> load() async {
     final prefs = await SharedPreferences.getInstance();
+    final storedLanguage = prefs.getString(_language) ?? 'en';
+    final language =
+        RegExp(r'^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$').hasMatch(storedLanguage)
+        ? storedLanguage
+        : 'en';
     return AppSettingsModel(
       notificationsEnabled: prefs.getBool(_notifications) ?? true,
-      languageCode: prefs.getString(_language) == 'ta' ? 'ta' : 'en',
+      languageCode: language,
       themeMode: ThemeMode.light,
     );
   }
@@ -24,8 +29,15 @@ class AppSettingsRepository {
     }
   }
 
+  /// A stored valid choice includes English; the implicit default is not a choice.
+  Future<bool> hasSelectedLanguage() async {
+    final value = (await SharedPreferences.getInstance()).getString(_language);
+    return value != null &&
+        RegExp(r'^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$').hasMatch(value);
+  }
+
   Future<void> saveLanguage(String code) async {
-    if (code != 'en' && code != 'ta') {
+    if (!RegExp(r'^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$').hasMatch(code)) {
       throw ArgumentError('Unsupported language');
     }
     final prefs = await SharedPreferences.getInstance();

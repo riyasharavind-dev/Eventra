@@ -1,9 +1,9 @@
+import 'package:eventor_vendor/services/app_settings_controller.dart';
 import 'package:eventor_vendor/core/theme/app_icon_colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/booking_model.dart';
 import '../../models/calendar_bookings.dart';
-import '../bookings/booking_ui.dart';
 import 'booking_month_calendar.dart';
 
 int unlockedCalendarYear() =>
@@ -37,7 +37,10 @@ class MinimalBookingCalendar extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              tooltip: bookingText(context, 'Previous month', 'முந்தைய மாதம்'),
+              tooltip: AppSettingsScope.translate(
+                context,
+                "vendor.previous_month.6a276950",
+              ),
               onPressed: first.year == 2026 && first.month == 1
                   ? null
                   : () => onMonthChanged(DateTime(first.year, first.month - 1)),
@@ -59,7 +62,10 @@ class MinimalBookingCalendar extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: bookingText(context, 'Next month', 'அடுத்த மாதம்'),
+              tooltip: AppSettingsScope.translate(
+                context,
+                "vendor.next_month.74e53211",
+              ),
               onPressed: first.year >= maxYear && first.month == 12
                   ? null
                   : () => onMonthChanged(DateTime(first.year, first.month + 1)),

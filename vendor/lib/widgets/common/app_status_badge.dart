@@ -4,21 +4,13 @@ class AppStatusBadge extends StatelessWidget {
   final String text;
   final bool isActive;
 
-  const AppStatusBadge({
-    super.key,
-    required this.text,
-    required this.isActive,
-  });
+  const AppStatusBadge({super.key, required this.text, required this.isActive});
 
-  const AppStatusBadge.active({
-    super.key,
-    this.text = 'Active',
-  }) : isActive = true;
+  const AppStatusBadge.active({super.key, this.text = 'Active'})
+    : isActive = true;
 
-  const AppStatusBadge.inactive({
-    super.key,
-    this.text = 'Inactive',
-  }) : isActive = false;
+  const AppStatusBadge.inactive({super.key, this.text = 'Inactive'})
+    : isActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +23,7 @@ class AppStatusBadge extends StatelessWidget {
         : const Color(0xFFF4F2F4);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),

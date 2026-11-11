@@ -1,3 +1,5 @@
+import 'vendor_localization.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/app_settings_model.dart';
@@ -8,6 +10,7 @@ class AppSettingsController extends ChangeNotifier {
   AppSettingsController({
     required AppSettingsModel initial,
     AppSettingsRepository? repository,
+    VendorLocalization? localization,
     Future<bool> Function()? enableNotifications,
     Future<void> Function()? disableNotifications,
     Future<bool?> Function()? notificationPermission,
@@ -15,7 +18,23 @@ class AppSettingsController extends ChangeNotifier {
        _repository = repository ?? AppSettingsRepository(),
        _enable = enableNotifications,
        _disable = disableNotifications,
-       _permission = notificationPermission;
+       _permission = notificationPermission,
+       localization =
+           localization ?? VendorLocalization(code: initial.languageCode) {
+    this.localization.addListener(_languageChanged);
+  }
+  final VendorLocalization localization;
+  void _languageChanged() => notifyListeners();
+  String tr(String key, {Map<String, Object?> args = const {}}) =>
+      localization.tr(key, args: args);
+  String get languageName => localization.selected.nativeName;
+  @override
+  void dispose() {
+    localization.removeListener(_languageChanged);
+    localization.dispose();
+    super.dispose();
+  }
+
   final AppSettingsRepository _repository;
   final Future<bool> Function()? _enable;
   final Future<void> Function()? _disable;
@@ -24,8 +43,7 @@ class AppSettingsController extends ChangeNotifier {
   AppSettingsModel get value => _value;
   bool _busy = false;
   bool get busy => _busy;
-  bool get tamil => _value.languageCode == 'ta';
-  String text(String english, String tamilText) => tamil ? tamilText : english;
+  String text(String english) => localization.source(english);
   Future<void> disablePush() =>
       _disable?.call() ??
       NotificationService.instance.removeToken(reportFailure: true);
@@ -43,9 +61,8 @@ class AppSettingsController extends ChangeNotifier {
         try {
           await disablePush();
         } catch (_) {
-          return text(
-            'Notifications are off in Eventor. Device registration cleanup could not be confirmed; retry when connected.',
-            'Eventor அறிவிப்புகள் அணைக்கப்பட்டன. சாதனப் பதிவு நீக்கத்தை உறுதிப்படுத்த முடியவில்லை; இணைப்பு கிடைத்ததும் மீண்டும் முயற்சிக்கவும்.',
+          return tr(
+            "vendor.notifications_are_off_in_eventor_device_regis.9506c661",
           );
         }
         return null;
@@ -67,9 +84,8 @@ class AppSettingsController extends ChangeNotifier {
         } catch (_) {
           /* OFF remains persisted. */
         }
-        return text(
-          'Notifications are blocked or unavailable. Check Phone Settings and try again.',
-          'அறிவிப்புகள் தடுக்கப்பட்டுள்ளன அல்லது கிடைக்கவில்லை. தொலைபேசி அமைப்புகளைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+        return tr(
+          "vendor.notifications_are_blocked_or_unavailable_chec.0e26d341",
         );
       }
       return null;
@@ -102,8 +118,10 @@ class AppSettingsController extends ChangeNotifier {
     _busy = true;
     notifyListeners();
     try {
+      final pack = await localization.prepare(code);
       await _repository.saveLanguage(code);
       _value = _value.copyWith(languageCode: code);
+      localization.activate(code, pack);
     } finally {
       _busy = false;
       notifyListeners();
@@ -124,6 +142,20 @@ class AppSettingsScope extends InheritedNotifier<AppSettingsController> {
     required AppSettingsController controller,
     required super.child,
   }) : super(notifier: controller);
+  static final _englishFallback = VendorLocalization(code: 'en');
+  static VendorLocalization localizationOf(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<AppSettingsScope>()
+          ?.notifier
+          ?.localization ??
+      _englishFallback;
+  static String translate(
+    BuildContext context,
+    String key, {
+    Map<String, Object?> args = const {},
+  }) => localizationOf(context).tr(key, args: args);
+  static String source(BuildContext context, String english) =>
+      localizationOf(context).source(english);
   static AppSettingsController of(BuildContext context) {
     final scope = context
         .dependOnInheritedWidgetOfExactType<AppSettingsScope>();
