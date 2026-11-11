@@ -85,3 +85,6 @@ supabase/.branches/
 # Local CLI diagnostic logs
 firebase-debug.log*
 flutter_*.log
+
+# Dart analyzer cache
+/.dartServer/
