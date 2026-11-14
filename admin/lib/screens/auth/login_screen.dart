@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../repositories/auth_repository.dart';
 import '../extended/admin_password_screen.dart';
@@ -34,7 +35,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthRepository().signIn(email: email.text, password: password.text);
     } catch (e) {
       if (mounted) {
-        setState(() => error = e.toString().replaceFirst('Bad state: ', ''));
+        setState(() {
+          error = switch (e) {
+            AuthException(code: 'invalid_credentials') => 'Email or password is incorrect. If your browser filled the password, clear it and enter your latest password.',
+            AuthException(:final message) => message,
+            _ => e.toString().replaceFirst('Bad state: ', ''),
+          };
+        });
       }
     } finally {
       if (mounted) {

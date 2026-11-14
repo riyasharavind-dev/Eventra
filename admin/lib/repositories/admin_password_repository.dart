@@ -61,9 +61,43 @@ class AdminPasswordRepository {
         code: code!,
       );
     }
-    await db.auth.updateUser(UserAttributes(password: password));
+    final email = db.auth.currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw StateError('No email is associated with this recovery session.');
+    }
+    final updated = await db.auth.updateUser(
+      UserAttributes(password: password),
+    );
+    if (updated.user?.id != initialUserId) {
+      throw StateError('Could not confirm which account was updated.');
+    }
+
+    // A recovery session alone does not prove the new password works.
+    // Verify with a separate client so the current MFA session stays intact.
+    final verifier = GoTrueClient(
+      url: '${SupabaseConfig.url}/auth/v1',
+      headers: {'apikey': SupabaseConfig.anonKey},
+      autoRefreshToken: false,
+    );
+    try {
+      final result = await verifier.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      if (result.session == null || result.user?.id != initialUserId) {
+        throw StateError('Could not verify sign-in for the updated account.');
+      }
+    } finally {
+      try {
+        if (verifier.currentSession != null) {
+          await verifier.signOut(scope: SignOutScope.local);
+        }
+      } finally {
+        verifier.dispose();
+      }
+    }
     if (invitation) await db.rpc('admin_team_accept_invite');
   }
 
-  Future<void> signOut() => db.auth.signOut();
+  Future<void> signOut() => db.auth.signOut(scope: SignOutScope.local);
 }

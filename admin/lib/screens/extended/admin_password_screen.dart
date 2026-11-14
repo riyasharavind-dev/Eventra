@@ -26,7 +26,17 @@ class AdminPasswordScreen extends StatefulWidget {
 class _AdminPasswordScreenState extends State<AdminPasswordScreen> {
   final form = GlobalKey<FormState>();
   late final repo = widget.repository ?? AdminPasswordRepository();
-  String email = '', password = '', confirmation = '', code = '';
+  final newPassword = TextEditingController();
+  final confirmPassword = TextEditingController();
+
+  @override
+  void dispose() {
+    newPassword.dispose();
+    confirmPassword.dispose();
+    super.dispose();
+  }
+
+  String email = '', code = '';
   bool busy = false, sent = false, saved = false, hidden = true;
   String? error;
   Future<void> submit() async {
@@ -41,19 +51,20 @@ class _AdminPasswordScreenState extends State<AdminPasswordScreen> {
         if (mounted) setState(() => sent = true);
       } else {
         await repo.savePassword(
-          password,
+          newPassword.text,
           code: code,
           invitation: widget.invitation,
         );
         if (mounted) {
+          TextInput.finishAutofillContext();
           clearAdminAuthUrl();
           if (widget.invitation && widget.onCompleted != null) {
             widget.onCompleted!();
           } else {
             setState(() {
               saved = true;
-              password = '';
-              confirmation = '';
+              newPassword.clear();
+              confirmPassword.clear();
               code = '';
             });
           }
@@ -200,7 +211,7 @@ class _AdminPasswordScreenState extends State<AdminPasswordScreen> {
                               ),
                             ),
                           ),
-                          onChanged: (v) => password = v,
+                          controller: newPassword,
                           validator: adminPasswordError,
                         ),
                         const SizedBox(height: 16),
@@ -209,9 +220,10 @@ class _AdminPasswordScreenState extends State<AdminPasswordScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Confirm password',
                           ),
-                          onChanged: (v) => confirmation = v,
-                          validator: (v) =>
-                              v == password ? null : 'Passwords do not match',
+                          controller: confirmPassword,
+                          validator: (v) => v == newPassword.text
+                              ? null
+                              : 'Passwords do not match',
                         ),
                         if (repo.needsMfa) ...[
                           const SizedBox(height: 16),
