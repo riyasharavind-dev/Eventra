@@ -21,6 +21,65 @@ class AdminWorkspaceScreen extends StatefulWidget {
 
 class _AdminWorkspaceScreenState extends State<AdminWorkspaceScreen> {
   String query = '', section = 'All', capability = 'All access';
+
+  Widget _summary(String label, String value, IconData icon) => Container(
+    width: MediaQuery.sizeOf(context).width < 650
+        ? (MediaQuery.sizeOf(context).width - 60) / 2
+        : 210,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFF0EDF0)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF80152C).withValues(alpha: 0.03),
+          blurRadius: 14,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(18),
+    child: Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5E8EC),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: const Color(0xFF80152C), size: 22),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF17171B),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF73737D),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final sections = widget.modules.map((m) => m.section).toSet().toList()
@@ -39,30 +98,50 @@ class _AdminWorkspaceScreenState extends State<AdminWorkspaceScreen> {
             _ => true,
           };
     }).toList();
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'Manage Eventor',
-          style: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(fontWeight: FontWeight.w800),
+        // Title Header
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Control Centre',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF17171B),
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Unified registry of modules, databases, workflows, and platform operations.',
+                    style: TextStyle(fontSize: 13.5, color: Color(0xFF73737D)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'One workspace for accounts, services, bookings, content and platform operations.',
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+
+        // Summary Statistics Cards
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 14,
+          runSpacing: 14,
           children: [
             _summary(
-              'App modules',
+              'Active modules',
               '${widget.modules.length}',
               Icons.hub_outlined,
             ),
             _summary(
-              'Workspaces',
+              'Domain sections',
               '${sections.length}',
               Icons.space_dashboard_outlined,
             ),
@@ -72,104 +151,171 @@ class _AdminWorkspaceScreenState extends State<AdminWorkspaceScreen> {
               Icons.add_circle_outline,
             ),
             _summary(
-              'Workflow modules',
+              'Workflow enabled',
               '${widget.modules.where((m) => m.actions.isNotEmpty).length}',
               Icons.task_alt,
             ),
           ],
         ),
         const SizedBox(height: 24),
+
+        // Owner Shortcuts Bar
         if (widget.isOwner)
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => widget.onOpen('database_connections', {}),
-                  icon: const Icon(Icons.hub_outlined),
-                  label: const Text('Database & system tables'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => widget.onOpen('storage_buckets', {}),
-                  icon: const Icon(Icons.cloud_outlined),
-                  label: const Text('Storage buckets'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => widget.onOpen('team_access', {}),
-                  icon: const Icon(Icons.group_outlined),
-                  label: const Text('Team & Access'),
-                ),
-              ],
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF0EDF0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'OWNER INFRASTRUCTURE CONTROLS',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                      color: Color(0xFF80152C),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => widget.onOpen('database_connections', {}),
+                        icon: const Icon(Icons.hub_outlined, size: 18),
+                        label: const Text('Database & System Tables'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => widget.onOpen('storage_buckets', {}),
+                        icon: const Icon(Icons.cloud_outlined, size: 18),
+                        label: const Text('Storage Buckets'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => widget.onOpen('team_access', {}),
+                        icon: const Icon(Icons.group_outlined, size: 18),
+                        label: const Text('Team & Permissions'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
+
+        // Search & Filter Controls
         TextField(
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search),
-            hintText: 'Search modules, tables or operations…',
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search, color: Color(0xFF73737D)),
+            hintText: 'Search modules by name, section, or description…',
+            suffixIcon: query.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () => setState(() => query = ''),
+                  )
+                : null,
           ),
           onChanged: (v) => setState(() => query = v),
         ),
         const SizedBox(height: 16),
+
+        // Section Choice Chips
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: ['All', ...sections]
-              .map(
-                (s) => ChoiceChip(
-                  label: Text(s),
-                  selected: section == s,
-                  onSelected: (_) => setState(() => section = s),
-                ),
-              )
-              .toList(),
+          children: ['All', ...sections].map((s) {
+            final isSelected = section == s;
+            return ChoiceChip(
+              label: Text(s),
+              selected: isSelected,
+              showCheckmark: false,
+              selectedColor: const Color(0xFFF5E8EC),
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: isSelected ? const Color(0xFF80152C) : const Color(0xFFF0EDF0),
+              ),
+              labelStyle: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF80152C) : const Color(0xFF17171B),
+              ),
+              onSelected: (_) => setState(() => section = s),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 16),
+
+        // Capabilities Filter & Count Row
         Row(
           children: [
             Expanded(
               child: Text(
-                '${filtered.length} modules',
-                style: Theme.of(context).textTheme.titleMedium,
+                'Showing ${filtered.length} modules',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF17171B),
+                ),
               ),
             ),
             SizedBox(
-              width: 170,
+              width: 180,
               child: DropdownButtonFormField<String>(
                 initialValue: capability,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   isDense: true,
-                  labelText: 'Operation',
+                  labelText: 'Access Capability',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                items:
-                    [
-                          'All access',
-                          'Create',
-                          'Edit',
-                          'Delete',
-                          'Workflow',
-                          'Read only',
-                        ]
-                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                        .toList(),
+                items: [
+                  'All access',
+                  'Create',
+                  'Edit',
+                  'Delete',
+                  'Workflow',
+                  'Read only',
+                ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
                 onChanged: (v) => setState(() => capability = v!),
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
+
         if (filtered.isEmpty)
           const Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(child: Text('No modules match your search.')),
+            padding: EdgeInsets.all(48),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.search_off_rounded, size: 48, color: Color(0xFFA0A0AC)),
+                  SizedBox(height: 12),
+                  Text(
+                    'No modules match your current filter.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF73737D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+
+        // Module Cards Grid
         LayoutBuilder(
           builder: (context, size) {
-            final columns = size.maxWidth >= 1120
+            final columns = size.maxWidth >= 1150
                 ? 3
-                : size.maxWidth >= 650
+                : size.maxWidth >= 680
                 ? 2
                 : 1;
             final width = (size.maxWidth - (columns - 1) * 16) / columns;
@@ -194,36 +340,4 @@ class _AdminWorkspaceScreenState extends State<AdminWorkspaceScreen> {
       ],
     );
   }
-
-  Widget _summary(String label, String value, IconData icon) => SizedBox(
-    width: MediaQuery.sizeOf(context).width < 650
-        ? (MediaQuery.sizeOf(context).width - 60) / 2
-        : 205,
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(label, style: const TextStyle(fontSize: 12)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }

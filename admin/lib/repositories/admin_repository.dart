@@ -20,6 +20,21 @@ class AdminRepository {
       (await db.rpc('admin_catalog') as List)
           .map((m) => AdminModule.fromMap(Map<String, dynamic>.from(m as Map)))
           .toList();
+  Future<Map<String, dynamic>> eventCategories(
+    String eventId, {
+    List<String>? categoryIds,
+    String? revision,
+  }) async => Map<String, dynamic>.from(
+    await db.rpc(
+      'admin_event_categories',
+      params: {
+        'p_event_id': eventId,
+        'p_category_ids': ?categoryIds,
+        'p_revision': ?revision,
+      },
+    ) as Map,
+  );
+
   Future<Map<String, dynamic>> overview() async =>
       Map<String, dynamic>.from(await db.rpc('admin_overview') as Map);
   Future<AdminPage> records(

@@ -6,6 +6,38 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/admin_module.dart';
 import '../repositories/admin_repository.dart';
 
+Future<T?> showAdminRecordPanel<T>(
+  BuildContext context,
+  WidgetBuilder builder,
+) => showGeneralDialog<T>(
+  context: context,
+  transitionDuration: const Duration(milliseconds: 220),
+  pageBuilder: (context, animation, secondaryAnimation) => SafeArea(
+    child: Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Material(
+          elevation: 12,
+          child: SizedBox.expand(child: Builder(builder: builder)),
+        ),
+      ),
+    ),
+  ),
+  transitionBuilder: (context, animation, secondaryAnimation, child) {
+    final direction = Directionality.of(context) == TextDirection.rtl
+        ? -1.0
+        : 1.0;
+    return SlideTransition(
+      position: Tween(
+        begin: Offset(direction, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(animation),
+      child: child,
+    );
+  },
+);
+
 String adminRequestId() {
   final random = Random.secure(), b = List<int>.generate(16, (_) => 0);
   for (var i = 0; i < b.length; i++) {
@@ -29,7 +61,20 @@ void adminError(BuildContext context, Object error) {
   if (error is PostgrestException && error.code == '23505') {
     message = 'A record with these details already exists.';
   }
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      backgroundColor: const Color(0xFF262626),
+      content: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    ),
+  );
 }
 
 String adminActionLabel(String action) =>
@@ -69,6 +114,7 @@ String adminActionLabel(String action) =>
       'cleanup_completed': 'Retry storage cleanup',
     }[action] ??
     adminLabel(action);
+
 List<String> availableAdminActions(
   AdminModule module,
   AdminRecord row, {
@@ -149,6 +195,7 @@ class _ReferencePickerState extends State<_ReferencePicker> {
   bool loading = true;
   Object? error;
   int offset = 0, generation = 0;
+
   @override
   void initState() {
     super.initState();
@@ -192,19 +239,51 @@ class _ReferencePickerState extends State<_ReferencePicker> {
 
   @override
   Widget build(BuildContext context) => Dialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    backgroundColor: Colors.white,
     child: SizedBox(
-      width: 620,
-      height: 560,
+      width: 640,
+      height: 580,
       child: Column(
         children: [
+          // Header
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 18, 14, 14),
             child: Row(
               children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBF4F6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.format_list_bulleted,
+                    size: 20,
+                    color: Color(0xFF80152C),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Select ${widget.module.label}',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Select ${widget.module.label}',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2024),
+                        ),
+                      ),
+                      Text(
+                        'Choose an existing ${widget.module.label.toLowerCase()} record to link',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
@@ -214,18 +293,53 @@ class _ReferencePickerState extends State<_ReferencePicker> {
               ],
             ),
           ),
+          const Divider(height: 1, color: Color(0xFFF0EDF0)),
+
+          // Search Field
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: query,
               decoration: InputDecoration(
-                hintText: 'Search and press Enter',
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    offset = 0;
-                    load();
-                  },
-                  icon: const Icon(Icons.search),
+                hintText: 'Search by title, name, or ID…',
+                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: query.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          query.clear();
+                          offset = 0;
+                          load();
+                        },
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.arrow_forward, size: 18),
+                        onPressed: () {
+                          offset = 0;
+                          load();
+                        },
+                      ),
+                filled: true,
+                fillColor: const Color(0xFFF8F8FA),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E2E6)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E2E6)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF80152C),
+                    width: 1.5,
+                  ),
                 ),
               ),
               onSubmitted: (_) {
@@ -234,49 +348,136 @@ class _ReferencePickerState extends State<_ReferencePicker> {
               },
             ),
           ),
-          if (loading) const LinearProgressIndicator(),
+
+          if (loading) const LinearProgressIndicator(color: Color(0xFF80152C)),
+
           if (error != null)
-            TextButton(
-              onPressed: load,
-              child: const Text('Could not load. Retry'),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Could not load records.'),
+                  TextButton(onPressed: load, child: const Text('Retry')),
+                ],
+              ),
             ),
+
+          // Records List
           Expanded(
-            child: ListView(
-              children: [
-                for (final row in page?.rows ?? [])
-                  ListTile(
-                    title: Text(row.title),
-                    subtitle: Text(
-                      row.values['email']?.toString() ?? row.id(widget.module),
+            child: (page?.rows.isEmpty ?? false) && !loading
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 40,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No ${widget.module.label.toLowerCase()} records found',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
-                    onTap: () => Navigator.pop(context, row.id(widget.module)),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: page?.rows.length ?? 0,
+                    itemBuilder: (context, index) {
+                      final row = page!.rows[index];
+                      final rowId = row.id(widget.module);
+                      final email = row.values['email']?.toString();
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFF0EDF0)),
+                        ),
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: ListTile(
+                            dense: true,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            title: Text(
+                              row.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF1F2024),
+                              ),
+                            ),
+                            subtitle: Text(
+                              email != null
+                                  ? '$email · ID: $rowId'
+                                  : 'ID: $rowId',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade500,
+                                fontFamily: 'monospace',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: const Icon(
+                              Icons.check_circle_outline,
+                              size: 18,
+                              color: Color(0xFF80152C),
+                            ),
+                            onTap: () => Navigator.pop(context, rowId),
+                          ),
+                        ),
+                      );
+                    },
                   ),
+          ),
+
+          // Pagination Footer
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFAFAFA),
+              border: Border(top: BorderSide(color: Color(0xFFF0EDF0))),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '${page?.total ?? 0} total records',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Previous page',
+                  onPressed: loading || offset == 0
+                      ? null
+                      : () {
+                          offset = (offset - 30).clamp(0, 1 << 30);
+                          load();
+                        },
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                IconButton(
+                  tooltip: 'Next page',
+                  onPressed: loading || offset + 30 >= (page?.total ?? 0)
+                      ? null
+                      : () {
+                          offset += 30;
+                          load();
+                        },
+                  icon: const Icon(Icons.chevron_right),
+                ),
               ],
             ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('${page?.total ?? 0} records'),
-              IconButton(
-                onPressed: loading || offset == 0
-                    ? null
-                    : () {
-                        offset = (offset - 30).clamp(0, 1 << 30);
-                        load();
-                      },
-                icon: const Icon(Icons.chevron_left),
-              ),
-              IconButton(
-                onPressed: loading || offset + 30 >= (page?.total ?? 0)
-                    ? null
-                    : () {
-                        offset += 30;
-                        load();
-                      },
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
           ),
         ],
       ),
@@ -302,6 +503,7 @@ class _ActionDialog extends StatefulWidget {
 class _ActionDialogState extends State<_ActionDialog> {
   final form = GlobalKey<FormState>();
   String text = '', email = '';
+
   @override
   Widget build(BuildContext context) {
     final reply = widget.action == 'reply',
@@ -320,64 +522,129 @@ class _ActionDialogState extends State<_ActionDialog> {
       'suspend_account',
       'restore_account',
     ].contains(widget.action);
+
+    final isDestructive =
+        deletion ||
+        widget.action == 'suspend_account' ||
+        widget.action == 'rejected' ||
+        widget.action == 'failed';
+
     return AlertDialog(
-      title: Text('${adminActionLabel(widget.action)}?'),
-      content: SingleChildScrollView(
-        child: Form(
-          key: form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                deletion
-                    ? 'This permanently removes the requested Auth account and its dependent records. Resolve active bookings first. Stored files are queued for cleanup.'
-                    : widget.action == 'publish'
-                    ? 'Publish this draft now? The previous published version is archived and published text becomes immutable.'
-                    : widget.action == 'hidden'
-                    ? 'This review is excluded from public lists and rating averages.'
-                    : 'This action is recorded in the admin activity log.',
-              ),
-              const SizedBox(height: 16),
-              if (deletion) ...[
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Type exact account email',
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDestructive
+                  ? Colors.red.shade50
+                  : const Color(0xFFFBF4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isDestructive
+                  ? Icons.warning_amber_rounded
+                  : Icons.verified_outlined,
+              color: isDestructive
+                  ? Colors.red.shade700
+                  : const Color(0xFF80152C),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '${adminActionLabel(widget.action)}?',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 480,
+        child: SingleChildScrollView(
+          child: Form(
+            key: form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDestructive
+                        ? Colors.red.shade50
+                        : const Color(0xFFF8F8FA),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDestructive
+                          ? Colors.red.shade200
+                          : const Color(0xFFEBEBEF),
+                    ),
                   ),
-                  onChanged: (v) => email = v,
-                  validator: (v) => v?.contains('@') == true
-                      ? null
-                      : 'Enter the account email',
+                  child: Text(
+                    deletion
+                        ? 'This permanently removes the requested Auth account and its dependent records. Resolve active bookings first. Stored files are queued for cleanup.'
+                        : widget.action == 'publish'
+                        ? 'Publish this draft now? The previous published version will be archived and published text becomes immutable.'
+                        : widget.action == 'hidden'
+                        ? 'This review will be excluded from public lists and rating averages.'
+                        : 'This action is tracked and recorded in the admin activity log.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDestructive
+                          ? Colors.red.shade900
+                          : Colors.grey.shade700,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
+                if (deletion) ...[
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Type exact account email',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onChanged: (v) => email = v,
+                    validator: (v) => v?.contains('@') == true
+                        ? null
+                        : 'Enter the account email',
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                TextFormField(
+                  maxLines: reply ? 6 : 3,
+                  maxLength: reply ? 4000 : 1000,
+                  decoration: InputDecoration(
+                    labelText: reply
+                        ? 'Reply to Requester'
+                        : required
+                        ? 'Reason (Required)'
+                        : 'Administrative Note (Optional)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onChanged: (v) => text = v,
+                  validator: (v) =>
+                      (reply || required) &&
+                          (v?.trim().length ?? 0) <
+                              (reply
+                                  ? 1
+                                  : [
+                                      'suspend_account',
+                                      'restore_account',
+                                    ].contains(widget.action)
+                                  ? 5
+                                  : 3)
+                      ? 'Enter a ${reply ? 'reply' : 'reason'}'
+                      : null,
+                ),
               ],
-              TextFormField(
-                maxLines: reply ? 6 : 3,
-                maxLength: reply ? 4000 : 1000,
-                decoration: InputDecoration(
-                  labelText: reply
-                      ? 'Reply to requester'
-                      : required
-                      ? 'Reason (required)'
-                      : 'Note (optional)',
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: (v) => text = v,
-                validator: (v) =>
-                    (reply || required) &&
-                        (v?.trim().length ?? 0) <
-                            (reply
-                                ? 1
-                                : [
-                                    'suspend_account',
-                                    'restore_account',
-                                  ].contains(widget.action)
-                                ? 5
-                                : 3)
-                    ? 'Enter a ${reply ? 'reply' : 'reason'}'
-                    : null,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -387,6 +654,15 @@ class _ActionDialogState extends State<_ActionDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: isDestructive
+                ? Colors.red.shade700
+                : const Color(0xFF80152C),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          ),
           onPressed: () {
             if (form.currentState!.validate()) {
               Navigator.pop(context, {
@@ -396,7 +672,7 @@ class _ActionDialogState extends State<_ActionDialog> {
               });
             }
           },
-          child: const Text('Confirm'),
+          child: Text(isDestructive ? 'Confirm & Apply' : 'Confirm Action'),
         ),
       ],
     );

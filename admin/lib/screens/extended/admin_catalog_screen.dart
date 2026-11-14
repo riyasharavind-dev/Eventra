@@ -31,13 +31,39 @@ class AdminCatalogScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(24),
     children: [
-      Text(
-        'Categories & Event Types',
-        style: Theme.of(context).textTheme.headlineSmall,
-      ),
-      const SizedBox(height: 8),
-      const Text(
-        'Manage the shared catalog used by the vendor and customer apps. Saved changes are available on their next fetch or refresh.',
+      Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF0EDF0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF80152C).withValues(alpha: 0.03),
+              blurRadius: 18,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Categories & Event Types Studio',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF17171B),
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Manage the core marketplace taxonomy shared across vendor onboardings, search indices, and customer discovery.',
+              style: TextStyle(fontSize: 13.5, color: Color(0xFF73737D)),
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: 24),
       for (final name in ['category_nodes', 'event_types'])
@@ -48,66 +74,88 @@ class AdminCatalogScreen extends StatelessWidget {
 
   Widget _card(BuildContext context, AdminModule module) {
     final categories = module.name == 'category_nodes';
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFF0EDF0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF80152C).withValues(alpha: 0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5E8EC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
                   categories
                       ? Icons.account_tree_outlined
                       : Icons.celebration_outlined,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: const Color(0xFF80152C),
+                  size: 22,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    module.label,
-                    style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  module.label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF17171B),
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            categories
+                ? 'Create root categories such as Decoration or Photography, then attach nested subcategories. Root categories power vendor business registration, while subcategories drive service listings.'
+                : 'Define core event occasions such as Wedding, Birthday, or Corporate Gala. Set visual icons, cover images, and sort orders. Only active types appear publicly.',
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: Color(0xFF73737D),
+              height: 1.45,
             ),
-            const SizedBox(height: 12),
-            Text(
-              categories
-                  ? 'Create parent categories such as Decoration, then add subcategories such as Stage Decoration by selecting their parent. Leave Parent category empty to create a main category.'
-                  : 'Create event types such as Wedding or Birthday. Manage their name, description, icon, image, active status and display order. Only active event types are available through the apps’ public catalog.',
-            ),
-            const SizedBox(height: 8),
-            Text(
-              categories
-                  ? 'Vendor business selection uses parent categories; service selection and customer Explore use the category hierarchy.'
-                  : 'Vendor service creation reads these event types. Customer bookings use the linked event-type records.',
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => onOpen(module.name, {}),
-                  icon: const Icon(Icons.list_alt),
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => onOpen(module.name, {}),
+                icon: const Icon(Icons.list_alt_rounded, size: 18),
+                label: Text(
+                  categories ? 'Manage Categories' : 'Manage Event Types',
+                ),
+              ),
+              if (module.canCreate && canWrite(module.name))
+                FilledButton.icon(
+                  onPressed: () => _create(context, module),
+                  icon: const Icon(Icons.add_rounded, size: 18),
                   label: Text(
-                    categories ? 'Manage Categories' : 'Manage Event Types',
+                    categories ? 'Create Category' : 'Create Event Type',
                   ),
                 ),
-                if (module.canCreate && canWrite(module.name))
-                  FilledButton.icon(
-                    onPressed: () => _create(context, module),
-                    icon: const Icon(Icons.add),
-                    label: Text(
-                      categories ? 'Create Category' : 'Create Event Type',
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

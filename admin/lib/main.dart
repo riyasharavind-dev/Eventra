@@ -34,14 +34,14 @@ class EventorAdminApp extends StatelessWidget {
     themeMode: ThemeMode.light,
     theme: ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+      scaffoldBackgroundColor: const Color(0xFFF8F8FA),
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
         margin: const EdgeInsets.symmetric(vertical: 6),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE8EAF0)),
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFF0EDF0)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -49,15 +49,48 @@ class EventorAdminApp extends StatelessWidget {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE1E4EC)),
+          borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE1E4EC)),
+          borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF80152C), width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 14,
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFF0EDF0)),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF80152C),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF80152C),
+          side: const BorderSide(color: Color(0xFFF0EDF0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -65,22 +98,30 @@ class EventorAdminApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF17171B),
+        ),
+        iconTheme: IconThemeData(color: Color(0xFF17171B)),
       ),
       listTileTheme: ListTileThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dataTableTheme: const DataTableThemeData(
-        headingRowColor: WidgetStatePropertyAll(Color(0xFFF2F3F8)),
+        headingRowColor: WidgetStatePropertyAll(Color(0xFFF8F8FA)),
         headingTextStyle: TextStyle(
           fontWeight: FontWeight.w700,
-          color: Color(0xFF252936),
+          color: Color(0xFF17171B),
+          fontSize: 13,
         ),
         dataRowMinHeight: 64,
         dataRowMaxHeight: 76,
         dividerThickness: 0.5,
       ),
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF9F0101),
+        seedColor: const Color(0xFF80152C),
+        primary: const Color(0xFF80152C),
         brightness: Brightness.light,
       ),
     ),

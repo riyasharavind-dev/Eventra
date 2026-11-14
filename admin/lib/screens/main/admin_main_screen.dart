@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import '../../models/admin_module.dart';
 import '../../repositories/admin_repository.dart';
 import '../../widgets/admin_management_helpers.dart';
+import '../../widgets/confirmation_dialog.dart';
 import '../management/admin_dashboard_screen.dart';
 import '../management/admin_customer_app_screen.dart';
 import '../management/admin_home_feed_screen.dart';
@@ -33,6 +34,7 @@ class _AdminMainScreenState extends State<AdminMainScreen>
     'own:access',
     'own:team_permissions',
   };
+
   @override
   Future<void> onLiveData(Set<String> changed) async {
     await load();
@@ -46,11 +48,21 @@ class _AdminMainScreenState extends State<AdminMainScreen>
   int refreshKey = 0;
   bool loading = true;
   Object? error;
+
+  final Set<String> _collapsedSections = {};
+  final _moduleSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     repo = widget.repository ?? AdminRepository();
     load();
+  }
+
+  @override
+  void dispose() {
+    _moduleSearchController.dispose();
+    super.dispose();
   }
 
   Future<void> load() async {
@@ -101,18 +113,13 @@ class _AdminMainScreenState extends State<AdminMainScreen>
   Future<void> logout() async {
     final yes = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Sign out of admin?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Sign out'),
-          ),
-        ],
+      builder: (c) => const ConfirmationDialog(
+        title: 'Sign out of admin?',
+        message: 'Are you sure you want to end your current admin session?',
+        confirmText: 'Sign out',
+        cancelText: 'Cancel',
+        confirmColor: Color(0xFF80152C),
+        icon: Icons.logout_rounded,
       ),
     );
     if (yes == true) {
@@ -126,178 +133,433 @@ class _AdminMainScreenState extends State<AdminMainScreen>
     }
   }
 
-  Widget navigation({bool drawer = false}) {
-    final visible = modules
-        .where(
-          (m) => '${m.label} ${m.name} ${m.section}'.toLowerCase().contains(
-            moduleSearch.toLowerCase(),
-          ),
-        )
-        .toList();
-    final sections = visible.map((m) => m.section).toSet();
+  Widget _navItem({
+    required IconData icon,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+    String? badge,
+    Color? badgeColor,
+  }) {
     return Container(
-      width: 260,
-      color: Theme.of(context).colorScheme.surface,
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFF5E8EC) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: isSelected
+            ? Border.all(color: const Color(0xFFF2D1DC))
+            : Border.all(color: Colors.transparent),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          dense: true,
+          visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onTap: onTap,
+          leading: Icon(
+            icon,
+            size: 20,
+            color: isSelected
+                ? const Color(0xFF80152C)
+                : const Color(0xFF73737D),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected
+                  ? const Color(0xFF80152C)
+                  : const Color(0xFF17171B),
+            ),
+          ),
+          trailing: badge != null
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        badgeColor ??
+                        const Color(0xFF80152C).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: badgeColor != null
+                          ? Colors.white
+                          : const Color(0xFF80152C),
+                    ),
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title, {String? keyName}) {
+    final isCollapsed = keyName != null && _collapsedSections.contains(keyName);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 16, 12, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                color: Color(0xFF8E8E98),
+              ),
+            ),
+          ),
+          if (keyName != null)
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                setState(() {
+                  if (isCollapsed) {
+                    _collapsedSections.remove(keyName);
+                  } else {
+                    _collapsedSections.add(keyName);
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  isCollapsed
+                      ? Icons.keyboard_arrow_down
+                      : Icons.keyboard_arrow_up,
+                  size: 16,
+                  color: const Color(0xFF8E8E98),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget navigation({bool drawer = false}) {
+    final query = moduleSearch.trim().toLowerCase();
+    final isOwner = session?['access_level'] == 'owner';
+
+    final visibleModules = modules.where((m) {
+      if (query.isEmpty) return true;
+      return '${m.label} ${m.name} ${m.section} ${m.description}'
+          .toLowerCase()
+          .contains(query);
+    }).toList();
+
+    return Container(
+      width: 275,
+      color: Colors.white,
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
+            // Brand & Identity Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFF0EDF0), width: 1),
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'EVENTOR',
-                    style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${session?['name'] ?? 'Admin'} · ${session?['access_level'] ?? ''}',
-                    maxLines: 2,
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF80152C), Color(0xFF650C20)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF80152C)
+                                  .withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'E',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'EVENTOR',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                                color: Color(0xFF80152C),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5E8EC),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'ADMIN CONSOLE',
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                  color: Color(0xFF80152C),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
+                  // Table search
                   TextField(
-                    decoration: const InputDecoration(
+                    controller: _moduleSearchController,
+                    decoration: InputDecoration(
                       isDense: true,
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Find module',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 18,
+                        color: Color(0xFF73737D),
+                      ),
+                      hintText: 'Search tables…',
+                      hintStyle: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFFA0A0AC),
+                      ),
+                      fillColor: const Color(0xFFF8F8FA),
+                      filled: true,
+                      suffixIcon: moduleSearch.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              onPressed: () =>
+                                  setState(() => moduleSearch = ''),
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFF0EDF0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF80152C),
+                          width: 1.2,
+                        ),
+                      ),
                     ),
                     onChanged: (v) => setState(() => moduleSearch = v),
                   ),
                 ],
               ),
             ),
+
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  ListTile(
-                    selected: selected == 'workspace',
-                    leading: const Icon(Icons.grid_view_rounded),
-                    title: const Text('All Modules'),
-                    onTap: () {
-                      if (drawer) {
-                        Navigator.pop(context);
-                      }
-                      open('workspace', {});
-                    },
-                  ),
-                  if (session?['access_level'] == 'owner') ...[
-                    ListTile(
-                      leading: const Icon(Icons.group_outlined),
-                      title: const Text('Team & Access'),
-                      selected: selected == 'team_access',
-                      onTap: () {
-                        if (drawer) Navigator.pop(context);
-                        open('team_access', {});
-                      },
+                  if (query.isEmpty) ...[
+                    _sectionHeader('Workspace'),
+                    _tableNav(
+                      'workspace',
+                      'Control Centre',
+                      Icons.space_dashboard_outlined,
+                      drawer,
                     ),
-                    ListTile(
-                      selected: selected == 'dashboard',
-                      leading: const Icon(Icons.dashboard_outlined),
-                      title: const Text('Dashboard'),
-                      onTap: () {
-                        if (drawer) {
-                          Navigator.pop(context);
-                        }
-                        open('dashboard', {});
-                      },
-                    ),
-                    ListTile(
-                      selected: selected == 'database_connections',
-                      leading: const Icon(Icons.hub_outlined),
-                      title: const Text('Database Connections'),
-                      onTap: () {
-                        if (drawer) Navigator.pop(context);
-                        open('database_connections', {});
-                      },
-                    ),
-                    ListTile(
-                      selected: selected == 'storage_buckets',
-                      leading: const Icon(Icons.cloud_outlined),
-                      title: const Text('Storage Buckets'),
-                      onTap: () {
-                        if (drawer) Navigator.pop(context);
-                        open('storage_buckets', {});
-                      },
-                    ),
-                  ],
-                  if (session?['access_level'] == 'owner' ||
-                      session?['access_level'] == 'admin')
-                    ListTile(
-                      selected: selected == 'customer_app',
-                      leading: const Icon(Icons.phone_android_outlined),
-                      title: const Text('Customer App'),
-                      onTap: () {
-                        if (drawer) Navigator.pop(context);
-                        open('customer_app', {});
-                      },
-                    ),
-                  if (modules.any(
-                    (m) => ['category_nodes', 'event_types'].contains(m.name),
-                  ))
-                    ListTile(
-                      selected: selected == 'shared_catalog',
-                      leading: const Icon(Icons.account_tree_outlined),
-                      title: const Text('Categories & Event Types'),
-                      onTap: () {
-                        if (drawer) {
-                          Navigator.pop(context);
-                        }
-                        open('shared_catalog', {});
-                      },
-                    ),
-                  for (final section in sections) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 8, 8),
-                      child: Text(
-                        section.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                    if (isOwner) ...[
+                      _tableNav(
+                        'dashboard',
+                        'Dashboard',
+                        Icons.analytics_outlined,
+                        drawer,
                       ),
+                      _tableNav(
+                        'team_access',
+                        'Team & Access',
+                        Icons.manage_accounts_outlined,
+                        drawer,
+                      ),
+                      _tableNav(
+                        'database_connections',
+                        'Database Connections',
+                        Icons.hub_outlined,
+                        drawer,
+                      ),
+                      _tableNav(
+                        'storage_buckets',
+                        'Storage Buckets',
+                        Icons.cloud_outlined,
+                        drawer,
+                      ),
+                    ],
+                  ],
+                  if (visibleModules.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text('No matching tables'),
                     ),
-                    ...visible
-                        .where((m) => m.section == section)
-                        .map(
-                          (m) => ListTile(
-                            dense: true,
-                            selected: selected == m.name,
-                            selectedColor: Theme.of(context)
-                                .colorScheme
-                                .primary,
-                            leading: Icon(_icon(m.section), size: 20),
-                            title: Text(m.label),
-                            onTap: () {
-                              if (drawer) {
-                                Navigator.pop(context);
-                              }
-                              open(m.name, {});
-                            },
-                          ),
+                  for (final section
+                      in visibleModules.map((m) => m.section).toSet()) ...[
+                    _sectionHeader(
+                      section,
+                      keyName: query.isEmpty ? section : null,
+                    ),
+                    if (query.isNotEmpty ||
+                        !_collapsedSections.contains(section))
+                      for (final table in visibleModules.where(
+                        (m) => m.section == section,
+                      ))
+                        _tableNav(
+                          table.name,
+                          table.name,
+                          _icon(section),
+                          drawer,
+                          active: _tableToolTarget(selected) == table.name,
                         ),
                   ],
                 ],
               ),
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign out'),
-              onTap: logout,
+
+            // User Profile & Sign Out Footer
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Color(0xFFF0EDF0), width: 1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: const Color(0xFF80152C),
+                    child: Text(
+                      ((session?['name'] as String?)?.isNotEmpty == true)
+                          ? (session!['name'] as String)
+                                .substring(0, 1)
+                                .toUpperCase()
+                          : 'A',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session?['name']?.toString() ?? 'Administrator',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF17171B),
+                          ),
+                        ),
+                        Text(
+                          (session?['access_level']?.toString() ?? 'staff')
+                              .toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: session?['access_level'] == 'owner'
+                                ? const Color(0xFFB8860B)
+                                : const Color(0xFF80152C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Sign out',
+                    onPressed: logout,
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      size: 20,
+                      color: Color(0xFF73737D),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  String? _tableToolTarget(String route) => switch (route) {
+    'language_tools' => 'app_languages',
+    'home_feed_tools' => 'home_feed_sections',
+    _ => null,
+  };
+
+  Widget _tableNav(
+    String destination,
+    String title,
+    IconData icon,
+    bool drawer, {
+    bool active = false,
+  }) => _navItem(
+    icon: icon,
+    title: title,
+    isSelected: selected == destination || active,
+    onTap: () {
+      if (drawer) Navigator.pop(context);
+      open(destination, {});
+    },
+  );
 
   IconData _icon(String section) => switch (section) {
     'Accounts & Access' => Icons.manage_accounts_outlined,
@@ -307,15 +569,35 @@ class _AdminMainScreenState extends State<AdminMainScreen>
     'Trust & Moderation' => Icons.verified_user_outlined,
     'Customer Experience' => Icons.view_carousel_outlined,
     'Content & Settings' => Icons.article_outlined,
-    'Support' => Icons.support_agent,
+    'Support' => Icons.support_agent_outlined,
     'Notifications' => Icons.notifications_outlined,
     'Published Content' => Icons.public,
     _ => Icons.admin_panel_settings_outlined,
   };
+
+  String _screenTitle(AdminModule? module) {
+    return switch (selected) {
+      'workspace' => 'Control Centre',
+      'shared_catalog' => 'Categories & Event Types',
+      'team_access' => 'Team & Permissions',
+      'database_connections' => 'Database Connections',
+      'storage_buckets' => 'Storage Buckets',
+      'customer_app' => 'Customer App Studio',
+      'dashboard' => 'Executive Dashboard',
+      'home_feed_tools' => 'Home Feed Editor',
+      'language_tools' => 'Languages & Releases',
+      _ => module?.name ?? 'Dashboard',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF80152C)),
+        ),
+      );
     }
     if (error != null) {
       return Scaffold(
@@ -326,14 +608,27 @@ class _AdminMainScreenState extends State<AdminMainScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Color(0xFF80152C),
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
                 Text(
                   error.toString().replaceFirst('Bad state: ', ''),
                   textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                TextButton(
+                const SizedBox(height: 16),
+                FilledButton.icon(
                   onPressed: load,
-                  child: const Text('Retry access check'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry access check'),
                 ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => repo.db.auth.signOut(),
                   child: const Text('Sign out'),
@@ -344,47 +639,112 @@ class _AdminMainScreenState extends State<AdminMainScreen>
         ),
       );
     }
-    final mobile = MediaQuery.sizeOf(context).width < 950,
-        module = modules.where((m) => m.name == selected).firstOrNull;
+
+    final mobile = MediaQuery.sizeOf(context).width < 950;
+    final module = modules.where((m) => m.name == selected).firstOrNull;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          selected == 'workspace'
-              ? 'Control Centre'
-              : selected == 'shared_catalog'
-              ? 'Categories & Event Types'
-              : selected == 'team_access'
-              ? 'Team & Access'
-              : selected == 'database_connections'
-              ? 'Database Connections'
-              : selected == 'storage_buckets'
-              ? 'Storage Buckets'
-              : selected == 'customer_app'
-              ? 'Customer App'
-              : module?.label ?? 'Dashboard',
+        titleSpacing: mobile ? null : 16,
+        leading: mobile
+            ? Builder(
+                builder: (c) => IconButton(
+                  icon: const Icon(Icons.menu_rounded),
+                  onPressed: () => Scaffold.of(c).openDrawer(),
+                ),
+              )
+            : null,
+        title: Row(
+          children: [
+            if (!mobile) ...[
+              const Text(
+                'Admin',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF73737D),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: Color(0xFFA0A0AC),
+                ),
+              ),
+            ],
+            Flexible(
+              child: Text(
+                _screenTitle(module),
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF17171B),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
+          // Live realtime indicator badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFC8E6C9)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2E7D32),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'Live',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Refresh workspace',
-            onPressed: () {
-              setState(() => refreshKey++);
-            },
-            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() => refreshKey++),
+            icon: const Icon(Icons.refresh_rounded),
           ),
           IconButton(
             tooltip: 'Recheck admin permissions',
             onPressed: load,
             icon: const Icon(Icons.admin_panel_settings_outlined),
           ),
+          const SizedBox(width: 10),
         ],
       ),
       drawer: mobile
-          ? Drawer(width: 280, child: navigation(drawer: true))
+          ? Drawer(width: 290, child: navigation(drawer: true))
           : null,
       body: Row(
         children: [
           if (!mobile) navigation(),
-          if (!mobile) const VerticalDivider(width: 1),
+          if (!mobile)
+            const VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: Color(0xFFF0EDF0),
+            ),
           Expanded(
             child: selected == 'workspace'
                 ? AdminWorkspaceScreen(
@@ -410,8 +770,12 @@ class _AdminMainScreenState extends State<AdminMainScreen>
                         (session?['access_level'] == 'staff' &&
                             (session?['permissions'] as Map?)?[name] == true),
                   )
-                : selected == 'app_languages' ||
-                      selected == 'app_language_releases'
+                : selected == 'language_tools' &&
+                      modules.any(
+                        (table) =>
+                            table.name == 'app_languages' ||
+                            table.name == 'app_language_releases',
+                      )
                 ? AdminLanguagesScreen(
                     key: ValueKey('languages-$refreshKey'),
                     canWrite:
@@ -454,7 +818,8 @@ class _AdminMainScreenState extends State<AdminMainScreen>
                     modules: modules,
                     onOpen: open,
                   )
-                : selected == 'home_feed_sections'
+                : selected == 'home_feed_tools' &&
+                      modules.any((table) => table.name == 'home_feed_sections')
                 ? AdminHomeFeedScreen(
                     key: ValueKey('home-feed-$refreshKey'),
                     repo: repo,
@@ -462,16 +827,28 @@ class _AdminMainScreenState extends State<AdminMainScreen>
                         session?['access_level'] == 'owner' ||
                         session?['access_level'] == 'admin' ||
                         (session?['access_level'] == 'staff' &&
-                            (session?['permissions'] as Map?)?[selected] ==
+                            (session?['permissions']
+                                    as Map?)?['home_feed_sections'] ==
                                 true),
                   )
                 : module == null
-                ? const Center(child: Text('Select an admin module.'))
+                ? const Center(child: Text('Select a table.'))
                 : AdminModuleScreen(
                     key: ValueKey('${module.name}-$refreshKey'),
                     repo: repo,
                     module: module,
                     modules: modules,
+                    tableTool: switch (module.name) {
+                      'app_languages' || 'app_language_releases' => (
+                        label: 'Translation & publishing',
+                        onPressed: () => open('language_tools', {}),
+                      ),
+                      'home_feed_sections' => (
+                        label: 'Feed editor',
+                        onPressed: () => open('home_feed_tools', {}),
+                      ),
+                      _ => null,
+                    },
                     filters: filters,
                     canWrite:
                         session?['access_level'] == 'owner' ||

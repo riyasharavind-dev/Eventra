@@ -22,6 +22,7 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
     'admin:team_invitations',
     'admin:company_email_settings',
   };
+
   @override
   Future<void> onLiveData(Set<String> changed) async {
     await load();
@@ -31,6 +32,7 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
   Map<String, dynamic>? data;
   String? error, message;
   bool busy = false;
+
   @override
   void initState() {
     super.initState();
@@ -98,12 +100,11 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
         ),
       ),
     );
-    if (values != null && mounted) {
-      await run(() async {
-        await repo.saveEmail(values);
-        return 'Sender preferences saved. SMTP verification is still required in Supabase before emails can be sent.';
-      });
-    }
+    if (values == null || !mounted) return;
+    await run(() async {
+      await repo.saveEmail(values);
+      return 'Email preferences saved.';
+    });
   }
 
   Future<void> revoke(Map<String, dynamic> invite) async {
@@ -111,22 +112,23 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Revoke invitation?'),
-        content: Text(
-          '${invite['email']} will not be able to activate this invitation.',
-        ),
+        content: Text('Cancel the invitation for “${invite['name']}”?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC62828),
+            ),
             onPressed: () => Navigator.pop(c, true),
             child: const Text('Revoke'),
           ),
         ],
       ),
     );
-    if (yes == true && mounted) {
+    if (yes == true) {
       await run(() async {
         await repo.revoke(invite['id'] as String);
         return null;
@@ -137,7 +139,9 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
   @override
   Widget build(BuildContext context) {
     if (data == null && error == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF80152C)),
+      );
     }
     final members = data?['members'] as List? ?? [],
         invites = data?['invitations'] as List? ?? [];
@@ -150,30 +154,67 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
           children: [
             FilledButton.icon(
               onPressed: busy || data == null ? null : () => edit(),
-              icon: const Icon(Icons.person_add_outlined),
+              icon: const Icon(Icons.person_add_rounded, size: 18),
               label: const Text('Invite Staff'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: busy || data == null ? null : emailSettings,
-              icon: const Icon(Icons.alternate_email),
+              icon: const Icon(Icons.alternate_email, size: 18),
               label: const Text('Company Email Settings'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
             ),
-            TextButton(
+            TextButton.icon(
               onPressed: busy ? null : load,
-              child: const Text('Refresh'),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Refresh'),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Staff use their own work email and set their own password. Company mailboxes must be created with your email provider. Sender preferences do not configure or verify SMTP.',
-            ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF0EDF0)),
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFF80152C),
+                size: 20,
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Staff use their own work email and set their own password. Company mailboxes must be created with your email provider. Sender preferences do not configure or verify SMTP.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF73737D),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        if (busy) const LinearProgressIndicator(),
+        if (busy)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(color: Color(0xFF80152C)),
+          ),
         if (error != null)
           Padding(
             padding: const EdgeInsets.all(12),
@@ -185,34 +226,162 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
         if (message != null)
           Padding(padding: const EdgeInsets.all(12), child: Text(message!)),
         const SizedBox(height: 20),
-        Text('Team Members', style: Theme.of(context).textTheme.titleLarge),
+        const Text(
+          'Team Members',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
+        ),
+        const SizedBox(height: 12),
         for (final raw in members)
           Builder(
             builder: (context) {
               final m = Map<String, dynamic>.from(raw as Map);
-              return Card(
-                child: ListTile(
-                  isThreeLine: true,
-                  leading: const Icon(Icons.person_outline),
-                  title: Text('${m['name']} · ${m['access_level']}'),
-                  subtitle: Text(
-                    '${m['email']}\n${m['is_active'] == true ? 'Active' : 'Suspended'} · Last login: ${m['last_login'] ?? 'Never'}',
-                  ),
-                  trailing: IconButton(
-                    tooltip: 'Edit role, permissions and status',
-                    onPressed: busy ? null : () => edit(member: m),
-                    icon: const Icon(Icons.edit_outlined),
+              final role = (m['access_level']?.toString() ?? 'staff')
+                  .toUpperCase();
+              final isActive = m['is_active'] == true;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF0EDF0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF80152C).withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFFF5E8EC),
+                        child: Text(
+                          ((m['name'] as String?)?.isNotEmpty == true)
+                              ? (m['name'] as String)
+                                    .substring(0, 1)
+                                    .toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: Color(0xFF80152C),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  m['name']?.toString() ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF17171B),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: role == 'OWNER'
+                                        ? const Color(0xFFFFF8E1)
+                                        : const Color(0xFFF5E8EC),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    role,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: role == 'OWNER'
+                                          ? const Color(0xFFB8860B)
+                                          : const Color(0xFF80152C),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? const Color(0xFFE8F5E9)
+                                        : const Color(0xFFFFEBEE),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    isActive ? 'ACTIVE' : 'SUSPENDED',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: isActive
+                                          ? const Color(0xFF2E7D32)
+                                          : const Color(0xFFC62828),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${m['email']} · Last login: ${m['last_login'] ?? 'Never'}',
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF73737D),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Edit role & permissions',
+                        onPressed: busy ? null : () => edit(member: m),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: Color(0xFF73737D),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
             },
           ),
         const SizedBox(height: 24),
-        Text('Invitations', style: Theme.of(context).textTheme.titleLarge),
+        const Text(
+          'Invitations',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
+        ),
+        const SizedBox(height: 12),
         if (invites.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text('No pending invitations.'),
+            child: Text(
+              'No pending invitations.',
+              style: TextStyle(color: Color(0xFF73737D)),
+            ),
           ),
         for (final raw in invites)
           Builder(
@@ -222,28 +391,72 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
                       DateTime.tryParse(raw['expires_at'].toString())
                           ?.isBefore(DateTime.now()) ??
                       true;
-              return Card(
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF0EDF0)),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${i['name']} · ${i['email']}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${i['access_level']} · ${i['status'] == 'revoked'
-                            ? 'Revoked'
-                            : expired
-                            ? 'Expired'
-                            : 'Pending'}${i['delivery_error'] == true ? ' · Email setup/delivery needs attention' : ''}',
-                      ),
-                      Text('Expires: ${i['expires_at']}'),
-                      Wrap(
-                        spacing: 12,
+                      Row(
                         children: [
-                          TextButton(
+                          Text(
+                            '${i['name']} · ${i['email']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5E8EC),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              (i['status'] == 'revoked'
+                                      ? 'Revoked'
+                                      : expired
+                                      ? 'Expired'
+                                      : 'Pending')
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF80152C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Role: ${(i['access_level']?.toString() ?? 'staff').toUpperCase()} · Expires: ${i['expires_at']}${i['delivery_error'] == true ? ' · Email setup/delivery needs attention' : ''}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF73737D),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        children: [
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                            ),
                             onPressed: busy
                                 ? null
                                 : () => run(
@@ -254,12 +467,17 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
                                       'permissions': i['permissions'],
                                     }, resend: true),
                                   ),
-                            child: const Text('Resend invitation'),
+                            icon: const Icon(Icons.send_rounded, size: 16),
+                            label: const Text('Resend invitation'),
                           ),
                           if (i['status'] == 'pending')
-                            TextButton(
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFC62828),
+                              ),
                               onPressed: busy ? null : () => revoke(i),
-                              child: const Text('Revoke'),
+                              icon: const Icon(Icons.cancel_outlined, size: 16),
+                              label: const Text('Revoke'),
                             ),
                         ],
                       ),
@@ -270,15 +488,45 @@ class _AdminTeamScreenState extends State<AdminTeamScreen>
             },
           ),
         const SizedBox(height: 24),
-        Text(
+        const Text(
           'Recent Team Activity',
-          style: Theme.of(context).textTheme.titleLarge,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF17171B),
+          ),
         ),
+        const SizedBox(height: 12),
         for (final a in data?['activity'] as List? ?? [])
-          ListTile(
-            title: Text(a['action'].toString().replaceAll('_', ' ')),
-            subtitle: Text(
-              '${a['created_at']} · Actor: ${a['actor_id'] ?? 'System'}',
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFF0EDF0)),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.history_rounded,
+                  color: Color(0xFF80152C),
+                ),
+                title: Text(
+                  a['action'].toString().replaceAll('_', ' ').toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                subtitle: Text(
+                  '${a['created_at']} · Actor: ${a['actor_id'] ?? 'System'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF73737D),
+                  ),
+                ),
+              ),
             ),
           ),
       ],
@@ -303,8 +551,10 @@ class _MemberDialogState extends State<_MemberDialog> {
   late Map<String, dynamic> permissions = Map<String, dynamic>.from(
     widget.member?['permissions'] as Map? ?? {},
   );
+
   @override
   Widget build(BuildContext context) => AlertDialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     title: Text(widget.member == null ? 'Invite Staff' : 'Edit Team Access'),
     content: SizedBox(
       width: 520,
@@ -323,6 +573,7 @@ class _MemberDialogState extends State<_MemberDialog> {
                     ? 'Enter a name (1–100 characters)'
                     : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 initialValue: email,
                 enabled: widget.member == null,
@@ -335,6 +586,7 @@ class _MemberDialogState extends State<_MemberDialog> {
                     ? null
                     : 'Enter a valid email',
               ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: level,
                 decoration: const InputDecoration(labelText: 'Role'),
@@ -348,7 +600,8 @@ class _MemberDialogState extends State<_MemberDialog> {
                     .toList(),
                 onChanged: (v) => setState(() => level = v!),
               ),
-              if (widget.member != null)
+              if (widget.member != null) ...[
+                const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Active access'),
@@ -358,24 +611,42 @@ class _MemberDialogState extends State<_MemberDialog> {
                   value: active,
                   onChanged: (v) => setState(() => active = v),
                 ),
+              ],
+              const SizedBox(height: 14),
               if (level == 'owner' || level == 'admin')
-                Text(
-                  level == 'owner'
-                      ? 'Full access, including Team & Access and infrastructure.'
-                      : 'All operational modules. Team, credentials, audit and infrastructure remain owner-only.',
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F8FA),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    level == 'owner'
+                        ? 'Full access, including Team & Access and platform infrastructure.'
+                        : 'All operational modules. Team, credentials, audit and infrastructure remain owner-only.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF73737D),
+                    ),
+                  ),
                 )
               else ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 const Text(
                   'Choose allowed modules. View is required before Edit.',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
+                const SizedBox(height: 8),
                 for (final m in widget.modules)
                   Row(
                     children: [
                       Expanded(
                         child: CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(m['label'].toString()),
+                          title: Text(
+                            m['label'].toString(),
+                            style: const TextStyle(fontSize: 13),
+                          ),
                           value: permissions.containsKey(m['name']),
                           onChanged: (v) => setState(() {
                             if (v == true) {
@@ -390,7 +661,7 @@ class _MemberDialogState extends State<_MemberDialog> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Edit'),
+                            const Text('Edit', style: TextStyle(fontSize: 12)),
                             Checkbox(
                               value: permissions[m['name']] == true,
                               onChanged: !permissions.containsKey(m['name'])
@@ -450,6 +721,7 @@ class _EmailDialogState extends State<_EmailDialog> {
   };
   @override
   Widget build(BuildContext context) => AlertDialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     title: const Text('Company Email Settings'),
     content: SizedBox(
       width: 480,
@@ -459,15 +731,24 @@ class _EmailDialogState extends State<_EmailDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Save your preferred sender details here. An owner must also configure matching sender/domain and SMTP credentials in Supabase Auth. Never enter SMTP passwords here. This does not create company mailboxes.',
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8FA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Save your preferred sender details here. An owner must also configure matching sender/domain and SMTP credentials in Supabase Auth. Never enter SMTP passwords here.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF73737D)),
+                ),
               ),
+              const SizedBox(height: 14),
               for (final entry in {
                 'sender_name': 'Sender name',
                 'sender_email': 'Sender email',
                 'reply_to': 'Reply-to email',
                 'provider': 'Email provider name',
-              }.entries)
+              }.entries) ...[
                 TextFormField(
                   initialValue: values[entry.key],
                   decoration: InputDecoration(labelText: entry.value),
@@ -488,6 +769,8 @@ class _EmailDialogState extends State<_EmailDialog> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 10),
+              ],
             ],
           ),
         ),
