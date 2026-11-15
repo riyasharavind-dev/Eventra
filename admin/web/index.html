@@ -30,17 +30,74 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>Eventor Admin</title>
+  <meta name="theme-color" content="#FFFFFF">
   <link rel="manifest" href="manifest.json">
+  <style>
+    body { margin: 0; background: #fff; }
+    #eventor-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      background: #fff;
+    }
+    .eventor-wordmark {
+      display: flex;
+      align-items: center;
+    }
+    .eventor-monogram { width: clamp(42px, 15vw, 60px); }
+    .eventor-letters {
+      width: min(56vw, 294px);
+      min-width: 0;
+      overflow: hidden;
+      margin-left: 6px;
+      animation: eventor-reveal 650ms 120ms both cubic-bezier(.65, 0, .35, 1);
+    }
+    .eventor-letters img { display: block; width: min(56vw, 294px); }
+    @keyframes eventor-reveal {
+      from { width: 0; margin-left: 0; }
+      to { width: min(56vw, 294px); margin-left: 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .eventor-letters { animation: none; }
+    }
+    #eventor-splash-error {
+      position: absolute;
+      top: calc(50% + 64px);
+      max-width: 85vw;
+      text-align: center;
+      font: 1rem system-ui, sans-serif;
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div id="eventor-splash" role="status" aria-label="Loading Eventor Admin">
+    <div class="eventor-wordmark" aria-hidden="true">
+      <img class="eventor-monogram" src="icons/eventor_monogram.svg" alt="">
+      <div class="eventor-letters">
+        <img src="icons/eventor_ventor.svg" alt="">
+      </div>
+    </div>
+    <p id="eventor-splash-error" hidden>
+      Eventor Admin is taking longer than expected. <a href="./">Reload</a>
+    </p>
+  </div>
+  <script>
+    const splash = document.getElementById('eventor-splash');
+    const splashError = document.getElementById('eventor-splash-error');
+    splashError.querySelector('a').addEventListener('click', event => {
+      event.preventDefault();
+      location.reload();
+    });
+    const startupTimeout = setTimeout(() => { splashError.hidden = false; }, 20000);
+    window.addEventListener('flutter-first-frame', () => {
+      clearTimeout(startupTimeout);
+      const reveal = splash.querySelector('.eventor-letters').getAnimations();
+      Promise.allSettled(reveal.map(animation => animation.finished))
+        .then(() => splash.remove());
+    }, { once: true });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
