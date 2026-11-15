@@ -8,7 +8,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminMfaScreen extends StatefulWidget {
   final VoidCallback onVerified;
-  const AdminMfaScreen({super.key, required this.onVerified});
+  final bool addDevice;
+  const AdminMfaScreen({
+    super.key,
+    required this.onVerified,
+    this.addDevice = false,
+  });
   @override
   State<AdminMfaScreen> createState() => _AdminMfaScreenState();
 }
@@ -16,6 +21,7 @@ class AdminMfaScreen extends StatefulWidget {
 class _AdminMfaScreenState extends State<AdminMfaScreen> {
   final auth = Supabase.instance.client.auth;
   String? factor, secret, qrSvg, error;
+  List<Factor> verifiedFactors = [];
   String code = '';
   bool busy = true;
 
@@ -35,7 +41,15 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
     });
     try {
       final factors = await auth.mfa.listFactors();
-      if (factors.totp.isNotEmpty) {
+      if (widget.addDevice) {
+        final assurance = auth.mfa.getAuthenticatorAssuranceLevel();
+        if (assurance.currentLevel != AuthenticatorAssuranceLevels.aal2 ||
+            factors.totp.isEmpty) {
+          throw AuthException('Verify your existing authenticator first.');
+        }
+        await enroll();
+      } else if (factors.totp.isNotEmpty) {
+        verifiedFactors = factors.totp;
         factor = factors.totp.first.id;
       } else {
         for (final old in factors.all.where(
@@ -45,13 +59,7 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
         )) {
           await auth.mfa.unenroll(old.id);
         }
-        final enrollment = await auth.mfa.enroll(
-          factorType: FactorType.totp,
-          friendlyName: 'Eventor Admin',
-        );
-        factor = enrollment.id;
-        secret = enrollment.totp!.secret;
-        qrSvg = enrollment.totp!.qrCode;
+        await enroll();
       }
     } catch (e) {
       error = e is AuthException
@@ -59,6 +67,17 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
           : 'Could not prepare authenticator. Retry.';
     }
     if (mounted) setState(() => busy = false);
+  }
+
+  Future<void> enroll() async {
+    final enrollment = await auth.mfa.enroll(
+      factorType: FactorType.totp,
+      friendlyName: widget.addDevice ? null : 'Eventor Admin',
+      issuer: 'Eventor Admin',
+    );
+    factor = enrollment.id;
+    secret = enrollment.totp!.secret;
+    qrSvg = enrollment.totp!.qrCode;
   }
 
   Future<void> verify() async {
@@ -87,14 +106,19 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF8F8FA),
     appBar: AppBar(
-      title: const Text('Authenticator Verification'),
+      title: Text(
+        widget.addDevice ? 'Add authenticator' : 'Authenticator Verification',
+      ),
       actions: [
-        TextButton.icon(
-          onPressed: () => auth.signOut(),
-          icon: const Icon(Icons.logout_rounded, size: 18),
-          label: const Text('Sign out'),
-          style: TextButton.styleFrom(foregroundColor: const Color(0xFF80152C)),
-        ),
+        if (!widget.addDevice)
+          TextButton.icon(
+            onPressed: () => auth.signOut(),
+            icon: const Icon(Icons.logout_rounded, size: 18),
+            label: const Text('Sign out'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF80152C),
+            ),
+          ),
       ],
     ),
     body: Center(
@@ -157,6 +181,27 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
                       height: 1.45,
                     ),
                   ),
+                if (verifiedFactors.length > 1) ...[
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: factor,
+                    decoration: const InputDecoration(
+                      labelText: 'Authenticator device',
+                    ),
+                    items: [
+                      for (final (index, device) in verifiedFactors.indexed)
+                        DropdownMenuItem(
+                          value: device.id,
+                          child: Text(
+                            device.friendlyName ?? 'Authenticator ${index + 1}',
+                          ),
+                        ),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (id) => setState(() => factor = id),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 TextField(
                   keyboardType: TextInputType.number,
@@ -224,7 +269,7 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
                     ),
                   ),
                 ],
-                if (!busy && secret == null)
+                if (!widget.addDevice && !busy && secret == null)
                   TextButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -233,7 +278,7 @@ class _AdminMfaScreenState extends State<AdminMfaScreen> {
                         ),
                       ),
                     ),
-                    child: const Text('Add a new authenticator'),
+                    child: const Text('Authenticator help'),
                   ),
               ],
             ),

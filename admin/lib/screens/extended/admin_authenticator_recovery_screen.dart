@@ -8,7 +8,7 @@ class AdminAuthenticatorRecoveryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Add a new authenticator')),
+    appBar: AppBar(title: const Text('Authenticator help')),
     body: Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

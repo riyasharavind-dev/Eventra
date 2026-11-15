@@ -1,3 +1,4 @@
+import '../extended/admin_mfa_screen.dart';
 import '../extended/admin_languages_screen.dart';
 import '../../services/app_live_data.dart';
 import '../../repositories/admin_connections_repository.dart';
@@ -688,6 +689,26 @@ class _AdminMainScreenState extends State<AdminMainScreen>
           ],
         ),
         actions: [
+          if (const ['owner', 'admin'].contains(session?['access_level']))
+            IconButton(
+              tooltip: 'Add authenticator',
+              icon: const Icon(Icons.phonelink_lock_outlined),
+              onPressed: () async {
+                final added = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (context) => AdminMfaScreen(
+                      addDevice: true,
+                      onVerified: () => Navigator.of(context).pop(true),
+                    ),
+                  ),
+                );
+                if (added == true && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Authenticator added.')),
+                  );
+                }
+              },
+            ),
           // Live realtime indicator badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
